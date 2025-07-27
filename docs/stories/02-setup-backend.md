@@ -1,0 +1,26 @@
+# Story 2: Générer le squelette de l'application Backend (Setup-2)
+
+**En tant que** Développeur, **je veux** que le projet multi-module Maven pour le backend Quarkus soit configuré, **afin que** les frontières architecturales (domaine, application, adaptateurs) soient établies et renforcées dès le départ.
+
+---
+
+### Tâches à faire
+
+- [ ] Dans le dossier `apps/backend`, créer le `pom.xml` parent.
+- [ ] Ce `pom.xml` parent doit définir les modules suivants : `bootstrap`, `producer`, `artist`.
+- [ ] Pour chaque module de contexte (`producer`, `artist`):
+    - [ ] Créer son `pom.xml` parent (packaging `pom`).
+    - [ ] Créer les sous-modules : `[context]-domain`, `[context]-application`, `[context]-adapters`.
+    - [ ] Créer les `pom.xml` pour chaque sous-module.
+- [ ] Pour chaque module `adapters` (`producer-adapters`, `artist-adapters`):
+    - [ ] Créer son `pom.xml` parent (packaging `pom`).
+    - [ ] Créer les sous-modules d'adaptateurs spécifiques (ex: `producer-adapter-rest`, `artist-adapter-persistence`).
+    - [ ] Créer les `pom.xml` pour chaque adaptateur.
+- [ ] S'assurer que la structure des répertoires correspond exactement à celle définie dans `docs/architecture/unified-project-structure.md`.
+- [ ] Le projet doit pouvoir être compilé via `mvn package` depuis `apps/backend` sans erreurs (même s'il ne contient pas encore de code source).
+
+---
+### Définition de "Terminé" (DoD)
+
+- [ ] La structure de répertoires et de fichiers `pom.xml` est créée dans `apps/backend`.
+- [ ] La commande `mvn package` s'exécute avec succès depuis `apps/backend`. 

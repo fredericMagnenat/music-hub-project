@@ -1,0 +1,24 @@
+{
+  "name": "music-hub-monorepo",
+  "version": "1.0.0",
+  "description": "Monorepo for Music Hub project",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm --parallel dev",
+    "build": "pnpm --recursive build",
+    "test": "pnpm --recursive test",
+    "lint": "pnpm --recursive lint",
+    "clean": "pnpm --recursive clean"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+} 
