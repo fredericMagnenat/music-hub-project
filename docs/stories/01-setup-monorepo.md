@@ -6,25 +6,25 @@
 
 ### Tâches à faire
 
-- [ ] Créer le répertoire racine du projet s'il n'existe pas.
-- [ ] Initialiser un dépôt Git (`git init`).
-- [ ] Créer la structure de dossiers suivante :
+- [x] Créer le répertoire racine du projet s'il n'existe pas.
+- [x] Initialiser un dépôt Git (`git init`).
+- [x] Créer la structure de dossiers suivante :
     - `.github/workflows/`
     - `apps/frontend/`
     - `apps/backend/`
     - `packages/shared-types/`
     - `infrastructure/terraform/`
-- [ ] Créer les fichiers vides suivants à la racine :
+- [x] Créer les fichiers vides suivants à la racine :
     - `.gitignore`
     - `package.json`
     - `pnpm-workspace.yaml`
     - `README.md`
     - `.github/workflows/ci.yaml`
-- [ ] Ajouter tous les nouveaux fichiers à l'index Git (`git add .`).
-- [ ] Créer le premier commit (`git commit -m "feat(setup): initialize monorepo structure"`).
+- [x] Ajouter tous les nouveaux fichiers à l'index Git (`git add .`).
+- [x] Créer le premier commit (`git commit -m "feat(setup): initialize monorepo structure"`).
 
 ---
 ### Définition de "Terminé" (DoD)
 
-- [ ] Toutes les tâches ci-dessus sont cochées.
-- [ ] Le commit initial est poussé sur la branche principale du dépôt distant. 
+- [x] Toutes les tâches ci-dessus sont cochées.
+- [x] Le commit initial est poussé sur la branche principale du dépôt distant. 
