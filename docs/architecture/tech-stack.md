@@ -13,6 +13,7 @@ This section defines the definitive list of technologies, libraries, and tools f
 | API Style | REST | - | Frontend/Backend Communication | The simplest and most standard approach for this type of application. |
 | Event Bus (In-Memory) | Quarkus Vert.x Events | - | Manage internal, in-process events | Leverages the built-in, lightweight Vert.x event bus for asynchronous communication between contexts (e.g., `TrackWasRegistered`). |
 | Database | PostgreSQL | 16.x | Relational data storage | Specified in the PRD. Powerful, open-source, and reliable. |
+| DB Migration | Flyway | latest | Database schema migrations | Provides version-controlled, automated database schema evolution. Essential for CI/CD. |
 | Frontend Testing | Vitest & RTL | latest | Unit/component testing | Specified in the PRD. The standard ecosystem for testing React/Vite applications. |
 | Backend Testing | JUnit 5 & Mockito | latest | Unit/integration testing | Specified in the PRD. The standard ecosystem for testing in Java/Quarkus. |
 | Code Coverage | Jacoco | latest | Measure backend test coverage | Required by the PRD (NFR3: 80% coverage). Provides a clear metric for code quality and testing thoroughness. |

@@ -6,21 +6,21 @@
 
 ### Tâches à faire
 
-- [ ] Dans le dossier `apps/backend`, créer le `pom.xml` parent.
-- [ ] Ce `pom.xml` parent doit définir les modules suivants : `bootstrap`, `producer`, `artist`.
-- [ ] Pour chaque module de contexte (`producer`, `artist`):
-    - [ ] Créer son `pom.xml` parent (packaging `pom`).
-    - [ ] Créer les sous-modules : `[context]-domain`, `[context]-application`, `[context]-adapters`.
-    - [ ] Créer les `pom.xml` pour chaque sous-module.
-- [ ] Pour chaque module `adapters` (`producer-adapters`, `artist-adapters`):
-    - [ ] Créer son `pom.xml` parent (packaging `pom`).
-    - [ ] Créer les sous-modules d'adaptateurs spécifiques (ex: `producer-adapter-rest`, `artist-adapter-persistence`).
-    - [ ] Créer les `pom.xml` pour chaque adaptateur.
-- [ ] S'assurer que la structure des répertoires correspond exactement à celle définie dans `docs/architecture/unified-project-structure.md`.
-- [ ] Le projet doit pouvoir être compilé via `mvn package` depuis `apps/backend` sans erreurs (même s'il ne contient pas encore de code source).
+- [x] Dans le dossier `apps/backend`, créer le `pom.xml` parent.
+- [x] Ce `pom.xml` parent doit définir les modules suivants : `bootstrap`, `producer`, `artist`.
+- [x] Pour chaque module de contexte (`producer`, `artist`):
+    - [x] Créer son `pom.xml` parent (packaging `pom`).
+    - [x] Créer les sous-modules : `[context]-domain`, `[context]-application`, `[context]-adapters`.
+    - [x] Créer les `pom.xml` pour chaque sous-module.
+- [x] Pour chaque module `adapters` (`producer-adapters`, `artist-adapters`):
+    - [x] Créer son `pom.xml` parent (packaging `pom`).
+    - [x] Créer les sous-modules d'adaptateurs spécifiques (ex: `producer-adapter-rest`, `artist-adapter-persistence`).
+    - [x] Créer les `pom.xml` pour chaque adaptateur.
+- [x] S'assurer que la structure des répertoires correspond exactement à celle définie dans `docs/architecture/unified-project-structure.md`.
+- [x] Le projet doit pouvoir être compilé via `mvn package` depuis `apps/backend` sans erreurs (même s'il ne contient pas encore de code source).
 
 ---
 ### Définition de "Terminé" (DoD)
 
-- [ ] La structure de répertoires et de fichiers `pom.xml` est créée dans `apps/backend`.
-- [ ] La commande `mvn package` s'exécute avec succès depuis `apps/backend`. 
+- [x] La structure de répertoires et de fichiers `pom.xml` est créée dans `apps/backend`.
+- [x] La commande `mvn package` s'exécute avec succès depuis `apps/backend`. 

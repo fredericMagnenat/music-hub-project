@@ -22,6 +22,10 @@ To increase type safety and encapsulate validation logic within the domain, seve
 
 ---
 
+## Database Schema Management
+
+Database schema changes will be managed through **Flyway**. Migration scripts will be stored in the backend source code (`src/main/resources/db/migration`). This ensures that schema changes are version-controlled, repeatable, and automatically applied upon application startup, which is critical for a reliable CI/CD pipeline.
+
 ## Model: Producer
 
 *   **Purpose:** The main aggregate representing a rights holder. It owns and manages a collection of `Track` objects.

@@ -40,14 +40,18 @@ backend/
 │   │   └── pom.xml         # --- CORE DOMAIN: No external dependencies
 │   ├── producer-application/
 │   │   └── pom.xml         # --- Depends on: producer-domain
-│   └── producer-adapters/    # Parent module for producer's adapters
-│       ├── pom.xml
-│       ├── producer-adapter-persistence/
-│       │   └── pom.xml     # --- Implements persistence ports
-│       ├── producer-adapter-rest/
-│       │   └── pom.xml     # --- Implements REST API (primary adapter)
-│       └── producer-adapter-spi/
-│           └── pom.xml     # --- Implements external service clients (secondary adapter)
+│   ├── producer-adapters/    # Parent module for producer's adapters
+│   │   ├── pom.xml
+│   │   ├── producer-adapter-messaging/
+│   │   │   └── pom.xml     # --- Listens for events (secondary adapter)
+│   │   ├── producer-adapter-persistence/
+│   │   │   └── pom.xml     # --- Implements persistence ports
+│   │   ├── producer-adapter-rest/
+│   │   │   └── pom.xml     # --- Implements REST API (primary adapter)
+│   │   └── producer-adapter-spi/
+│   │       └── pom.xml     # --- Implements external service clients (secondary adapter)
+│   └── producer-wiring/
+│       └── pom.xml         # --- Assembles producer components
 │
 └── artist/                 # Parent module for the 'artist' bounded context
     ├── pom.xml
@@ -55,12 +59,16 @@ backend/
     │   └── pom.xml         # --- CORE DOMAIN: No external dependencies
     ├── artist-application/
     │   └── pom.xml         # --- Depends on: artist-domain
-    └── artist-adapters/      # Parent module for artist's adapters
-        ├── pom.xml
-        ├── artist-adapter-persistence/
-        │   └── pom.xml     # --- Implements persistence ports
-        ├── artist-adapter-messaging/
-        │   └── pom.xml     # --- Listens for events (secondary adapter)
-        └── artist-adapter-rest/
-            └── pom.xml     # --- Implements REST API
+    ├── artist-adapters/      # Parent module for artist's adapters
+    │   ├── pom.xml
+    │   ├── artist-adapter-persistence/
+    │   │   └── pom.xml     # --- Implements persistence ports
+    │   ├── artist-adapter-messaging/
+    │   │   └── pom.xml     # --- Listens for events (secondary adapter)
+    │   ├── artist-adapter-rest/
+    │   │   └── pom.xml     # --- Implements REST API
+    │   └── artist-adapter-spi/
+    │       └── pom.xml     # --- Implements external service clients (secondary adapter)
+    └── artist-wiring/
+        └── pom.xml         # --- Assembles artist components
 ```
