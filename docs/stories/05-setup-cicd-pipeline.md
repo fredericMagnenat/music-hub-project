@@ -6,22 +6,22 @@
 
 ### Tâches à faire
 
-- [ ] Dans le fichier `.github/workflows/ci.yaml`, définir un workflow qui se déclenche sur les `push` et `pull_request` vers la branche principale.
-- [ ] Définir un job `build-and-test` qui s'exécute sur `ubuntu-latest`.
-- [ ] Ajouter les étapes (steps) suivantes au job :
-    - [ ] `actions/checkout@v3` pour récupérer le code.
-    - [ ] `actions/setup-java@v3` pour configurer Java 21.
-    - [ ] `pnpm/action-setup@v2` pour configurer PNPM.
-    - [ ] Installer les dépendances root : `pnpm install`.
-    - [ ] Construire le frontend : `pnpm --filter frontend build`.
-    - [ ] Tester le frontend : `pnpm --filter frontend test`.
-    - [ ] Construire et tester le backend : `mvn -B package --file apps/backend/pom.xml`.
-- [ ] Pousser le fichier `ci.yaml` sur le dépôt.
+- [x] Dans le fichier `.github/workflows/ci.yaml`, définir un workflow qui se déclenche sur les `push` et `pull_request` vers la branche principale.
+- [x] Définir un job `build-and-test` qui s'exécute sur `ubuntu-latest`.
+- [x] Ajouter les étapes (steps) suivantes au job :
+    - [x] `actions/checkout@v3` pour récupérer le code.
+    - [x] `actions/setup-java@v3` pour configurer Java 21.
+    - [x] `pnpm/action-setup@v2` pour configurer PNPM.
+    - [x] Installer les dépendances root : `pnpm install`.
+    - [x] Construire le frontend : `pnpm --filter frontend build`.
+    - [x] Tester le frontend : `pnpm --filter frontend test`.
+    - [x] Construire et tester le backend : `mvn -B package --file apps/backend/pom.xml`.
+- [x] Pousser le fichier `ci.yaml` sur le dépôt.
 - [ ] Vérifier dans l'onglet "Actions" de GitHub que le pipeline s'exécute et réussit.
 
 ---
 ### Définition de "Terminé" (DoD)
 
-- [ ] Le fichier `ci.yaml` est présent et correctement configuré.
+- [x] Le fichier `ci.yaml` est présent et correctement configuré.
 - [ ] Le pipeline se lance automatiquement sur un push.
 - [ ] Toutes les étapes du pipeline (build et test pour le front et le back) se terminent avec succès. 

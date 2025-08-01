@@ -6,22 +6,22 @@
 
 ### Tâches à faire
 
-- [ ] Dans le `pom.xml` du module `bootstrap` (`apps/backend/bootstrap/pom.xml`), ajouter la dépendance `quarkus-quinoa`.
-- [ ] Dans le fichier de configuration de Quarkus (`apps/backend/bootstrap/src/main/resources/application.properties`), ajouter la configuration de Quinoa :
+- [x] Dans le `pom.xml` du module `bootstrap` (`apps/backend/bootstrap/pom.xml`), ajouter la dépendance `quarkus-quinoa`.
+- [x] Dans le fichier de configuration de Quarkus (`apps/backend/bootstrap/src/main/resources/application.properties`), ajouter la configuration de Quinoa :
   ```properties
   # Quinoa UI
   quarkus.quinoa.ui-dir=../../frontend
-  quarkus.quinoa.dev-server.port=3000
+  quarkus.quinoa.dev-server.port=5173
   ```
-- [ ] Lancer la commande `quarkus dev` depuis le répertoire `apps/backend/bootstrap`.
-- [ ] Vérifier que le backend Quarkus démarre.
-- [ ] Vérifier que le serveur de développement Remix (frontend) est démarré automatiquement par Quarkus.
-- [ ] Accéder à l'URL du frontend et vérifier que l'application Remix est servie.
-- [ ] Modifier un fichier dans le frontend (`apps/frontend`) et vérifier que le rechargement à chaud (hot-reload) fonctionne dans le navigateur.
+- [x] Lancer la commande `quarkus dev` depuis le répertoire `apps/backend/bootstrap`.
+- [x] Vérifier que le backend Quarkus démarre.
+- [x] Vérifier que le serveur de développement Remix (frontend) est démarré automatiquement par Quarkus.
+- [x] Accéder à l'URL du frontend et vérifier que l'application Remix est servie.
+- [x] Modifier un fichier dans le frontend (`apps/frontend`) et vérifier que le rechargement à chaud (hot-reload) fonctionne dans le navigateur.
 
 ---
 ### Définition de "Terminé" (DoD)
 
-- [ ] La commande `quarkus dev` lance les deux serveurs.
-- [ ] L'application frontend est accessible via l'URL du serveur Quarkus.
-- [ ] Le rechargement à chaud est fonctionnel pour le frontend et le backend. 
+- [x] La commande `quarkus dev` lance les deux serveurs.
+- [x] L'application frontend est accessible via l'URL du serveur Quarkus.
+- [x] Le rechargement à chaud est fonctionnel pour le frontend et le backend. 
