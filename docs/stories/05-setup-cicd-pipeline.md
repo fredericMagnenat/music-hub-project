@@ -17,11 +17,11 @@
     - [x] Tester le frontend : `pnpm --filter frontend test`.
     - [x] Construire et tester le backend : `mvn -B package --file apps/backend/pom.xml`.
 - [x] Pousser le fichier `ci.yaml` sur le dépôt.
-- [ ] Vérifier dans l'onglet "Actions" de GitHub que le pipeline s'exécute et réussit.
+- [x] Vérifier dans l'onglet "Actions" de GitHub que le pipeline s'exécute et réussit.
 
 ---
 ### Définition de "Terminé" (DoD)
 
 - [x] Le fichier `ci.yaml` est présent et correctement configuré.
-- [ ] Le pipeline se lance automatiquement sur un push.
-- [ ] Toutes les étapes du pipeline (build et test pour le front et le back) se terminent avec succès. 
+- [x] Le pipeline se lance automatiquement sur un push.
+- [x] Toutes les étapes du pipeline (build et test pour le front et le back) se terminent avec succès. 
