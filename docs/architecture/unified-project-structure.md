@@ -34,12 +34,18 @@ backend/
 │   ├── pom.xml
 │   └── src/
 │
+├── shared-domain/          # SHARED KERNEL: Domain concepts shared across contexts
+│   └── pom.xml             # --- e.g., ISRC value object
+│
+├── shared-events/          # SHARED KERNEL: Event contracts shared across contexts
+│   └── pom.xml             # --- Depends on: shared-domain
+│
 ├── producer/               # Parent module for the 'producer' bounded context
 │   ├── pom.xml
 │   ├── producer-domain/
-│   │   └── pom.xml         # --- CORE DOMAIN: No external dependencies
+│   │   └── pom.xml         # --- CORE DOMAIN: Depends on shared-domain
 │   ├── producer-application/
-│   │   └── pom.xml         # --- Depends on: producer-domain
+│   │   └── pom.xml         # --- Depends on: producer-domain, shared-events
 │   ├── producer-adapters/    # Parent module for producer's adapters
 │   │   ├── pom.xml
 │   │   ├── producer-adapter-messaging/
@@ -56,9 +62,9 @@ backend/
 └── artist/                 # Parent module for the 'artist' bounded context
     ├── pom.xml
     ├── artist-domain/
-    │   └── pom.xml         # --- CORE DOMAIN: No external dependencies
+    │   └── pom.xml         # --- CORE DOMAIN: Depends on shared-domain
     ├── artist-application/
-    │   └── pom.xml         # --- Depends on: artist-domain
+    │   └── pom.xml         # --- Depends on: artist-domain, shared-events
     ├── artist-adapters/      # Parent module for artist's adapters
     │   ├── pom.xml
     │   ├── artist-adapter-persistence/

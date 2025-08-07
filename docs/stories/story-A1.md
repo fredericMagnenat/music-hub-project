@@ -7,17 +7,17 @@
 
 #### Backend Technical Tasks (`artist` context)
 
-1.  **Module `artist-adapter-messaging`:**
+1.  [x] **Module `artist-adapter-messaging`:**
     *   Create a `TrackEventHandler` class.
     *   Implement a method that listens (`@Observes`) for `TrackWasRegistered` events published on the Vert.x event bus.
     *   This method will act as an adapter, receiving the event and calling the appropriate application service.
 
-2.  **Module `artist-domain`:**
+2.  [x] **Module `artist-domain`:**
     *   Create the `Artist` aggregate and its repository interface (`ArtistRepository`).
     *   Implement the random ID generation logic (UUIDv4) for the `Artist`.
     *   Add an `addTrackReference(ISRC isrc)` method to the `Artist` aggregate.
 
-3.  **Module `artist-application`:**
+3.  [x] **Module `artist-application`:**
     *   Create the `ArtistService` application service.
     *   Create a `handle(TrackWasRegistered event)` method.
     *   This method will contain the User Story's logic:
@@ -27,7 +27,7 @@
         *   Call the `addTrackReference()` method on the found or created artist.
         *   Save the artist.
 
-4.  **Module `artist-adapter-persistence`:**
+4.  [x] **Module `artist-adapter-persistence`:**
     *   Implement `ArtistRepositoryImpl` using JPA/Panache.
     *   Define the `ArtistEntity` JPA entity.
 

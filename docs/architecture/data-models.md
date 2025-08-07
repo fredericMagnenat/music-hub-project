@@ -14,7 +14,7 @@ A hybrid approach will be used for primary key generation to combine robustness 
 
 ### Value Objects
 
-To increase type safety and encapsulate validation logic within the domain, several attributes will be implemented as Value Objects, not primitive strings. While they are serialized as strings in the API, they are treated as rich objects in the backend code.
+To increase type safety and encapsulate validation logic within the domain, several attributes will be implemented as Value Objects, not primitive strings. While they are serialized as strings in the API, they are treated as rich objects in the backend code. Any Value Object that is shared between bounded contexts (like `ISRC`) **must** be defined in the `shared-domain` Maven module.
 *   **`ProducerCode`**: A 5-character code identifying a producer.
 *   **`ISRC`**: A 12-character International Standard Recording Code.
 *   **`TrackTitle`**: A non-empty title for a track.

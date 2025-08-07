@@ -25,8 +25,10 @@ A monorepo is the chosen approach to streamline development and dependency manag
 *   **Monorepo Tool:** Start with `pnpm` workspaces for the front-end and shared packages. Avoid more complex tools like Nx or Turborepo until a clear need arises.
 *   **Package Organization:**
     *   `apps/frontend`: The Remix application.
-    *   `apps/backend`: The Quarkus application.
-    *   `packages/shared-types`: Shared TypeScript types for API contracts.
+    *   `apps/backend`: The Quarkus application, organized into multiple Maven modules.
+    *   `packages/shared-types`: Shared **TypeScript types** for API contracts between frontend and backend.
+    *   `apps/backend/shared-domain`: A shared **Java module** for domain concepts (e.g., Value Objects like `ISRC`) used by multiple backend contexts.
+    *   `apps/backend/shared-events`: A shared **Java module** for event contracts (e.g., `TrackWasRegistered`) used for communication between backend contexts.
 
 ## High Level Architecture Diagram
 
