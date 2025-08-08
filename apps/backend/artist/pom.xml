@@ -21,6 +21,13 @@
         <module>artist-domain</module>
         <module>artist-application</module>
         <module>artist-adapters</module>
-        <module>artist-wiring</module>
     </modules>
+    <dependencies>
+        <dependency>
+            <groupId>com.musichub</groupId>
+            <artifactId>shared-domain</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
 </project> 

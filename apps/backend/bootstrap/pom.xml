@@ -22,20 +22,73 @@
     </properties>
 
     <dependencies>
-        <!-- Artist Context -->
+        <!-- Artist -->
+
         <dependency>
             <groupId>com.musichub</groupId>
-            <artifactId>artist-wiring</artifactId>
+            <artifactId>artist-adapter-messaging</artifactId>
             <version>${project.version}</version>
-            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>com.musichub</groupId>
+            <artifactId>artist-adapter-persistence</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.musichub</groupId>
+            <artifactId>artist-adapter-rest</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.musichub</groupId>
+            <artifactId>artist-adapter-spi</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
-        <!-- Producer Context -->
+        <!-- Producer -->
         <dependency>
             <groupId>com.musichub</groupId>
-            <artifactId>producer-wiring</artifactId>
+            <artifactId>producer-adapter-messaging</artifactId>
             <version>${project.version}</version>
-            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>com.musichub</groupId>
+            <artifactId>producer-adapter-persistence</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.musichub</groupId>
+            <artifactId>producer-adapter-rest</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.musichub</groupId>
+            <artifactId>producer-adapter-spi</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- The "application" and "model" modules are transitively included already;
+          but we need to include them *explicitly* so that the aggregated JaCoCo report will cover them. -->
+        <dependency>
+            <groupId>com.musichub</groupId>
+            <artifactId>artist-domain</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.musichub</groupId>
+            <artifactId>artist-application</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.musichub</groupId>
+            <artifactId>producer-domain</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.musichub</groupId>
+            <artifactId>producer-application</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <!-- Quarkus Core -->
@@ -48,8 +101,48 @@
             <groupId>io.quarkiverse.quinoa</groupId>
             <artifactId>quarkus-quinoa</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-rest</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-opentelemetry</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-observability-devservices-lgtm</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkiverse.micrometer.registry</groupId>
+            <artifactId>quarkus-micrometer-registry-otlp</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.opentelemetry.instrumentation</groupId>
+            <artifactId>opentelemetry-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-health</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-jdbc-h2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-        <!-- To use the "attached test JAR" from the "adapter" module -->
+
+        <!-- To use the "attached test JAR" from the "adapter" module-->
         <dependency>
             <groupId>com.musichub</groupId>
             <artifactId>artist-adapters</artifactId>
@@ -58,7 +151,6 @@
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>com.musichub</groupId>
             <artifactId>producer-adapters</artifactId>
@@ -67,48 +159,24 @@
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
-
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit5</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-test-common</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.awaitility</groupId>
-            <artifactId>awaitility</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-narayana-jta</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
         <plugins>
             <plugin>
-                <groupId>${quarkus.platform.group-id}</groupId>
-                <artifactId>quarkus-maven-plugin</artifactId>
+                <artifactId>maven-compiler-plugin</artifactId>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
             </plugin>
             <plugin>
-                <groupId>io.smallrye</groupId>
-                <artifactId>jandex-maven-plugin</artifactId>
+                <groupId>${quarkus.platform.group-id}</groupId>
+                <artifactId>quarkus-maven-plugin</artifactId>
             </plugin>
-        </plugins>
+         </plugins>
     </build>
     <profiles>
         <profile>

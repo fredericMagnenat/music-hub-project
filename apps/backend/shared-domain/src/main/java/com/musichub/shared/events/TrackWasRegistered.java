@@ -1,4 +1,4 @@
-package com.musichub.events;
+package com.musichub.shared.events;
 
 import com.musichub.shared.domain.values.ISRC;
 

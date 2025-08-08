@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Optional;
 
+import com.musichub.shared.events.TrackWasRegistered;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,8 +17,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.musichub.artist.domain.Artist;
-import com.musichub.artist.domain.ArtistRepository;
-import com.musichub.events.TrackWasRegistered;
+import com.musichub.artist.application.port.out.ArtistRepository;
+
 import com.musichub.shared.domain.values.ISRC;
 
 @ExtendWith(MockitoExtension.class)

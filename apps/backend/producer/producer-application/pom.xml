@@ -29,7 +29,7 @@
             <artifactId>quarkus-arc</artifactId>
         </dependency>
 
-        <!-- To use the "attached test JAR" from the "model" module -->
+        <!-- To use the "attached test JAR" from the "model" module-->
         <dependency>
             <groupId>com.musichub</groupId>
             <artifactId>producer-domain</artifactId>
@@ -38,7 +38,16 @@
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
-        <!-- Test dependencies managed by Quarkus BOM -->
     </dependencies>
-    
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>io.smallrye</groupId>
+                <artifactId>jandex-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 </project> 

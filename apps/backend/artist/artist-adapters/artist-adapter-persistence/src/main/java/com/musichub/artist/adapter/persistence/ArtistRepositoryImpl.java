@@ -1,10 +1,12 @@
 package com.musichub.artist.adapter.persistence;
 
 import com.musichub.artist.domain.Artist;
-import com.musichub.artist.domain.ArtistRepository;
+import com.musichub.artist.application.port.out.ArtistRepository;
 import com.musichub.shared.domain.values.ISRC;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.transaction.Transactional;
+
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -17,6 +19,7 @@ public class ArtistRepositoryImpl implements ArtistRepository, PanacheRepository
     }
 
     @Override
+    @Transactional
     public void save(Artist artist) {
         Optional<ArtistEntity> existingEntityOpt = find("name", artist.getName()).firstResultOptional();
 

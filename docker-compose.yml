@@ -1,0 +1,21 @@
+services:
+  postgres:
+    container_name: postgres_container_musichubdb
+    image: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
+      POSTGRES_DB: musichubdata
+      PGDATA: /data/postgres
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - "5433:5432"
+    networks:
+      - postgres
+    restart: unless-stopped
+networks:
+  postgres:
+    driver: bridge
+volumes:
+  postgres:
