@@ -2,6 +2,6 @@
 
 The integration between frontend and backend is managed by the [Quarkus Quinoa extension](https://quarkus.io/blog/quinoa-modern-ui-with-no-hassle/), which unifies their lifecycles.
 
-*   **Local Development:** A single command, `quarkus dev`, from the `apps/backend` directory will start both the Quarkus backend and the Remix development server, with transparent proxying for a seamless live-reload experience.
-*   **Build:** The `mvn package` command in `apps/backend` will first trigger the Remix build (`pnpm run build`) and then bundle the resulting static assets directly into the final Quarkus application JAR.
-*   **Deployment:** The deployment process is maximally simplified. A single Docker container is built from the Quarkus application and deployed to AWS App Runner. This single container is responsible for serving both the API and the user interface assets.
+*   **Local Development:** From the `apps/bootstrap` directory, run `mvn quarkus:dev`. This starts the Quarkus backend and the Remix dev server (configured via Quinoa) with transparent proxying for live-reload.
+*   **Build:** Run `mvn package` from the `apps` directory (or `mvn package` inside `apps/bootstrap`). The build will trigger the Remix build in `apps/webui` and bundle the produced assets into the Quarkus application JAR.
+*   **Deployment:** Build a single Docker container from the Quarkus application and deploy it (e.g., to AWS App Runner). The container serves both the API and the UI assets.

@@ -16,8 +16,7 @@ All git commits **must** follow the [Conventional Commits](https://www.conventio
 2.  **Domain Immutability**: Domain objects (`domain` layer) **must be** immutable. Any modification to an aggregate must result in a new instance of that aggregate.
 3.  **Enforce Value Objects & Shared Kernel**:
     *   In the backend domain, **prefer creating Value Objects** (`ISRC`, `ProducerCode`, `ArtistName`, etc.) over using primitive types like `String` for any data that has intrinsic rules, format, or constraints.
-    *   If a Value Object or other domain concept is used by more than one bounded context, it **must** be placed in the `shared-domain` module.
-    *   If an event contract is used for communication between contexts, it **must** be placed in the `shared-events` module.
+    *   If a Value Object or event contract is used by more than one bounded context, it **must** be placed in the `apps/shared-kernel` module.
     *   This enforces domain invariants and creates a clear, reusable "Shared Kernel".
 4.  **No Logic in Adapters**: REST controllers and other adapters **must be** as "thin" as possible. They only convert requests/events into application service calls and map the results. All business logic **must reside** in the `application` and `domain` layers.
 5.  **Application Use Case Entry Points**: The frontend (via REST controllers) and other contexts (via events) **must never** interact directly with repositories or the domain. They **must always** go through the application layer's use case interfaces (e.g., `RegisterTrackUseCase.java`). The implementing classes are often called "Application Services".

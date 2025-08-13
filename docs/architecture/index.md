@@ -1,8 +1,8 @@
-# music-data-hub Fullstack Architecture Document
+# Music Hub Project - Architecture Fullstack
 
 ## Table of Contents
 
-- [music-data-hub Fullstack Architecture Document](#table-of-contents)
+- [Music Hub Project - Architecture Fullstack](#table-of-contents)
   - [Introduction](./introduction.md)
     - [Starter Template or Existing Project](./introduction.md#starter-template-or-existing-project)
     - [Change Log](./introduction.md#change-log)
@@ -27,7 +27,7 @@
   - [API Specification](./api-specification.md)
   - [Unified Project Structure](./unified-project-structure.md)
     - [Monorepo Root Structure](./unified-project-structure.md#monorepo-root-structure)
-    - [Backend Multi-Module Structure (`apps/backend/`)](./unified-project-structure.md#backend-multi-module-structure-appsbackend)
+    - [Backend Modules Structure (`apps/`)](./unified-project-structure.md#backend-modules-structure-apps)
   - [Resilience and Observability](./resilience-and-observability.md)
   - [Security and Secrets Management](./security-and-secrets-management.md)
     - [Prerequisite: External API Access](./security-and-secrets-management.md#prerequisite-external-api-access)

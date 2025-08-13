@@ -6,18 +6,18 @@
 
 ### Tâches à faire
 
-- [x] Dans le `pom.xml` du module `bootstrap` (`apps/backend/bootstrap/pom.xml`), ajouter la dépendance `quarkus-quinoa`.
-- [x] Dans le fichier de configuration de Quarkus (`apps/backend/bootstrap/src/main/resources/application.properties`), ajouter la configuration de Quinoa :
+- [x] Dans le `pom.xml` du module `bootstrap` (`apps/bootstrap/pom.xml`), ajouter la dépendance `quarkus-quinoa`.
+- [x] Dans le fichier de configuration de Quarkus (`apps/bootstrap/src/main/resources/application.properties`), ajouter la configuration de Quinoa :
   ```properties
   # Quinoa UI
-  quarkus.quinoa.ui-dir=../../frontend
+  quarkus.quinoa.ui-dir=../webui
   quarkus.quinoa.dev-server.port=5173
   ```
-- [x] Lancer la commande `quarkus dev` depuis le répertoire `apps/backend/bootstrap`.
+- [x] Lancer la commande `mvn quarkus:dev` depuis le répertoire `apps/bootstrap`.
 - [x] Vérifier que le backend Quarkus démarre.
 - [x] Vérifier que le serveur de développement Remix (frontend) est démarré automatiquement par Quarkus.
 - [x] Accéder à l'URL du frontend et vérifier que l'application Remix est servie.
-- [x] Modifier un fichier dans le frontend (`apps/frontend`) et vérifier que le rechargement à chaud (hot-reload) fonctionne dans le navigateur.
+- [x] Modifier un fichier dans le frontend (`apps/webui`) et vérifier que le rechargement à chaud (hot-reload) fonctionne dans le navigateur.
 
 ---
 ### Définition de "Terminé" (DoD)

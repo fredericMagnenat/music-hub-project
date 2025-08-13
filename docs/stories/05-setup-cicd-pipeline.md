@@ -11,11 +11,11 @@
 - [x] Ajouter les étapes (steps) suivantes au job :
     - [x] `actions/checkout@v3` pour récupérer le code.
     - [x] `actions/setup-java@v3` pour configurer Java 21.
-    - [x] `pnpm/action-setup@v2` pour configurer PNPM.
-    - [x] Installer les dépendances root : `pnpm install`.
-    - [x] Construire le frontend : `pnpm --filter frontend build`.
-    - [x] Tester le frontend : `pnpm --filter frontend test`.
-    - [x] Construire et tester le backend : `mvn -B package --file apps/backend/pom.xml`.
+    - [x] (Optionnel) `pnpm/action-setup@v2` pour configurer PNPM si le frontend l'utilise.
+    - [x] (Optionnel) Installer les dépendances root : `pnpm install` (si PNPM est utilisé).
+    - [x] Construire le frontend : `pnpm --filter webui build` (si PNPM/Remix est utilisé).
+    - [x] Tester le frontend : `pnpm --filter webui test` (si PNPM/Remix est utilisé).
+    - [x] Construire et tester le backend : `mvn -B -f apps/pom.xml package`.
 - [x] Pousser le fichier `ci.yaml` sur le dépôt.
 - [x] Vérifier dans l'onglet "Actions" de GitHub que le pipeline s'exécute et réussit.
 

@@ -2,7 +2,7 @@
 
 ## Technical Summary
 
-The architecture for "music-data-hub" is designed as a modern web application deployed on a flexible cloud infrastructure. The front-end will be a Single-Page Application (SPA) developed with **Remix (TypeScript)**, communicating via a REST API with a robust back-end based on **Quarkus (Java)**. This event-driven architecture, adhering to Domain-Driven Design (DDD) principles, is designed to meet the PRD goals: rapid ISRC validation, centralized catalog management, and high potential for future scalability.
+The architecture for the Music Hub Project is designed as a modern web application deployed on a flexible cloud infrastructure. The front-end is a Single-Page Application (SPA) developed with **Remix (TypeScript)**, communicating via a REST API with a robust back-end based on **Quarkus (Java)**. This event-driven architecture, adhering to Domain-Driven Design (DDD) principles, is designed to meet the PRD goals: rapid ISRC validation, centralized catalog management, and high potential for future scalability.
 
 ## Platform and Infrastructure Choice
 
@@ -22,13 +22,13 @@ For the Proof of Concept (PoC), the recommendation is to use **Docker containers
 A monorepo is the chosen approach to streamline development and dependency management.
 
 *   **Structure:** Monorepo
-*   **Monorepo Tool:** Start with `pnpm` workspaces for the front-end and shared packages. Avoid more complex tools like Nx or Turborepo until a clear need arises.
 *   **Package Organization:**
-    *   `apps/frontend`: The Remix application.
-    *   `apps/backend`: The Quarkus application, organized into multiple Maven modules.
-    *   `packages/shared-types`: Shared **TypeScript types** for API contracts between frontend and backend.
-    *   `apps/backend/shared-domain`: A shared **Java module** for domain concepts (e.g., Value Objects like `ISRC`) used by multiple backend contexts.
-    *   `apps/backend/shared-events`: A shared **Java module** for event contracts (e.g., `TrackWasRegistered`) used for communication between backend contexts.
+    *   `apps/webui`: The Remix application (frontend UI).
+    *   `apps/bootstrap`: The Quarkus application runtime hosting REST endpoints and integrating the bounded contexts.
+    *   `apps/producer`: Bounded context (multi-module: `producer-domain`, `producer-application`, `producer-adapters/*`).
+    *   `apps/artist`: Bounded context (multi-module: `artist-domain`, `artist-application`, `artist-adapters/*`).
+    *   `apps/shared-kernel`: Shared kernel (Java) for cross-context domain values and events (e.g., `ISRC`, `TrackWasRegistered`).
+    *   `packages/shared-types` (optionnel): Shared **TypeScript types** for API contracts between frontend and backend.
 
 ## High Level Architecture Diagram
 

@@ -10,14 +10,14 @@
 - [x] Initialiser un dépôt Git (`git init`).
 - [x] Créer la structure de dossiers suivante :
     - `.github/workflows/`
-    - `apps/frontend/`
-    - `apps/backend/`
+    - `apps/webui/`
+    - `apps/` (modules backend: `bootstrap/`, `producer/`, `artist/`, `shared-kernel/`)
     - `packages/shared-types/`
     - `infrastructure/terraform/`
 - [x] Créer les fichiers vides suivants à la racine :
     - `.gitignore`
-    - `package.json`
-    - `pnpm-workspace.yaml`
+    - `package.json` (si utilisation de pnpm/npm pour le frontend)
+    - `pnpm-workspace.yaml` (optionnel)
     - `README.md`
     - `.github/workflows/ci.yaml`
 - [x] Ajouter tous les nouveaux fichiers à l'index Git (`git add .`).

@@ -12,18 +12,16 @@ During the initial implementation and architectural review, several points of po
 
 ### Technical Tasks
 
-1.  [x] **Create `shared-domain` Module:**
-    *   A new Maven module `apps/backend/shared-domain` was created.
+1.  [x] **Create `shared-kernel` Module:**
+    *   A new Maven module `apps/shared-kernel` was created.
     *   **Purpose:** To house stable, shared domain concepts (Value Objects, etc.) used across multiple bounded contexts.
     *   The `ISRC` Value Object, with its validation logic, will be the first concept to be placed here.
     *   The `artist-domain` and `producer-domain` modules will now depend on `shared-domain`.
 
-2.  [x] **Create `shared-events` Module:**
-    *   A new Maven module `apps/backend/shared-events` was created.
-    *   **Purpose:** To define the public event contracts used for inter-context communication.
-    *   This module depends on `shared-domain` to use rich types like `ISRC` in its event definitions.
-    *   The `TrackWasRegistered` event record was moved to this module.
-    *   The `artist-application` and `producer-application` modules will now depend on `shared-events`.
+2.  [x] **Move Events into Shared Kernel:**
+    *   Public event contracts used for inter-context communication are defined in `apps/shared-kernel` alongside shared values.
+    *   The `TrackWasRegistered` event record was placed here.
+    *   The `artist-application` and `producer-application` modules now depend on `shared-kernel`.
 
 3.  [x] **Refactor Application Port to a Use Case:**
     *   The interface `ArtistServicePort` was renamed to `ArtistTrackRegistrationUseCase`.
@@ -42,4 +40,4 @@ During the initial implementation and architectural review, several points of po
 ### Validation
 
 *   The primary validation for this refactoring is to ensure the entire backend application continues to build successfully and all existing tests pass.
-*   Run `mvn clean install` from the `apps/backend` directory to confirm.
+*   Run `mvn clean install` from the `apps` directory to confirm.

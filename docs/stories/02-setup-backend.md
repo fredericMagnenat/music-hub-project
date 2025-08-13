@@ -6,7 +6,7 @@
 
 ### Tâches à faire
 
-- [x] Dans le dossier `apps/backend`, créer le `pom.xml` parent.
+- [x] Dans le dossier `apps`, créer le `pom.xml` parent.
 - [x] Ce `pom.xml` parent doit définir les modules suivants : `bootstrap`, `producer`, `artist`.
 - [x] Pour chaque module de contexte (`producer`, `artist`):
     - [x] Créer son `pom.xml` parent (packaging `pom`).
@@ -17,10 +17,10 @@
     - [x] Créer les sous-modules d'adaptateurs spécifiques (ex: `producer-adapter-rest`, `artist-adapter-persistence`).
     - [x] Créer les `pom.xml` pour chaque adaptateur.
 - [x] S'assurer que la structure des répertoires correspond exactement à celle définie dans `docs/architecture/unified-project-structure.md`.
-- [x] Le projet doit pouvoir être compilé via `mvn package` depuis `apps/backend` sans erreurs (même s'il ne contient pas encore de code source).
+- [x] Le projet doit pouvoir être compilé via `mvn package` depuis `apps` sans erreurs (même s'il ne contient pas encore de code source).
 
 ---
 ### Définition de "Terminé" (DoD)
 
-- [x] La structure de répertoires et de fichiers `pom.xml` est créée dans `apps/backend`.
-- [x] La commande `mvn package` s'exécute avec succès depuis `apps/backend`. 
+- [x] La structure de répertoires et de fichiers `pom.xml` est créée dans `apps`.
+- [x] La commande `mvn package` s'exécute avec succès depuis `apps`. 
