@@ -32,7 +32,7 @@ docker compose up -d postgres
 
 2) Dev unifié (backend + frontend via Quinoa)
 ```bash
-cd apps/bootstrap
+cd apps/
 mvn quarkus:dev
 ```
 - API: http://localhost:8080
