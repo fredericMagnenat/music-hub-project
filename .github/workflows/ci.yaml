@@ -2,37 +2,59 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
-  build-and-test:
+  frontend:
+    name: Frontend (webui)
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up Java
-        uses: actions/setup-java@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          distribution: 'temurin'
-          java-version: '21'
+          node-version: 20
+          cache: 'pnpm'
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
+          run_install: false
 
-      - name: Install root dependencies
-        run: pnpm install
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Build frontend
-        run: pnpm --filter frontend build
+      - name: Build webui
+        run: pnpm --filter ./apps/webui build
 
-      - name: Test frontend
-        run: pnpm --filter frontend test
+      - name: Test webui
+        run: pnpm --filter ./apps/webui test
 
-      - name: Build and test backend
-        run: mvn -B package --file apps/backend/pom.xml 
+  backend:
+    name: Backend (Maven)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Build & test (multi-module)
+        run: mvn -B -f apps/pom.xml verify
+
+      - name: Upload surefire reports (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maven-test-reports
+          path: '**/target/surefire-reports/*.xml'
