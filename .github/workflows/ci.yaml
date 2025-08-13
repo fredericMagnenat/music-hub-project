@@ -7,49 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  frontend:
-    name: Frontend (webui)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-          run_install: false
-
-      - name: Setup pnpm cache
-        id: pnpm-cache
-        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_ENV
-
-      - name: Restore pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('apps/webui/pnpm-lock.yaml', 'apps/webui/package.json') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
-        working-directory: apps/webui
-
-      - name: Build webui
-        run: pnpm run build
-        working-directory: apps/webui
-
-      - name: Test webui
-        run: pnpm exec vitest run
-        working-directory: apps/webui
-
-  backend:
+  build:
     name: Backend (Maven)
     runs-on: ubuntu-latest
     steps:
@@ -63,7 +21,7 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      - name: Build & test (multi-module)
+      - name: Build & test backend (multi-module)
         run: mvn -B -f apps/pom.xml verify
 
       - name: Upload surefire reports (on failure)
@@ -72,3 +30,16 @@ jobs:
         with:
           name: maven-test-reports
           path: '**/target/surefire-reports/*.xml'
+
+      - name: Set up Node.js (for frontend unit tests)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install frontend deps (npm)
+        working-directory: apps/webui
+        run: npm install
+
+      - name: Run frontend unit tests (Vitest)
+        working-directory: apps/webui
+        run: npx vitest run
