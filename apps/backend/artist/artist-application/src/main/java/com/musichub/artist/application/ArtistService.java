@@ -1,8 +1,8 @@
 package com.musichub.artist.application;
 
-import com.musichub.artist.application.port.in.ArtistTrackRegistrationUseCase;
-import com.musichub.artist.application.port.out.ArtistRepository;
 import com.musichub.artist.domain.Artist;
+import com.musichub.artist.domain.ports.in.ArtistTrackRegistrationUseCase;
+import com.musichub.artist.domain.ports.out.ArtistRepository;
 import com.musichub.shared.events.TrackWasRegistered;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

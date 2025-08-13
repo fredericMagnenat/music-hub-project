@@ -26,7 +26,7 @@
     <dependencies>
         <dependency>
             <groupId>com.musichub</groupId>
-            <artifactId>shared-domain</artifactId>
+            <artifactId>shared-kernel</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

@@ -36,7 +36,7 @@
     </properties>
 
     <modules>
-        <module>shared-domain</module>
+        <module>shared-kernel</module>
         <module>producer</module>
         <module>artist</module>
         <module>bootstrap</module>
@@ -70,11 +70,6 @@
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok-mapstruct-binding</artifactId>
                 <version>${lombok-mapstruct-binding.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.quarkiverse.micrometer.registry</groupId>
-                <artifactId>quarkus-micrometer-registry-otlp</artifactId>
-                <version>3.2.4</version>
             </dependency>
             <dependency>
                 <groupId>io.quarkiverse.quinoa</groupId>

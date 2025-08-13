@@ -1,6 +1,6 @@
 package com.musichub.artist.adapter.messaging;
 
-import com.musichub.artist.application.port.in.ArtistTrackRegistrationUseCase;
+import com.musichub.artist.domain.ports.in.ArtistTrackRegistrationUseCase;
 import com.musichub.shared.events.TrackWasRegistered;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
