@@ -65,6 +65,7 @@ build/
 out/
 
 target/
+packages/
 
 # Terraform
 *.tfstate
