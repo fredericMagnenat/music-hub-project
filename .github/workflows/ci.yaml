@@ -39,12 +39,15 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+        working-directory: apps/webui
 
       - name: Build webui
-        run: pnpm --filter ./apps/webui build
+        run: pnpm run build
+        working-directory: apps/webui
 
       - name: Test webui
-        run: pnpm --filter ./apps/webui test
+        run: pnpm exec vitest run
+        working-directory: apps/webui
 
   backend:
     name: Backend (Maven)
