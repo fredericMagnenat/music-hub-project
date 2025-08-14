@@ -15,3 +15,10 @@ Dependencies
 
 Estimate
 - 3 pts
+
+Status
+- Done on 2025-08-14 via commit `58d376c` (feat(producer-application): add ProducerService.handle with normalization and idempotent attach; add unit tests)
+
+Artifacts
+- Code: `apps/producer/producer-application/src/main/java/com/musichub/producer/application/ProducerService.java`
+- Tests: `apps/producer/producer-application/src/test/java/com/musichub/producer/application/ProducerServiceTest.java`
