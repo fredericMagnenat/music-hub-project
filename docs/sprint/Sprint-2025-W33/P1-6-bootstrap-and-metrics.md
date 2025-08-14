@@ -14,3 +14,10 @@ Dependencies
 
 Estimate
 - 2 pts
+
+Status
+- Done on 2025-08-14 (no code change required)
+
+Notes
+- Le base path est géré via `@Path("/api/v1/…")` dans les resources REST.
+- Les dépendances Micrometer/OTel sont déjà configurées dans `apps/bootstrap/pom.xml` et `application.properties`.
