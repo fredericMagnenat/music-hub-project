@@ -15,3 +15,14 @@ Dependencies
 
 Estimate
 - 5 pts
+
+Status
+- Done on 2025-08-14 via commit `d68abce` (feat(producer-persistence): add ProducerEntity, Mapper, and RepositoryImpl (Panache))
+
+Artifacts
+- Entity: `apps/producer/producer-adapters/producer-adapter-persistence/src/main/java/com/musichub/producer/adapter/persistence/ProducerEntity.java`
+- Repository: `apps/producer/producer-adapters/producer-adapter-persistence/src/main/java/com/musichub/producer/adapter/persistence/ProducerRepositoryImpl.java`
+- Mapper: `apps/producer/producer-adapters/producer-adapter-persistence/src/main/java/com/musichub/producer/adapter/persistence/ProducerMapper.java`
+
+Note
+- Flyway migrations à ajouter ultérieurement (P1-4 AC3 non couvert ici).
