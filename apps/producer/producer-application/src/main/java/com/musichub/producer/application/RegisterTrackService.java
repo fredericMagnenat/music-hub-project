@@ -5,9 +5,10 @@ import com.musichub.producer.domain.ports.in.RegisterTrackUseCase;
 import com.musichub.producer.domain.ports.out.ProducerRepository;
 import com.musichub.shared.domain.values.ISRC;
 import com.musichub.shared.domain.values.ProducerCode;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.Objects;
-
+@ApplicationScoped
 public class RegisterTrackService implements RegisterTrackUseCase {
 
     private final ProducerRepository producerRepository;

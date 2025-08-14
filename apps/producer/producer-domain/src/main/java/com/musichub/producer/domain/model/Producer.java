@@ -32,6 +32,10 @@ public final class Producer {
         return new Producer(producerId, producerCode, name, new LinkedHashSet<>());
     }
 
+    public static Producer from(ProducerId id, ProducerCode producerCode, String name, Set<ISRC> tracks) {
+        return new Producer(id, producerCode, name, tracks);
+    }
+
     public ProducerId id() { return id; }
 
     public ProducerCode producerCode() { return producerCode; }

@@ -54,6 +54,7 @@ coverage/
 # IDE
 .vscode/
 .idea/
+**/*.iml
 
 # OS
 .DS_Store
