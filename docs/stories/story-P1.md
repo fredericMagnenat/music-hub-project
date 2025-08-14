@@ -1,3 +1,4 @@
+
 ### User Story: P1 - Validate and Create a Producer
 
 > **As a** System, **when** a new ISRC is submitted, **I want** to validate that the "Producer Code" (the first 5 characters) exists, and create it if it's unknown, **in order to** ensure that each track has a referenced owner.
@@ -34,14 +35,14 @@
     *   Exposer également les interfaces `Producer`, `Track`, `Source` conformément aux modèles de `docs/architecture/data-models.md` pour typer les réponses de l'API côté frontend.
 
 2.  **Module `apps/shared-kernel` (Java):**
-    *   Définir le Value Object `ISRC` et sa validation (partagé entre contextes).
+    *   Définir/centraliser les Value Objects partagés: `ISRC`, `ProducerCode` (tous deux déjà présents dans `com.musichub.shared.domain.values`).
+    *   Définir `ProducerId` (UUID basé sur v5 à partir de `ProducerCode`) si ce n'est pas déjà fait.
     *   (Optionnel pour P1) Définir le contrat d'évènement `TrackWasRegistered`.
 
 3.  **Module `producer-domain`:**
-    *   Définir le Value Object `ProducerCode` (5 caractères) et sa validation.
     *   Créer l'agrégat `Producer` et le port `ProducerRepository`.
-    *   Implémenter la génération d'ID déterministe (UUIDv5) à partir de `producerCode` (cf. architecture).
-    *   Ajouter un `ProducerFactory` pour centraliser la création.
+    *   Utiliser `ProducerCode` et `ISRC` du `shared-kernel`.
+    *   Implémenter l'usage de `ProducerId` (UUIDv5 dérivé du `ProducerCode`) pour l'idempotence.
 
 4.  **Module `producer-application`:**
     *   Créer le service applicatif `ProducerService`.
@@ -80,7 +81,7 @@
 ### Tests to Plan
 
 *   **Backend:**
-    *   Unit tests pour les Value Objects (`ISRC` dans `shared-kernel`, `ProducerCode` dans `producer-domain`).
+    *   Unit tests pour les Value Objects dans `shared-kernel` (`ISRC`, `ProducerCode`, et `ProducerId` si présent).
     *   Unit tests for the `Producer` aggregate.
     *   Integration tests (`@QuarkusTest`) pour `ProducerController` couvrant: succès (nouveau/existant), `400` (format invalide), `422` (ISRC valide mais non résolvable).
 *   **Frontend:**
