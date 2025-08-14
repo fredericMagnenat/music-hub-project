@@ -3,7 +3,7 @@
 Story: docs/stories/story-P1.md
 
 Description
-Create a simple page with ISRC input and Add button; disable button while request in progress.
+Create a simple page with ISRC input and a Validate button; disable the Validate button while the request is in progress.
 
 Acceptance Criteria
 - Input with client-side validation and normalization.
