@@ -1,4 +1,4 @@
-package com.musichub.producer.domain.port;
+package com.musichub.producer.domain.ports.out;
 
 import com.musichub.producer.domain.model.Producer;
 import com.musichub.producer.domain.values.ProducerId;
