@@ -16,3 +16,10 @@ Dependencies
 
 Estimate
 - 2 pts
+
+Status
+- Done on 2025-08-14 via commit `4495961` (feat(producer-domain): add ProducerId (UUIDv5 from ProducerCode) with unit tests)
+
+Artifacts
+- Code: `apps/producer/producer-domain/src/main/java/com/musichub/producer/domain/values/ProducerId.java`
+- Tests: `apps/producer/producer-domain/src/test/java/com/musichub/producer/domain/values/ProducerIdTest.java`
