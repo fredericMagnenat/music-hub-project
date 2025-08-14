@@ -36,13 +36,12 @@
 
 2.  **Module `apps/shared-kernel` (Java):**
     *   Définir/centraliser les Value Objects partagés: `ISRC`, `ProducerCode` (tous deux déjà présents dans `com.musichub.shared.domain.values`).
-    *   Définir `ProducerId` (UUID basé sur v5 à partir de `ProducerCode`) si ce n'est pas déjà fait.
     *   (Optionnel pour P1) Définir le contrat d'évènement `TrackWasRegistered`.
 
 3.  **Module `producer-domain`:**
     *   Créer l'agrégat `Producer` et le port `ProducerRepository`.
     *   Utiliser `ProducerCode` et `ISRC` du `shared-kernel`.
-    *   Implémenter l'usage de `ProducerId` (UUIDv5 dérivé du `ProducerCode`) pour l'idempotence.
+    *   Définir `ProducerId` dans ce module (UUIDv5 dérivé du `ProducerCode`) et l'utiliser pour garantir l'idempotence.
 
 4.  **Module `producer-application`:**
     *   Créer le service applicatif `ProducerService`.
@@ -81,7 +80,8 @@
 ### Tests to Plan
 
 *   **Backend:**
-    *   Unit tests pour les Value Objects dans `shared-kernel` (`ISRC`, `ProducerCode`, et `ProducerId` si présent).
+    *   Unit tests pour les Value Objects dans `shared-kernel` (`ISRC`, `ProducerCode`).
+    *   Unit tests pour `ProducerId` dans `producer-domain` (génération v5, égalité, sérialisation si applicable).
     *   Unit tests for the `Producer` aggregate.
     *   Integration tests (`@QuarkusTest`) pour `ProducerController` couvrant: succès (nouveau/existant), `400` (format invalide), `422` (ISRC valide mais non résolvable).
 *   **Frontend:**
