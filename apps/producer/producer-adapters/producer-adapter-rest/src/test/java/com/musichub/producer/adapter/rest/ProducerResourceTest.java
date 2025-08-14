@@ -41,7 +41,9 @@ class ProducerResourceTest {
 
         // Then
         assertEquals(202, response.getStatus());
-        assertEquals(mockProducer, response.getEntity());
+        ProducerResource.ProducerResponse body = (ProducerResource.ProducerResponse) response.getEntity();
+        assertEquals(mockProducer.id().value().toString(), body.id);
+        assertEquals(mockProducer.producerCode().value(), body.producerCode);
     }
 
     @Test
