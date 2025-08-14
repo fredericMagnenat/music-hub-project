@@ -1,13 +1,14 @@
 package com.musichub.producer.application;
 
 import com.musichub.producer.domain.model.Producer;
+import com.musichub.producer.domain.ports.in.RegisterTrackUseCase;
 import com.musichub.producer.domain.ports.out.ProducerRepository;
 import com.musichub.shared.domain.values.ISRC;
 import com.musichub.shared.domain.values.ProducerCode;
 
 import java.util.Objects;
 
-public class ProducerService {
+public class ProducerService implements RegisterTrackUseCase {
 
     private final ProducerRepository producerRepository;
 
@@ -15,7 +16,8 @@ public class ProducerService {
         this.producerRepository = Objects.requireNonNull(producerRepository);
     }
 
-    public Producer handle(String isrcValue) {
+    @Override
+    public Producer registerTrack(String isrcValue) {
         ISRC isrc = ISRC.of(normalizeIsrc(isrcValue));
         ProducerCode code = ProducerCode.with(isrc);
 
