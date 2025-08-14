@@ -15,3 +15,11 @@ Dependencies
 
 Estimate
 - 3 pts
+
+Status
+- Done on 2025-08-14 via commits `b3b3956`, `199654d`
+
+Artifacts
+- Resource: `apps/producer/producer-adapters/producer-adapter-rest/src/main/java/com/musichub/producer/adapter/rest/resource/ProducerResource.java`
+- Tests (unit): `apps/producer/producer-adapters/producer-adapter-rest/src/test/java/com/musichub/producer/adapter/rest/ProducerResourceTest.java`
+- Tests (integration bootstrap): `apps/bootstrap/src/test/java/com/musichub/bootstrap/producer/ProducerRegistrationIntegrationTest.java`
