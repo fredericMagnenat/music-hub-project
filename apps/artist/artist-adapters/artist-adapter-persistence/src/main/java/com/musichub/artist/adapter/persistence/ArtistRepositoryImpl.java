@@ -25,12 +25,10 @@ public class ArtistRepositoryImpl implements ArtistRepository, PanacheRepository
         Optional<ArtistEntity> existingEntityOpt = find("name", artist.getName()).firstResultOptional();
 
         if (existingEntityOpt.isPresent()) {
-            // Update existing entity
             ArtistEntity entityToUpdate = existingEntityOpt.get();
             entityToUpdate.trackReferences.addAll(artist.getTrackReferences().stream().map(ISRC::value).collect(Collectors.toSet()));
             // Panache will automatically persist changes on a managed entity within a transaction.
         } else {
-            // Create new entity
             ArtistEntity newEntity = ArtistMapper.toDbo(artist);
             persist(newEntity);
         }

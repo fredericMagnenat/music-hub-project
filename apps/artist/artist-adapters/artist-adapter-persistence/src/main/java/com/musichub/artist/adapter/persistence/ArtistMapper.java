@@ -1,7 +1,8 @@
 package com.musichub.artist.adapter.persistence;
 
 import com.musichub.artist.domain.Artist;
-import com.musichub.artist.domain.Artist.ArtistId;
+
+import com.musichub.shared.domain.id.ArtistId;
 import com.musichub.shared.domain.values.ISRC;
 
 import java.util.stream.Collectors;

@@ -1,5 +1,6 @@
 package com.musichub.artist.domain;
 
+import com.musichub.shared.domain.id.ArtistId;
 import com.musichub.shared.domain.values.ISRC;
 
 import java.util.HashSet;
@@ -64,6 +65,5 @@ public class Artist {
         return Objects.hash(id);
     }
 
-    // Using a record for the ID for immutability and value-based equality
-    public record ArtistId(UUID value) {}
+
 }
