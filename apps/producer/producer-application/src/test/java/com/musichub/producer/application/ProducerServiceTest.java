@@ -18,10 +18,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ProducerService Application Layer Tests")
-class ProducerServiceTest {
+@DisplayName("RegisterTrackService Application Layer Tests")
+class RegisterTrackServiceTest {
 
-    private ProducerService service;
+    private RegisterTrackService service;
 
     @Mock
     private ProducerRepository repository;
@@ -29,7 +29,7 @@ class ProducerServiceTest {
     @BeforeEach
     void setUp() {
         repository = mock(ProducerRepository.class);
-        service = new ProducerService(repository);
+        service = new RegisterTrackService(repository);
     }
 
     @Nested

@@ -8,11 +8,11 @@ import com.musichub.shared.domain.values.ProducerCode;
 
 import java.util.Objects;
 
-public class ProducerService implements RegisterTrackUseCase {
+public class RegisterTrackService implements RegisterTrackUseCase {
 
     private final ProducerRepository producerRepository;
 
-    public ProducerService(ProducerRepository producerRepository) {
+    public RegisterTrackService(ProducerRepository producerRepository) {
         this.producerRepository = Objects.requireNonNull(producerRepository);
     }
 
