@@ -1,6 +1,6 @@
 package com.musichub.artist.adapter.persistence;
 
-import com.musichub.artist.domain.ArtistStatus;
+import com.musichub.artist.domain.model.ArtistStatus;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import java.util.Set;

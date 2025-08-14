@@ -1,6 +1,6 @@
 package com.musichub.artist.domain.ports.out;
 
-import com.musichub.artist.domain.Artist;
+import com.musichub.artist.domain.model.Artist;
 
 import java.util.Optional;
 

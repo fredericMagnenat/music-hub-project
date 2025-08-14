@@ -21,7 +21,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.musichub.artist.domain.Artist;
+import com.musichub.artist.domain.model.Artist;
 
 
 import com.musichub.shared.domain.values.ISRC;

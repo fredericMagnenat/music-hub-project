@@ -1,6 +1,6 @@
 package com.musichub.artist.adapter.persistence;
 
-import com.musichub.artist.domain.Artist;
+import com.musichub.artist.domain.model.Artist;
 
 import com.musichub.shared.domain.id.ArtistId;
 import com.musichub.shared.domain.values.ISRC;

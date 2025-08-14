@@ -1,5 +1,7 @@
 package com.musichub.artist.domain;
 
+import com.musichub.artist.domain.model.Artist;
+import com.musichub.artist.domain.model.ArtistStatus;
 import com.musichub.shared.domain.id.ArtistId;
 import com.musichub.shared.domain.values.ISRC;
 import org.junit.jupiter.api.Test;

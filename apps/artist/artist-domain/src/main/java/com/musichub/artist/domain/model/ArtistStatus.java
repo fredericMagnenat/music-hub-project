@@ -1,4 +1,4 @@
-package com.musichub.artist.domain;
+package com.musichub.artist.domain.model;
 
 public enum ArtistStatus {
     PROVISIONAL,

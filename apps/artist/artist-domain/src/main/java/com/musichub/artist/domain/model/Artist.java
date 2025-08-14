@@ -1,4 +1,4 @@
-package com.musichub.artist.domain;
+package com.musichub.artist.domain.model;
 
 import com.musichub.shared.domain.id.ArtistId;
 import com.musichub.shared.domain.values.ISRC;

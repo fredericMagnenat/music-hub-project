@@ -1,6 +1,6 @@
 package com.musichub.artist.application;
 
-import com.musichub.artist.domain.Artist;
+import com.musichub.artist.domain.model.Artist;
 import com.musichub.artist.domain.ports.in.ArtistTrackRegistrationUseCase;
 import com.musichub.artist.domain.ports.out.ArtistRepository;
 import com.musichub.shared.events.TrackWasRegistered;
