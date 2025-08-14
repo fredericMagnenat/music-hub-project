@@ -14,12 +14,12 @@ public class ProducerRepositoryImpl implements ProducerRepository, PanacheReposi
 
     @Override
     public Optional<Producer> findByProducerCode(ProducerCode code) {
-        return find("producerCode", code.value()).firstResultOptional().map(ProducerMapper::toDomainWithTracks);
+        return find("producerCode", code.value()).firstResultOptional().map(ProducerMapper::toDomain);
     }
 
     @Override
     public Optional<Producer> findById(com.musichub.producer.domain.values.ProducerId id) {
-        return find("id", id.value()).firstResultOptional().map(ProducerMapper::toDomainWithTracks);
+        return find("id", id.value()).firstResultOptional().map(ProducerMapper::toDomain);
     }
 
     @Override
@@ -29,12 +29,12 @@ public class ProducerRepositoryImpl implements ProducerRepository, PanacheReposi
         if (existing.isPresent()) {
             ProducerEntity entity = existing.get();
             entity.name = producer.name();
-            entity.tracks = producer.tracks().stream().map(com.musichub.shared.domain.values.ISRC::value).collect(java.util.stream.Collectors.toSet());
-            return ProducerMapper.toDomainWithTracks(entity);
+            entity.tracks = producer.tracks().stream().map(com.musichub.shared.domain.values.ISRC::value).collect(java.util.stream.Collectors.toCollection(java.util.LinkedHashSet::new));
+            return ProducerMapper.toDomain(entity);
         } else {
             ProducerEntity entity = ProducerMapper.toDbo(producer);
             persist(entity);
-            return ProducerMapper.toDomainWithTracks(entity);
+            return ProducerMapper.toDomain(entity);
         }
     }
 }

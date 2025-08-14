@@ -1,7 +1,6 @@
 package com.musichub.producer.adapter.persistence;
 
 import com.musichub.producer.domain.model.Producer;
-import com.musichub.producer.domain.values.ProducerId;
 import com.musichub.shared.domain.values.ISRC;
 import com.musichub.shared.domain.values.ProducerCode;
 
@@ -21,16 +20,13 @@ public final class ProducerMapper {
     }
 
     public static Producer toDomain(ProducerEntity dbo) {
-        return Producer.createNew(
-                ProducerCode.of(dbo.producerCode),
-                dbo.name
+        ProducerCode code = ProducerCode.of(dbo.producerCode);
+        java.util.Set<ISRC> tracks = dbo.tracks == null ? java.util.Set.of() : dbo.tracks.stream().map(ISRC::of).collect(java.util.stream.Collectors.toCollection(java.util.LinkedHashSet::new));
+        return Producer.from(
+                com.musichub.producer.domain.values.ProducerId.fromProducerCode(code),
+                code,
+                dbo.name,
+                tracks
         );
-        // Note: Tracks mapped below to preserve existing set
-    }
-
-    public static Producer toDomainWithTracks(ProducerEntity dbo) {
-        Producer producer = toDomain(dbo);
-        dbo.tracks.forEach(isrc -> producer.addTrack(ISRC.of(isrc)));
-        return producer;
     }
 }
