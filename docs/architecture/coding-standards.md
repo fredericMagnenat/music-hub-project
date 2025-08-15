@@ -21,3 +21,12 @@ All git commits **must** follow the [Conventional Commits](https://www.conventio
 4.  **No Logic in Adapters**: REST controllers and other adapters **must be** as "thin" as possible. They only convert requests/events into application service calls and map the results. All business logic **must reside** in the `application` and `domain` layers.
 5.  **Application Use Case Entry Points**: The frontend (via REST controllers) and other contexts (via events) **must never** interact directly with repositories or the domain. They **must always** go through the application layer's use case interfaces (e.g., `RegisterTrackUseCase.java`). The implementing classes are often called "Application Services".
 6.  **Configuration over Environment Variables**: **Never** access environment variables directly (`process.env` or `System.getenv`). Use the configuration mechanisms provided by the frameworks (Quarkus or Remix) for clean dependency injection of configuration.
+
+## Flyway Versioning in Multi-Module Quarkus
+
+- All Flyway migrations across modules share a global, monotonically increasing version space. When using multiple `quarkus.flyway.locations`, versions must be unique globally.
+- Convention for this repository:
+  - `producer` context: reserve versions `V1..V99`
+  - `artist` context: reserve versions `V100..V199`
+  - If another context is added, allocate a distinct 100-range.
+- In `apps/bootstrap/src/main/resources/application.properties`, set Flyway locations only under the `%dev` profile.
