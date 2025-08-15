@@ -117,6 +117,35 @@ class ProducerRegistrationIntegrationTest {
 
     @Test
     @TestTransaction
+    @DisplayName("Should be idempotent across differently formatted ISRC inputs (hyphens vs canonical)")
+    void shouldBeIdempotentAcrossDifferentFormats() {
+        // First registration with hyphens
+        given()
+                .contentType(ContentType.JSON)
+                .body("{\"isrc\":\"FR-LA1-24-00001\"}")
+                .when()
+                .post("/api/v1/producers")
+                .then()
+                .statusCode(202)
+                .body("producerCode", equalTo("FRLA1"))
+                .body("tracks", hasSize(1))
+                .body("tracks[0]", equalTo("FRLA12400001"));
+
+        // Second registration with canonical value
+        given()
+                .contentType(ContentType.JSON)
+                .body("{\"isrc\":\"FRLA12400001\"}")
+                .when()
+                .post("/api/v1/producers")
+                .then()
+                .statusCode(202)
+                .body("producerCode", equalTo("FRLA1"))
+                .body("tracks", hasSize(1))
+                .body("tracks[0]", equalTo("FRLA12400001"));
+    }
+
+    @Test
+    @TestTransaction
     @DisplayName("Should normalize ISRC with hyphens")
     void shouldNormalizeIsrcWithHyphens() {
         given()
