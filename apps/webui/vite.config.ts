@@ -8,9 +8,10 @@ installGlobals();
 
 export default defineConfig({
   plugins: [
-    remix({
-      postcss: true,
-    }),
+    remix(),
     tsconfigPaths(),
   ],
+  css: {
+    // si nécessaire, Vite détectera postcss.config automatiquement
+  },
 });
