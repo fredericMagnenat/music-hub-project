@@ -1,6 +1,8 @@
 import type { MetaFunction } from "@remix-run/node";
 import { useCallback, useMemo, useState } from "react";
 import { registerTrack } from "~/lib/utils";
+import { Input } from "~/components/ui/input";
+import { Button } from "~/components/ui/button";
 
 export const meta: MetaFunction = () => {
   return [
@@ -61,14 +63,13 @@ export default function Index() {
           <label htmlFor="isrc" className="block text-sm font-medium mb-1">
             ISRC
           </label>
-          <input
+          <Input
             id="isrc"
             name="isrc"
             type="text"
             value={rawIsrc}
             onChange={(e) => setRawIsrc(e.target.value)}
             placeholder="FR-LA1-24-00001 or FRLA12400001"
-            className="w-full rounded border px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
             aria-invalid={!valid && rawIsrc.length > 0}
             aria-describedby="isrc-help"
           />
@@ -82,12 +83,7 @@ export default function Index() {
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={onSubmit}
-          disabled={!valid || isSubmitting}
-          className="inline-flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
-        >
+        <Button type="button" onClick={onSubmit} disabled={!valid || isSubmitting}>
           {isSubmitting ? (
             <span className="inline-flex items-center gap-2">
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
@@ -96,7 +92,7 @@ export default function Index() {
           ) : (
             "Validate"
           )}
-        </button>
+        </Button>
 
         {message && (
           <div className="mt-3 rounded border border-green-200 bg-green-50 p-3 text-green-800">
