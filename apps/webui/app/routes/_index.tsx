@@ -4,6 +4,7 @@ import { registerTrack } from "~/lib/utils";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { useToast } from "~/components/ui/toast";
+import { StatusBadge } from "~/components/ui/status-badge";
 
 export const meta: MetaFunction = () => {
   return [
@@ -23,6 +24,16 @@ function isValidISRC(input: string): boolean {
   // ^[A-Z]{2}[A-Z0-9]{3}\d{7}$
   const normalized = normalizeISRC(input);
   return /^[A-Z]{2}[A-Z0-9]{3}\d{7}$/.test(normalized);
+}
+
+type TrackStatus = "Provisional" | "Verified";
+
+interface RecentTrackItem {
+  id: string;
+  title: string;
+  artists: string[];
+  isrc: string;
+  status: TrackStatus;
 }
 
 export default function Index() {
@@ -63,11 +74,24 @@ export default function Index() {
     }
   }, [normalized, toast]);
 
+  // Placeholder recent tracks (replace with data when available)
+  const recentTracks: RecentTrackItem[] = useMemo(
+    () => [
+      { id: "1", title: "Midnight Echoes", artists: ["N. Rivera"], isrc: "FRLA12400001", status: "Verified" },
+      { id: "2", title: "Cloud Runner", artists: ["Ada Fox", "Miles K."], isrc: "USRC17607839", status: "Provisional" },
+      { id: "3", title: "Neon Garden", artists: ["The Lumen"], isrc: "GBAYE6800011", status: "Verified" },
+      { id: "4", title: "Low Tide", artists: ["Élodie"], isrc: "FRZAA2400123", status: "Provisional" },
+      { id: "5", title: "Paper Planes", artists: ["Quiet Parade"], isrc: "USQX91501234", status: "Verified" },
+      { id: "6", title: "Afterglow", artists: ["K. Tanaka"], isrc: "JPZ123400567", status: "Provisional" },
+    ],
+    []
+  );
+
   return (
-    <div className="min-h-dvh font-sans antialiased p-6">
-      <div className="mx-auto max-w-xl">
-        <h1 className="text-2xl font-bold mb-4">music-data-hub</h1>
-        <div className="mb-2">
+    <div className="min-h-dvh font-sans antialiased">
+      <div className="mx-auto max-w-xl p-6 md:max-w-3xl">
+        <h1 className="text-2xl font-bold mb-6">music-data-hub</h1>
+        <div className="mb-3">
           <label htmlFor="isrc" className="block text-sm font-medium mb-1">
             ISRC
           </label>
@@ -80,6 +104,7 @@ export default function Index() {
             placeholder="FR-LA1-24-00001 or FRLA12400001"
             aria-invalid={!valid && rawIsrc.length > 0}
             aria-describedby="isrc-help"
+            className="focus-visible:ring-[#1E3A8A]"
           />
           <p id="isrc-help" className="mt-1 text-xs text-gray-600">
             Normalized: <span className="font-mono">{normalized || "—"}</span>
@@ -91,7 +116,12 @@ export default function Index() {
           )}
         </div>
 
-        <Button type="button" onClick={onSubmit} disabled={!valid || isSubmitting}>
+        <Button
+          type="button"
+          onClick={onSubmit}
+          disabled={!valid || isSubmitting}
+          className="focus-visible:ring-[#1E3A8A] bg-[#1E3A8A] hover:bg-[#0F2D6F] text-white"
+        >
           {isSubmitting ? (
             <span className="inline-flex items-center gap-2">
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
@@ -112,6 +142,38 @@ export default function Index() {
             {error}
           </div>
         )}
+
+        <div className="mt-8">
+          <h3 className="text-lg font-semibold mb-3">Recent Tracks</h3>
+          {recentTracks.length === 0 ? (
+            <div
+              className="rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700"
+              role="status"
+              aria-live="polite"
+            >
+              No recent tracks yet. Tracks you validate will appear here.
+            </div>
+          ) : (
+            <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0" aria-label="Recent Tracks">
+              {recentTracks.slice(0, 10).map((t) => (
+                <li key={t.id} className="rounded-md border border-gray-200 bg-white p-3 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-gray-900" title={t.title}>
+                        {t.title}
+                      </p>
+                      <p className="truncate text-sm text-gray-600" title={t.artists.join(", ")}>
+                        {t.artists.join(", ")}
+                      </p>
+                      <p className="mt-1 font-mono text-xs text-gray-500">ISRC: {t.isrc}</p>
+                    </div>
+                    <StatusBadge status={t.status} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );
