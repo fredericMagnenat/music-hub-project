@@ -3,19 +3,21 @@
 Story: docs/stories/story-P1.md
 
 ## Status
-Pending
+Done
 
 ## Description
 Add tests for form, components, and API service: disabled/loading state, normalization, success (202), and distinct error handling for 400 vs 422.
 
 ## Acceptance Criteria
-- [ ] All critical UX behaviors covered.
-- [ ] Toasts emitted aux bons statuts.
-- [ ] Validation ISRC: cas invalides/valides normalisés.
+- [x] All critical UX behaviors covered.
+- [x] Toasts émis aux bons statuts (202/400/422).
+- [x] Validation ISRC: cas invalides/valides normalisés.
 
 ## Implementation Notes
-- Cibler `app/routes/_index.tsx`, `app/lib/utils.ts`, `components/ui/{input,button,toast}`.
-- Mock fetch pour `/api/v1/producers`.
+- Tests déplacés hors de `app/` pour éviter l'exécution en dev: `apps/webui/tests/_index.test.tsx`.
+- Vitest en `jsdom` avec jest-dom; plugin Remix désactivé en mode test.
+- Ciblé: `app/routes/_index.tsx`, `app/lib/utils.ts`, `components/ui/{input,button,toast}`.
+- Mock: `registerTrack()` pour simuler 202/400/422.
 
 ## Dependencies
 - P1-7..P1-9
