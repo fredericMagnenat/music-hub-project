@@ -13,6 +13,7 @@
     - [High Level Architecture Diagram](./high-level-architecture.md#high-level-architecture-diagram)
     - [Architectural Patterns](./high-level-architecture.md#architectural-patterns)
   - [Tech Stack](./tech-stack.md)
+  - [Front-end Spec](../front-end-spec.md)
   - [Data Models](./data-models.md)
       - [Technical Concerns](./data-models.md#technical-concerns)
       - [ID Generation Strategy](./data-models.md#id-generation-strategy)

@@ -7,7 +7,7 @@ This document defines the user experience goals, information architecture, user 
 
 | Date | Version | Description | Author |
 | --- | --- | --- | --- |
-| | | | |
+| 2025-08-15 | 0.2 | Sync with MVP; shadcn/ui integration planned; scope aligned with current implementation | fred |
 
 ### Overall UX Goals & Principles
 
@@ -24,6 +24,23 @@ This document defines the user experience goals, information architecture, user 
 1. **Reliability First:** The interface must build trust by presenting accurate data and clear statuses. Every design element should reinforce this sense of dependability.
 2. **Speed and Efficiency:** The primary user flow of validating an ISRC must be as short and simple as possible, removing all friction.
 3. **Progressive Disclosure:** The main interface focuses on the core validation task. More complex management features are accessible but do not clutter the initial experience.
+
+## Current Implementation Status (MVP)
+
+### Implemented
+- ISRC input with normalization and client-side validation (uppercase, strip separators, regex check).
+- Submission to `POST /api/v1/producers` and handling of `202`, `400`, and `422` responses.
+- Inline success/error messages (temporary) pending toast integration.
+
+### Not Yet Implemented (Next Iterations)
+- Adoption of `shadcn/ui` components (`Input`, `Button`, `Toast`) replacing raw Tailwind elements.
+- Dashboard "Recent Tracks" list with `Provisional`/`Verified` status badges.
+- Producer View (catalog listing, search/filter).
+- Branding palette and typography across the UI.
+
+### Design System Status
+- Currently using Tailwind CSS with native elements for the MVP.
+- `shadcn/ui` integration is planned next; see "Component Library / Design System".
 
 ## Information Architecture (IA)
 
@@ -134,7 +151,7 @@ graph TD
 ## Component Library / Design System
 
 ### Design System Approach
-As defined in the architecture document, we will use **`shadcn/ui`**. The approach is not to build a design system from scratch, but rather to **customize `shadcn/ui` components** to match the unique brand identity of `music-data-hub`, which will be defined in the "Branding & Style Guide" section.
+For the MVP, we are using **Tailwind CSS** with native form elements. Next, we will integrate **`shadcn/ui`** and **customize its components** to match the brand identity of `music-data-hub`, as defined in the "Branding & Style Guide" section.
 
 ### Core Components (MVP)
 Based on the dashboard wireframe and planned features, these are the initial components we will need to use and customize:
