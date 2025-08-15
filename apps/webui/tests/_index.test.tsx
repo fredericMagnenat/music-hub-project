@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import React from "react";
-import Index from "./_index";
+import Index from "~/routes/_index";
 import { ToastProvider } from "~/components/ui/toast";
 
 // Mock registerTrack to control responses
@@ -41,13 +41,11 @@ describe("Index route (ISRC form)", () => {
     const button = screen.getByRole("button", { name: /validate/i });
     fireEvent.click(button);
 
-    // spinner appears (find spinner element by role or class)
     await waitFor(() => {
       expect(screen.getByText(/validate/i)).toBeInTheDocument();
     });
 
     await waitFor(() => {
-      // message container shows 202
       expect(screen.getByText(/Accepted \(202\)/i)).toBeInTheDocument();
     });
   });
