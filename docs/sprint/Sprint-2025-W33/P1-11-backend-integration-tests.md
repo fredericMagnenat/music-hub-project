@@ -13,3 +13,11 @@ Dependencies
 
 Estimate
 - 3 pts
+ 
+ Status
+ - Done on 2025-08-15 via commits `3d3edda`
+ 
+ Artifacts
+ - Integration tests (bootstrap):
+   - `apps/bootstrap/src/test/java/com/musichub/bootstrap/producer/ProducerRegistrationIntegrationTest.java`
+   - `apps/bootstrap/src/test/java/com/musichub/bootstrap/producer/ProducerResourceIntegrationErrorHandlingTest.java`
