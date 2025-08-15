@@ -109,5 +109,20 @@ class ProducerIdTest {
             assertEquals(5, uuid.version(), "Should be UUID version 5");
             assertEquals(2, uuid.variant(), "Should use IETF variant");
         }
+
+        @Test
+        @DisplayName("Equality and hashCode should be consistent for same ProducerCode")
+        void equalityAndHashCode_consistentForSameProducerCode() {
+            // Given
+            ProducerCode code = ProducerCode.of("FRLA1");
+
+            // When
+            ProducerId id1 = ProducerId.fromProducerCode(code);
+            ProducerId id2 = ProducerId.fromProducerCode(code);
+
+            // Then
+            assertEquals(id1, id2);
+            assertEquals(id1.hashCode(), id2.hashCode());
+        }
     }
 }

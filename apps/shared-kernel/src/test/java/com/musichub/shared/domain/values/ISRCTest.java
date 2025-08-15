@@ -98,4 +98,35 @@ class ISRCTest {
             () -> assertDoesNotThrow(() -> ISRC.of("US-R-C-1-7-6-0-7-8-3-9"))
         );
     }
+
+    @Test
+    @DisplayName("Should throw exception for lowercase letters (invalid format)")
+    void shouldThrowExceptionForLowercaseLetters() {
+        String invalidLowercase = "usrc17607839";
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> ISRC.of(invalidLowercase)
+        );
+        assertTrue(exception.getMessage().contains("is invalid"));
+    }
+
+    @Test
+    @DisplayName("Should throw exception for spaces in ISRC")
+    void shouldThrowExceptionForSpacesInISRC() {
+        String invalidWithSpaces = "US RC1 76 07839";
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> ISRC.of(invalidWithSpaces)
+        );
+        assertTrue(exception.getMessage().contains("is invalid"));
+    }
+
+    @Test
+    @DisplayName("Equality is based on original value (dash vs no dash are not equal)")
+    void equalityBasedOnOriginalValue_dashVsNoDash_notEqual() {
+        ISRC withDashes = ISRC.of("US-RC1-76-07839");
+        ISRC withoutDashes = ISRC.of("USRC17607839");
+        assertNotEquals(withDashes, withoutDashes);
+        assertNotEquals(withDashes.hashCode(), withoutDashes.hashCode());
+    }
 }
