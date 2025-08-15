@@ -104,7 +104,7 @@ export default function Index() {
             placeholder="FR-LA1-24-00001 or FRLA12400001"
             aria-invalid={!valid && rawIsrc.length > 0}
             aria-describedby="isrc-help"
-            className="focus-visible:ring-[#1E3A8A]"
+            className="focus-visible:ring-[var(--hub-primary)]"
           />
           <p id="isrc-help" className="mt-1 text-xs text-gray-600">
             Normalized: <span className="font-mono">{normalized || "—"}</span>
@@ -120,7 +120,7 @@ export default function Index() {
           type="button"
           onClick={onSubmit}
           disabled={!valid || isSubmitting}
-          className="focus-visible:ring-[#1E3A8A] bg-[#1E3A8A] hover:bg-[#0F2D6F] text-white"
+          className="focus-visible:ring-[var(--hub-primary)]"
         >
           {isSubmitting ? (
             <span className="inline-flex items-center gap-2">
