@@ -71,6 +71,11 @@
           but we need to include them *explicitly* so that the aggregated JaCoCo report will cover them. -->
         <dependency>
             <groupId>com.musichub</groupId>
+            <artifactId>shared-kernel</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.musichub</groupId>
             <artifactId>artist-domain</artifactId>
             <version>${project.version}</version>
         </dependency>
