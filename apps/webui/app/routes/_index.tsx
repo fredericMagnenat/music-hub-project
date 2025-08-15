@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from "react";
 import { registerTrack } from "~/lib/utils";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
+import { useToast } from "~/components/ui/toast";
 
 export const meta: MetaFunction = () => {
   return [
@@ -33,6 +34,8 @@ export default function Index() {
   const normalized = useMemo(() => normalizeISRC(rawIsrc), [rawIsrc]);
   const valid = useMemo(() => isValidISRC(rawIsrc), [rawIsrc]);
 
+  const { toast } = useToast();
+
   const onSubmit = useCallback(async () => {
     setMessage(null);
     setError(null);
@@ -41,19 +44,24 @@ export default function Index() {
       const result = await registerTrack(normalized);
       if (result.ok) {
         setMessage("Accepted (202): track registration in progress.");
+        toast({ message: "Track registration accepted (202)", variant: "success" });
       } else if (result.status === 400) {
         setError("Invalid ISRC format (400). Please check and try again.");
+        toast({ message: "Invalid ISRC format (400)", variant: "error" });
       } else if (result.status === 422) {
         setError("ISRC valid but unresolvable upstream (422).");
+        toast({ message: "ISRC valid but unresolvable (422)", variant: "error" });
       } else {
         setError(`Request failed (${result.status}).`);
+        toast({ message: `Request failed (${result.status})`, variant: "error" });
       }
     } catch (err) {
       setError("Network or server error. Please try again later.");
+      toast({ message: "Network or server error", variant: "error" });
     } finally {
       setIsSubmitting(false);
     }
-  }, [normalized]);
+  }, [normalized, toast]);
 
   return (
     <div className="min-h-dvh font-sans antialiased p-6">
