@@ -24,3 +24,10 @@ This section defines the definitive list of technologies, libraries, and tools f
 | Build & Deployment | Docker Containers | latest | Application packaging | Industry standard for deployment. Allows running applications consistently anywhere. |
 | IaC (Infra as Code) | Terraform | latest | Managing AWS infrastructure | Enables versioned, reproducible, and automated infrastructure management. |
 | CI/CD | GitHub Actions | - | Build/test/deploy automation | Natively integrated with GitHub, easy to set up for a project hosted on the platform. |
+
+## Frontend Testing Setup
+
+- Vitest exécute les tests en environnement `jsdom` avec `@testing-library/jest-dom`.
+- Fichier de setup: `apps/webui/vitest.setup.ts`.
+- Les tests sont co‑localisés sous `apps/webui/app/` (ex: `apps/webui/app/routes/_index.test.tsx`).
+- Le plugin Remix est désactivé en mode test dans `apps/webui/vite.config.ts` si nécessaire.

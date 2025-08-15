@@ -66,3 +66,10 @@ apps/
         └── artist-adapter-spi/
             └── pom.xml     # --- Implements external service clients (secondary adapter)
 ```
+
+## Frontend Testing Layout
+
+- Les tests frontend (Vitest + React Testing Library) sont co‑localisés avec le code Remix dans `apps/webui/app/`.
+- Exemple: `apps/webui/app/routes/_index.test.tsx` pour la route `apps/webui/app/routes/_index.tsx`.
+- Le setup global de tests se trouve dans `apps/webui/vitest.setup.ts`.
+- La configuration Vite/Vitest peut désactiver certains plugins Remix en mode test (voir `apps/webui/vite.config.ts`).
