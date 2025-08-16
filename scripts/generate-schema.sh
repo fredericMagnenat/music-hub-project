@@ -37,8 +37,7 @@ fi
 validate_profiles
 echo "🔧 Generating database schema using dev-schema-h2 profile..."
 
-# Navigate to bootstrap module
-cd "$(dirname "$0")/../apps/bootstrap"
+# We're already in bootstrap directory from validate_profiles()
 
 echo "📦 Starting Quarkus with dev-schema-h2 profile..."
 

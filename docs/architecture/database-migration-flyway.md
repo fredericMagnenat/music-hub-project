@@ -247,193 +247,118 @@ quarkus.hibernate-orm.log.format-sql=true
 
 > **Note:** The original `hibernate-enhance-maven-plugin` is no longer available in Hibernate 6+ / Quarkus 3.x. This modern approach uses Quarkus dev services and configuration profiles for schema generation.
 
-#### 2. Development Profile for Schema Generation
+#### 2. Development Profiles for Schema Generation
 
-Add to `apps/bootstrap/src/main/resources/application.properties`:
+The project provides two specialized profiles for schema generation during migration development:
+
+**Profile Configuration (in `apps/bootstrap/src/main/resources/application.properties`):**
 
 ```properties
-# Profile for schema generation (development only)
+# PostgreSQL schema generation profile (production-like DDL)
 %dev-schema.quarkus.hibernate-orm.database.generation=create
 %dev-schema.quarkus.hibernate-orm.log.sql=true
+%dev-schema.quarkus.hibernate-orm.log.format-sql=true
 %dev-schema.quarkus.hibernate-orm.sql-load-script=no-file
 %dev-schema.quarkus.flyway.migrate-at-start=false
+%dev-schema.quarkus.datasource.db-kind=postgresql
 %dev-schema.quarkus.datasource.jdbc.url=jdbc:postgresql://localhost:5433/musichubdata_temp
+%dev-schema.quarkus.datasource.username=admin
+%dev-schema.quarkus.datasource.password=admin
+%dev-schema.quarkus.datasource.jdbc.max-size=8
+%dev-schema.quarkus.datasource.jdbc.min-size=2
 
-# Alternative: Use H2 for quick schema generation
+# H2 in-memory schema generation profile (fast validation)
 %dev-schema-h2.quarkus.datasource.db-kind=h2
-%dev-schema-h2.quarkus.datasource.jdbc.url=jdbc:h2:mem:schema-gen;DB_CLOSE_DELAY=-1
+%dev-schema-h2.quarkus.datasource.jdbc.url=jdbc:h2:mem:schema-export;DB_CLOSE_DELAY=-1
+%dev-schema-h2.quarkus.datasource.username=sa
+%dev-schema-h2.quarkus.datasource.password=
 %dev-schema-h2.quarkus.hibernate-orm.database.generation=create
+%dev-schema-h2.quarkus.hibernate-orm.database.generation-halt-on-error=true
+%dev-schema-h2.quarkus.hibernate-orm.log.sql=true
+%dev-schema-h2.quarkus.hibernate-orm.log.format-sql=true
+%dev-schema-h2.quarkus.hibernate-orm.sql-load-script=no-file
 %dev-schema-h2.quarkus.flyway.migrate-at-start=false
+%dev-schema-h2.quarkus.quinoa.enabled=false
+```
+
+**When to Use Which Profile:**
+
+| Use Case | Recommended Profile | Why? |
+|----------|-------------------|------|
+| **Quick entity validation** | `dev-schema-h2` | Fast startup (2s), no external deps |
+| **Migration development** | `dev-schema` | PostgreSQL-compatible DDL |
+| **CI/CD schema checks** | `dev-schema-h2` | No infrastructure required |
+| **Production DDL preview** | `dev-schema` | Real PostgreSQL dialect |
+
+**Usage Examples:**
+```bash
+# Quick schema generation with H2 (recommended for frequent use)
+mvn quarkus:dev -Dquarkus.profile=dev-schema-h2
+
+# PostgreSQL schema generation for production-compatible DDL
+mvn quarkus:dev -Dquarkus.profile=dev-schema
+
+# Using the dedicated script (uses dev-schema-h2 by default)
+./scripts/generate-schema.sh
+
+# Profile validation only
+./scripts/generate-schema.sh --validate-only
 ```
 
 #### 3. Migration Generation Script
 
-Create `scripts/generate-migration.sh`:
+The project includes a comprehensive migration generation script that handles version detection, range validation, and template creation:
 
+**Usage:**
 ```bash
-#!/bin/bash
-set -e
+# Generate migration for producer context (V1-V99)
+./scripts/generate-migration.sh producer "Add email column"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-# Function to print colored output
-print_status() {
-    echo -e "${BLUE}🔄 $1${NC}"
-}
-
-print_success() {
-    echo -e "${GREEN}✅ $1${NC}"
-}
-
-print_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
-}
-
-print_error() {
-    echo -e "${RED}❌ $1${NC}"
-}
-
-# Parse arguments
-MIGRATION_DESC="$1"
-CONTEXT="$2"
-
-if [[ -z "$MIGRATION_DESC" || -z "$CONTEXT" ]]; then
-    print_error "Missing required arguments"
-    echo "Usage: $0 'description' 'producer|artist'"
-    echo ""
-    echo "Examples:"
-    echo "  $0 'add_email_to_producer' 'producer'"
-    echo "  $0 'create_artist_social_links' 'artist'"
-    echo "  $0 'add_timestamps_to_producer' 'producer'"
-    exit 1
-fi
-
-# Validate context
-case "$CONTEXT" in
-    producer)
-        VERSION_MIN=1
-        VERSION_MAX=99
-        MIGRATION_PATH="apps/producer/producer-adapters/producer-adapter-persistence/src/main/resources/db/migration/producer"
-        ;;
-    artist)
-        VERSION_MIN=100
-        VERSION_MAX=199
-        MIGRATION_PATH="apps/artist/artist-adapters/artist-adapter-persistence/src/main/resources/db/migration/artist"
-        ;;
-    *)
-        print_error "Invalid context: $CONTEXT"
-        echo "Context must be 'producer' or 'artist'"
-        exit 1
-        ;;
-esac
-
-# Ensure migration directory exists
-mkdir -p "$MIGRATION_PATH"
-
-# Find next version number
-print_status "Finding next version number for $CONTEXT context..."
-CURRENT_VERSION=0
-
-if [[ -d "$MIGRATION_PATH" ]]; then
-    CURRENT_VERSION=$(find "$MIGRATION_PATH" -name "V*.sql" -exec basename {} \; 2>/dev/null | \
-                     grep -o '^V[0-9]*' | \
-                     sed 's/V//' | \
-                     sort -n | \
-                     tail -1 || echo "$((VERSION_MIN - 1))")
-fi
-
-NEXT_VERSION=$((CURRENT_VERSION + 1))
-
-# Validate version is in range
-if [[ $NEXT_VERSION -lt $VERSION_MIN || $NEXT_VERSION -gt $VERSION_MAX ]]; then
-    print_error "Version $NEXT_VERSION is outside allowed range for $CONTEXT context ($VERSION_MIN-$VERSION_MAX)"
-    print_warning "Consider using a different context or expanding version ranges"
-    exit 1
-fi
-
-MIGRATION_FILE="${MIGRATION_PATH}/V${NEXT_VERSION}__${MIGRATION_DESC}.sql"
-
-print_status "Generating schema export with modern Quarkus tooling..."
-
-# Generate current schema for reference using modern approach
-mvn exec:exec@schema-export -f apps/bootstrap/pom.xml -q || {
-    print_warning "Schema export command executed, check apps/bootstrap/target/generated-schema.sql for reference"
-}
-
-# Alternative: use the dedicated schema generation script
-if [[ -x "./scripts/generate-schema.sh" ]]; then
-    print_status "Using dedicated schema generation script..."
-    ./scripts/generate-schema.sh || {
-        print_warning "Schema generation script failed, continuing without generated schema reference"
-    }
-fi
-
-print_status "Creating migration file: $MIGRATION_FILE"
-
-# Create migration file with helpful template
-cat > "$MIGRATION_FILE" << EOF
--- $CONTEXT context: $MIGRATION_DESC
--- Generated on $(date '+%Y-%m-%d %H:%M:%S')
--- Author: $(git config user.name || echo "Unknown")
-
--- TODO: Replace this template with your actual migration statements
-
--- Common migration patterns:
-
--- Add column:
--- ALTER TABLE ${CONTEXT}s ADD COLUMN new_column VARCHAR(255);
--- ALTER TABLE ${CONTEXT}s ADD COLUMN new_column VARCHAR(255) NOT NULL DEFAULT 'default_value';
-
--- Add index:
--- CREATE INDEX idx_${CONTEXT}s_new_column ON ${CONTEXT}s(new_column);
-
--- Add constraint:
--- ALTER TABLE ${CONTEXT}s ADD CONSTRAINT chk_${CONTEXT}_new_column 
---     CHECK (new_column IN ('value1', 'value2'));
-
--- Create table:
--- CREATE TABLE ${CONTEXT}_new_table (
---     id UUID PRIMARY KEY,
---     ${CONTEXT}_id UUID NOT NULL REFERENCES ${CONTEXT}s(id) ON DELETE CASCADE,
---     created_at TIMESTAMP NOT NULL DEFAULT NOW()
--- );
-
--- Data migration:
--- UPDATE ${CONTEXT}s SET new_column = 'default_value' WHERE new_column IS NULL;
-
-EOF
-
-# Add generated schema reference if available
-if [[ -f "apps/bootstrap/target/generated-schema.sql" ]]; then
-    echo "" >> "$MIGRATION_FILE"
-    echo "-- Generated schema for reference:" >> "$MIGRATION_FILE"
-    echo "-- (Review and adapt as needed for your migration)" >> "$MIGRATION_FILE"
-    echo "" >> "$MIGRATION_FILE"
-    
-    # Extract relevant tables for the context
-    grep -A 10 -B 2 -i "${CONTEXT}" apps/bootstrap/target/generated-schema.sql >> "$MIGRATION_FILE" 2>/dev/null || {
-        echo "-- No generated schema found for $CONTEXT context" >> "$MIGRATION_FILE"
-    }
-fi
-
-print_success "Migration file created: $MIGRATION_FILE"
-print_status "Next steps:"
-echo "  1. Edit the migration file to add your actual SQL statements"
-echo "  2. Test the migration: mvn quarkus:dev"
-echo "  3. Verify the changes in your database"
-echo "  4. Commit the migration with your entity changes"
-echo ""
-print_warning "Remember: Migrations are forward-only. Test thoroughly before committing!"
+# Generate migration for artist context (V100-V199)
+./scripts/generate-migration.sh artist "Create social links table"
 ```
 
-Make the script executable:
-```bash
-chmod +x scripts/generate-migration.sh
+**Features:**
+- ✅ **Automatic version detection**: Scans existing migrations and calculates next version
+- ✅ **Range validation**: Ensures versions stay within context boundaries (Producer V1-V99, Artist V100-V199)
+- ✅ **Template generation**: Creates migration files with context-specific SQL examples
+- ✅ **Schema reference integration**: Includes recent schema generation output when available
+- ✅ **Git metadata**: Automatically adds author, email, and timestamp to migration headers
+- ✅ **Input validation**: Validates context names and description format
+
+**Example Output:**
+```sql
+-- producer context: Add email column
+-- Generated on 2025-08-16 14:30:00
+-- Author: fred Magnenat <fred.magnenat@gmail.com>
+-- Version: V2
+
+-- TODO: Replace this template with your actual migration statements
+-- IMPORTANT: Test your migration on a copy of production data first!
+
+-- ADD COLUMN example:
+-- ALTER TABLE producers ADD COLUMN created_at TIMESTAMP DEFAULT NOW();
+-- 
+-- ADD INDEX example:
+-- CREATE INDEX idx_producers_code ON producers(producer_code);
+-- 
+-- INSERT DATA example:
+-- INSERT INTO producers (id, producer_code, name) VALUES 
+--   (gen_random_uuid(), 'PROD1', 'Example Producer');
+
+-- Rollback strategy (document how to reverse this migration):
+-- TODO: Document rollback steps or create corresponding DOWN migration
+
+-- Recent schema generation reference:
+-- (Generated from dev-schema-h2 profile)
+-- CREATE TABLE producers (id UUID PRIMARY KEY, ...);
+
+-- Migration checklist:
+-- [ ] SQL syntax validated
+-- [ ] Migration tested on development database
+-- [ ] Rollback strategy documented
+-- [ ] Performance impact assessed for large tables
+-- [ ] Migration reviewed by team
 ```
 
 ### Step-by-Step Development Workflow
@@ -471,15 +396,24 @@ public class ProducerEntity extends PanacheEntityBase {
 
 ```bash
 # Generate migration for the new email field
-./scripts/generate-migration.sh "add_email_to_producer" "producer"
+./scripts/generate-migration.sh producer "Add email to producer"
 ```
 
 **Output:**
 ```
-🔄 Finding next version number for producer context...
-🔄 Generating schema export with modern Quarkus tooling...
-🔄 Creating migration file: apps/producer/.../V2__add_email_to_producer.sql
-✅ Migration file created: apps/producer/.../V2__add_email_to_producer.sql
+🚀 Music Hub Migration Generator
+
+🔍 Scanning for existing migrations in producer context...
+🔍 Current highest version: V1
+🔍 Next version will be: V2
+✅ Migration file generated: apps/producer/.../V2__add_email_to_producer.sql
+
+📄 File location: apps/producer/.../V2__add_email_to_producer.sql
+📝 Version: V2
+👤 Author: fred Magnenat
+📅 Timestamp: 2025-08-16 14:30:00
+
+🎉 Migration generation completed!
 ```
 
 #### Step 3: Edit the Generated Migration
@@ -1479,18 +1413,47 @@ This comprehensive Flyway guide establishes robust database migration practices 
 
 ### Quick Reference:
 
+**Migration Management:**
 - **Producer Migrations**: V1-V99 in `apps/producer/.../db/migration/producer/`
 - **Artist Migrations**: V100-V199 in `apps/artist/.../db/migration/artist/`
-- **Generate Migration**: `./scripts/generate-migration.sh "description" "context"`
-- **Generate Schema**: `./scripts/generate-schema.sh` (Quarkus-based schema export)
-- **Schema Export via Maven**: `mvn exec:exec@schema-export -f apps/bootstrap/pom.xml`
-- **Validate Migrations**: `./scripts/validate-migrations.sh`
-- **Recovery**: `./scripts/recover-flyway-state.sh` (dev only)
+- **Generate Migration**: `./scripts/generate-migration.sh <context> "<description>"`
+- **Generate Schema**: `./scripts/generate-schema.sh` (H2-based, fast)
+- **Validate Profiles**: `./scripts/generate-schema.sh --validate-only`
 
-### Schema Generation Tools (Quarkus 3.x / Hibernate 6+):
+**Schema Generation:**
+- **H2 (Fast)**: `mvn quarkus:dev -Dquarkus.profile=dev-schema-h2`
+- **PostgreSQL (Production-like)**: `mvn quarkus:dev -Dquarkus.profile=dev-schema`
+- **Via Maven Plugin**: `mvn exec:exec@schema-export -f apps/bootstrap/pom.xml`
 
-- **Configuration File**: `apps/bootstrap/src/main/resources/schema-export.properties`
-- **Sample Schema**: Check `apps/bootstrap/target/generated-schema.sql` for reference
-- **Helper Script**: `./scripts/generate-schema.sh` for automated schema generation
+**Development Workflow:**
+1. `./scripts/generate-schema.sh` (get current schema reference)
+2. `./scripts/generate-migration.sh producer "Add new feature"` (create migration)
+3. Edit migration file with actual SQL
+4. `mvn quarkus:dev` (test migration)
+5. Commit entity changes + migration together
+
+**Documentation:**
+- **Profile Details**: `apps/bootstrap/README.md`
+- **Migration Guide**: This document
+- **Troubleshooting**: See "Troubleshooting & Recovery" section above
+
+### Modern Tooling (Quarkus 3.x / Hibernate 6+):
+
+**Integrated Scripts:**
+- **Migration Generator**: `./scripts/generate-migration.sh` - Full-featured migration creation with version validation
+- **Schema Generator**: `./scripts/generate-schema.sh` - Fast H2-based schema generation with PostgreSQL fallback
+- **Profile Validation**: Built-in profile configuration validation
+
+**Configuration Profiles:**
+- **dev-schema-h2**: H2 in-memory for fast entity validation and CI/CD
+- **dev-schema**: PostgreSQL for production-compatible DDL generation
+- **Unified Configuration**: All profiles integrated in `application.properties`
+
+**Key Improvements over Legacy Tooling:**
+- ✅ **No deprecated plugins**: Modern Quarkus-compatible approach
+- ✅ **Dual-database support**: H2 for speed, PostgreSQL for accuracy
+- ✅ **Integrated validation**: Automatic profile and migration validation
+- ✅ **Rich templates**: Context-aware migration templates with examples
+- ✅ **Git integration**: Automatic author/timestamp metadata
 
 For specific examples and troubleshooting, refer to the relevant sections above. Remember: migrations are forward-only, test thoroughly, and always maintain backward compatibility during deployment windows.
