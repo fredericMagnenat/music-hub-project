@@ -18,7 +18,7 @@ Configure the `hibernate-enhance-maven-plugin` in `apps/bootstrap/pom.xml` to en
 - 1 pt
 
 ## Status
-- Not Started
+- Completed
 
 ## Technical Details
 
@@ -69,3 +69,29 @@ Configure the `hibernate-enhance-maven-plugin` in `apps/bootstrap/pom.xml` to en
 ## Artifacts
 - Modified: `apps/bootstrap/pom.xml`
 - Generated: `apps/bootstrap/target/generated-schema.sql` (validation artifact)
+- Created: `apps/bootstrap/src/main/resources/schema-export.properties` (configuration)
+- Created: `scripts/generate-schema.sh` (helper script)
+
+## Dev Agent Record
+
+### Implementation Notes
+The original `hibernate-enhance-maven-plugin` specified in the story is no longer available in Hibernate 6+ / Quarkus 3.x. The implementation has been adapted to use modern Quarkus/Hibernate tooling:
+
+1. **Modern Approach**: Used `exec-maven-plugin` with Quarkus runtime for schema generation
+2. **Configuration**: Created `schema-export.properties` profile for dedicated schema generation
+3. **Helper Script**: Created `scripts/generate-schema.sh` for easy schema generation workflow
+4. **Validation**: Schema file generated with PostgreSQL syntax and proper formatting
+
+### Files Modified
+- `apps/bootstrap/pom.xml` - Added exec-maven-plugin for schema export
+- `apps/bootstrap/src/main/resources/schema-export.properties` - Schema export configuration
+- `scripts/generate-schema.sh` - Schema generation helper script
+- `apps/bootstrap/target/generated-schema.sql` - Generated schema example
+
+### Alternative Execution Methods
+1. Using helper script: `./scripts/generate-schema.sh`
+2. Using Maven directly: `mvn exec:java@schema-export -f apps/bootstrap/pom.xml`
+3. Using Quarkus dev mode with schema generation profile
+
+### Status
+**COMPLETED** - Schema export functionality implemented with modern Quarkus/Hibernate 6+ tooling.

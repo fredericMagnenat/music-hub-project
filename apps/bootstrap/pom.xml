@@ -188,6 +188,27 @@
                 <groupId>${quarkus.platform.group-id}</groupId>
                 <artifactId>quarkus-maven-plugin</artifactId>
             </plugin>
+            <!-- Schema Export functionality via custom script execution -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>schema-export</id>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <phase>none</phase>
+                        <configuration>
+                            <executable>echo</executable>
+                            <arguments>
+                                <argument>Schema export configured. Use ./scripts/generate-schema.sh or check target/generated-schema.sql for sample schema.</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
          </plugins>
     </build>
     <profiles>

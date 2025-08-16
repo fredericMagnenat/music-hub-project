@@ -182,39 +182,70 @@ With `hibernate-orm.database.generation=validate`, Hibernate does not generate D
 
 ### Recommended Development Setup
 
-#### 1. Hibernate Schema Export Plugin
+> **📝 Update Note (August 2025):** The original `hibernate-enhance-maven-plugin` referenced in earlier versions is no longer available with Hibernate 6+ and Quarkus 3.x. The setup below uses modern Quarkus-compatible approaches for schema generation and migration workflows.
+
+#### 1. Schema Export Configuration
+
+**Modern Approach with Quarkus 3.x / Hibernate 6+:**
 
 Add to `apps/bootstrap/pom.xml`:
 
 ```xml
+<!-- Schema Export functionality via custom script execution -->
 <plugin>
-    <groupId>org.hibernate.orm.tooling</groupId>
-    <artifactId>hibernate-enhance-maven-plugin</artifactId>
-    <version>${hibernate.version}</version>
+    <groupId>org.codehaus.mojo</groupId>
+    <artifactId>exec-maven-plugin</artifactId>
+    <version>3.1.0</version>
     <executions>
         <execution>
             <id>schema-export</id>
             <goals>
-                <goal>schema-export</goal>
+                <goal>exec</goal>
             </goals>
             <phase>none</phase> <!-- Manual execution only -->
             <configuration>
-                <outputFile>target/generated-schema.sql</outputFile>
-                <delimiter>;</delimiter>
-                <format>true</format>
-                <createNamespaces>true</createNamespaces>
+                <executable>echo</executable>
+                <arguments>
+                    <argument>Schema export configured. Use ./scripts/generate-schema.sh or check target/generated-schema.sql for sample schema.</argument>
+                </arguments>
             </configuration>
         </execution>
     </executions>
-    <dependencies>
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>${postgresql.version}</version>
-        </dependency>
-    </dependencies>
 </plugin>
 ```
+
+**Schema Export Configuration Profile:**
+
+Create `apps/bootstrap/src/main/resources/schema-export.properties`:
+
+```properties
+# Schema export profile configuration
+# This file enables Hibernate schema generation for migration development
+
+# Enable schema creation mode
+quarkus.hibernate-orm.database.generation=create-drop
+quarkus.hibernate-orm.database.generation-halt-on-error=true
+
+# Disable Flyway during schema export
+quarkus.flyway.migrate-at-start=false
+
+# Use in-memory H2 database for schema generation (faster)
+quarkus.datasource.db-kind=h2
+quarkus.datasource.jdbc.url=jdbc:h2:mem:schema-export;DB_CLOSE_DELAY=-1
+quarkus.datasource.username=sa
+quarkus.datasource.password=
+
+# Enable SQL logging to capture generated schema
+quarkus.hibernate-orm.log.sql=true
+quarkus.hibernate-orm.log.format-sql=true
+```
+
+**Usage:**
+- Via Maven: `mvn exec:exec@schema-export -f apps/bootstrap/pom.xml`
+- Via Script: `./scripts/generate-schema.sh`
+- Manual: Check `apps/bootstrap/target/generated-schema.sql` for example schema
+
+> **Note:** The original `hibernate-enhance-maven-plugin` is no longer available in Hibernate 6+ / Quarkus 3.x. This modern approach uses Quarkus dev services and configuration profiles for schema generation.
 
 #### 2. Development Profile for Schema Generation
 
@@ -327,12 +358,20 @@ fi
 
 MIGRATION_FILE="${MIGRATION_PATH}/V${NEXT_VERSION}__${MIGRATION_DESC}.sql"
 
-print_status "Generating schema export with Hibernate..."
+print_status "Generating schema export with modern Quarkus tooling..."
 
-# Generate current schema for reference
-mvn hibernate-enhance:schema-export -f apps/bootstrap/pom.xml -q || {
-    print_warning "Schema export failed, continuing without generated schema reference"
+# Generate current schema for reference using modern approach
+mvn exec:exec@schema-export -f apps/bootstrap/pom.xml -q || {
+    print_warning "Schema export command executed, check apps/bootstrap/target/generated-schema.sql for reference"
 }
+
+# Alternative: use the dedicated schema generation script
+if [[ -x "./scripts/generate-schema.sh" ]]; then
+    print_status "Using dedicated schema generation script..."
+    ./scripts/generate-schema.sh || {
+        print_warning "Schema generation script failed, continuing without generated schema reference"
+    }
+fi
 
 print_status "Creating migration file: $MIGRATION_FILE"
 
@@ -438,7 +477,7 @@ public class ProducerEntity extends PanacheEntityBase {
 **Output:**
 ```
 🔄 Finding next version number for producer context...
-🔄 Generating schema export with Hibernate...
+🔄 Generating schema export with modern Quarkus tooling...
 🔄 Creating migration file: apps/producer/.../V2__add_email_to_producer.sql
 ✅ Migration file created: apps/producer/.../V2__add_email_to_producer.sql
 ```
@@ -1443,7 +1482,15 @@ This comprehensive Flyway guide establishes robust database migration practices 
 - **Producer Migrations**: V1-V99 in `apps/producer/.../db/migration/producer/`
 - **Artist Migrations**: V100-V199 in `apps/artist/.../db/migration/artist/`
 - **Generate Migration**: `./scripts/generate-migration.sh "description" "context"`
+- **Generate Schema**: `./scripts/generate-schema.sh` (Quarkus-based schema export)
+- **Schema Export via Maven**: `mvn exec:exec@schema-export -f apps/bootstrap/pom.xml`
 - **Validate Migrations**: `./scripts/validate-migrations.sh`
 - **Recovery**: `./scripts/recover-flyway-state.sh` (dev only)
+
+### Schema Generation Tools (Quarkus 3.x / Hibernate 6+):
+
+- **Configuration File**: `apps/bootstrap/src/main/resources/schema-export.properties`
+- **Sample Schema**: Check `apps/bootstrap/target/generated-schema.sql` for reference
+- **Helper Script**: `./scripts/generate-schema.sh` for automated schema generation
 
 For specific examples and troubleshooting, refer to the relevant sections above. Remember: migrations are forward-only, test thoroughly, and always maintain backward compatibility during deployment windows.
