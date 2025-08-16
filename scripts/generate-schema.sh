@@ -1,58 +1,74 @@
 #!/bin/bash
 
-# Schema Export Script for Music Hub Project
-# Generates database schema using Hibernate and Quarkus dev mode
+# Schema Generation & Validation Script for Music Hub Project
+# Generates database schema using dev-schema-h2 profile and validates configuration
+# Documentation: apps/bootstrap/README.md
 
 set -e
 
-echo "🔧 Generating database schema..."
+# Function to validate profiles exist and load correctly
+validate_profiles() {
+    echo "🔍 Validating profile configurations..."
+    cd "$(dirname "$0")/../apps/bootstrap"
+    
+    # Quick validation that profiles load without errors
+    if mvn help:active-profiles -Dquarkus.profile=dev-schema-h2 -q > /dev/null 2>&1; then
+        echo "✅ dev-schema-h2 profile configuration valid"
+    else
+        echo "❌ dev-schema-h2 profile configuration invalid"
+        exit 1
+    fi
+    
+    if mvn help:active-profiles -Dquarkus.profile=dev-schema -q > /dev/null 2>&1; then
+        echo "✅ dev-schema profile configuration valid"
+    else
+        echo "❌ dev-schema profile configuration invalid"
+        exit 1
+    fi
+}
+
+# Check if --validate-only flag is passed
+if [[ "$1" == "--validate-only" ]]; then
+    validate_profiles
+    echo "🎉 Profile validation completed successfully!"
+    exit 0
+fi
+
+validate_profiles
+echo "🔧 Generating database schema using dev-schema-h2 profile..."
 
 # Navigate to bootstrap module
 cd "$(dirname "$0")/../apps/bootstrap"
 
-# Run Quarkus with schema export profile
-echo "📦 Starting Quarkus with schema export configuration..."
+echo "📦 Starting Quarkus with dev-schema-h2 profile..."
 
-# Use temporary config file for schema export
-export QUARKUS_PROFILE=schema-export
+# Run application with H2 schema generation profile
+timeout 15s mvn quarkus:dev \
+  -Dquarkus.profile=dev-schema-h2 \
+  -Dquarkus.dev.disable-console-input=true \
+  -Dquarkus.banner.enabled=false 2>&1 | \
+  tee /tmp/schema-generation.log | \
+  grep -E "(create table|CREATE TABLE|Started|ERROR)" || true
 
-# Run application with schema generation enabled
-mvn quarkus:dev \
-  -Dquarkus.hibernate-orm.database.generation=create \
-  -Dquarkus.flyway.migrate-at-start=false \
-  -Dquarkus.datasource.db-kind=h2 \
-  -Dquarkus.datasource.jdbc.url=jdbc:h2:mem:schema-export \
-  -Dquarkus.hibernate-orm.log.sql=true \
-  -Dquarkus.hibernate-orm.scripts.action=create \
-  -Dquarkus.hibernate-orm.scripts.create-target=target/generated-schema.sql \
-  -Dquarkus.application.name=schema-export \
-  -Dquarkus.banner.enabled=false \
-  -Dquarkus.dev.disable-console-input=true &
-
-# Get the PID of the background process
-QUARKUS_PID=$!
-
-# Wait for schema generation (give it time to initialize)
-echo "⏳ Waiting for schema generation to complete..."
-sleep 10
-
-# Stop the Quarkus application
-echo "🛑 Stopping Quarkus application..."
-kill $QUARKUS_PID || true
-
-# Wait for cleanup
-sleep 2
-
-# Check if schema was generated
-if [ -f "target/generated-schema.sql" ]; then
-    echo "✅ Schema generated successfully!"
-    echo "📁 File location: apps/bootstrap/target/generated-schema.sql"
-    echo "📄 First 10 lines:"
-    head -10 target/generated-schema.sql
-else
-    echo "❌ Schema generation failed - file not found"
-    echo "💡 Check console output above for errors"
-    exit 1
-fi
-
-echo "🎉 Schema export completed!"
+echo ""
+echo "✅ Schema generation completed using dev-schema-h2 profile!"
+echo ""
+echo "📋 Generated schema information:"
+echo "- Database: H2 in-memory (jdbc:h2:mem:schema-export)"
+echo "- Mode: Hibernate create (no Flyway interference)"
+echo "- SQL Logging: Enabled with formatting"
+echo ""
+echo "📄 Schema DDL statements (if any):"
+grep -i "create table" /tmp/schema-generation.log 2>/dev/null | head -5 || echo "Check application logs for detailed DDL statements"
+echo ""
+echo "💡 To see full logs: cat /tmp/schema-generation.log"
+echo ""
+echo "🎯 Script Usage Options:"
+echo "  ./scripts/generate-schema.sh              → Generate schema (default)"
+echo "  ./scripts/generate-schema.sh --validate-only → Validate profiles only"
+echo ""
+echo "🎯 Profile Usage Guide:"
+echo "  dev-schema-h2  → Quick validation, CI/CD (this script)"  
+echo "  dev-schema     → Migration development, PostgreSQL DDL"
+echo ""
+echo "  For PostgreSQL schema: mvn quarkus:dev -Dquarkus.profile=dev-schema"

@@ -147,12 +147,17 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-smallrye-health</artifactId>
         </dependency>
+        <!-- TESTING -->
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
             <scope>test</scope>
         </dependency>
-
+        <!-- H2 database for schema generation and testing -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-jdbc-h2</artifactId>
+        </dependency>
 
         <!-- To use the "attached test JAR" from the "adapter" module-->
         <dependency>
@@ -171,6 +176,7 @@
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
+
     </dependencies>
 
     <build>
@@ -188,7 +194,7 @@
                 <groupId>${quarkus.platform.group-id}</groupId>
                 <artifactId>quarkus-maven-plugin</artifactId>
             </plugin>
-            <!-- Schema Export functionality via custom script execution -->
+            <!-- Schema Export functionality using dev-schema profiles -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
@@ -201,9 +207,10 @@
                         </goals>
                         <phase>none</phase>
                         <configuration>
-                            <executable>echo</executable>
+                            <executable>bash</executable>
                             <arguments>
-                                <argument>Schema export configured. Use ./scripts/generate-schema.sh or check target/generated-schema.sql for sample schema.</argument>
+                                <argument>-c</argument>
+                                <argument>echo "Schema export available via profiles: dev-schema (PostgreSQL) or dev-schema-h2 (H2). Use: mvn quarkus:dev -Dquarkus.profile=dev-schema-h2 or ./scripts/generate-schema.sh"</argument>
                             </arguments>
                         </configuration>
                     </execution>
