@@ -18,6 +18,16 @@ export default defineConfig(({ mode }) => {
     css: {
       // si nécessaire, Vite détectera postcss.config automatiquement
     },
+    server: {
+      proxy: {
+        // Proxy API calls to backend in development
+        "/api": {
+          target: "http://localhost:8080",
+          changeOrigin: true,
+          secure: false,
+        },
+      },
+    },
     test: {
       environment: "jsdom",
       setupFiles: "./vitest.setup.ts",

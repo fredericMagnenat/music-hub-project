@@ -38,12 +38,13 @@ mvn quarkus:dev
 - API: http://localhost:8080
 - UI: servie par Quarkus (Quinoa démarre le dev server Remix et proxy automatiquement)
 
-3) Alternative: lancer le frontend seul
+3) Alternative: lancer le frontend seul (avec proxy vers backend)
 ```bash
 cd apps/webui
 npm install
-npm run dev
+npm run dev  # Le proxy Vite redirige /api vers http://localhost:8080
 ```
+**Note:** Assurez-vous que le backend tourne sur le port 8080 avant de démarrer le frontend.
 
 ## Build
 
