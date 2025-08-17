@@ -36,15 +36,25 @@ public final class Producer {
         return new Producer(id, producerCode, name, tracks);
     }
 
-    public ProducerId id() { return id; }
+    public ProducerId id() {
+        return id;
+    }
 
-    public ProducerCode producerCode() { return producerCode; }
+    public ProducerCode producerCode() {
+        return producerCode;
+    }
 
-    public String name() { return name; }
+    public String name() {
+        return name;
+    }
 
-    public void rename(String newName) { this.name = newName; }
+    public void rename(String newName) {
+        this.name = newName;
+    }
 
-    public Set<ISRC> tracks() { return Collections.unmodifiableSet(tracks); }
+    public Set<ISRC> tracks() {
+        return Collections.unmodifiableSet(tracks);
+    }
 
     public boolean hasTrack(ISRC isrc) {
         Objects.requireNonNull(isrc, "ISRC must not be null");
@@ -55,6 +65,21 @@ public final class Producer {
         Objects.requireNonNull(isrc, "ISRC must not be null");
         ISRC normalized = normalize(isrc);
         return tracks.add(normalized); // idempotent due to Set
+    }
+
+    /**
+     * Adds a Track entity to this Producer aggregate, enforcing business rules.
+     * - The track's producer code (derived from its ISRC) must match this aggregate's producer code
+     * - Idempotent behavior: returns false if an equivalent track already exists
+     */
+    public boolean addTrack(Track track) {
+        Objects.requireNonNull(track, "track must not be null");
+        // Validate producer code consistency using ISRC-derived ProducerCode
+        ProducerCode trackProducerCode = ProducerCode.with(track.isrc());
+        if (!this.producerCode.equals(trackProducerCode)) {
+            throw new IllegalArgumentException("Track producer code does not match aggregate producer code");
+        }
+        return addTrack(track.isrc());
     }
 
     public boolean addTrack(String isrcValue) {
