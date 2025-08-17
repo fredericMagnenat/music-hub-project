@@ -1,4 +1,4 @@
-# FLYWAY-5: Integration testing and complete workflow validation
+ # FLYWAY-5: Integration testing and complete workflow validation
 
 Story: docs/stories/10.flyway-migration-workflow.md
 

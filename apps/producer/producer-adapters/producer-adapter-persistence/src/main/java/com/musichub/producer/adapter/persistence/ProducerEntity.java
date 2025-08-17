@@ -19,6 +19,9 @@ public class ProducerEntity extends PanacheEntityBase {
     @Column(name = "name")
     public String name;
 
+    @Column(name = "status", length = 20)
+    public String status;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "producer_tracks", joinColumns = @JoinColumn(name = "producer_id"))
     @Column(name = "isrc", nullable = false, length = 12)

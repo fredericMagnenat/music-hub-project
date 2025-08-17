@@ -20,6 +20,9 @@ public class ArtistEntity extends PanacheEntityBase {
     @Column(nullable = false)
     public ArtistStatus status;
 
+    @Column(name = "country", length = 2)
+    public String country;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "artist_track_references", joinColumns = @JoinColumn(name = "artist_id"))
     @Column(name = "isrc")
