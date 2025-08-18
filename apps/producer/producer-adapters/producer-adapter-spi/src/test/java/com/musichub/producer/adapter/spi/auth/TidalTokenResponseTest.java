@@ -1,7 +1,10 @@
 package com.musichub.producer.adapter.spi.auth;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
+import jakarta.json.bind.JsonbConfig;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -11,7 +14,21 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class TidalTokenResponseTest {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private static Jsonb jsonb;
+
+    @BeforeAll
+    static void setup() {
+        JsonbConfig config = new JsonbConfig()
+                .withFormatting(true);
+        jsonb = JsonbBuilder.create(config);
+    }
+
+    @AfterAll
+    static void cleanup() throws Exception {
+        if (jsonb != null) {
+            jsonb.close();
+        }
+    }
 
     @Test
     void defaultConstructor_ShouldCreateEmptyInstance() {
@@ -20,69 +37,62 @@ class TidalTokenResponseTest {
 
         // Then: Should have null values
         assertNotNull(response);
-        assertNull(response.accessToken);
-        assertNull(response.tokenType);
-        assertNull(response.expiresIn);
+        assertNull(response.getAccessToken());
+        assertNull(response.getExpiresIn());
         assertFalse(response.isValid());
     }
 
     @Test
     void parameterizedConstructor_ShouldSetAllFields() {
         // When: Creating instance with parameters
-        TidalTokenResponse response = new TidalTokenResponse("token123", "Bearer", 3600);
+        TidalTokenResponse response = new TidalTokenResponse("token123", 3600L);
 
         // Then: Should set all fields
-        assertEquals("token123", response.accessToken);
-        assertEquals("Bearer", response.tokenType);
-        assertEquals(3600, response.expiresIn);
+        assertEquals("token123", response.getAccessToken());
+        assertEquals(3600L, response.getExpiresIn());
         assertTrue(response.isValid());
     }
 
     @Test
-    void jsonDeserialization_ShouldMapCorrectly() throws JsonProcessingException {
+    void jsonDeserialization_ShouldMapCorrectly() throws Exception {
         // Given: JSON response from Tidal auth API
         String json = """
             {
                 "access_token": "eyJhbGciOiJIUzI1NiIs...",
-                "token_type": "Bearer",
-                "expires_in": 3600,
-                "scope": "r_usr"
+                "expires_in": 3600
             }
             """;
 
         // When: Deserializing JSON
-        TidalTokenResponse response = objectMapper.readValue(json, TidalTokenResponse.class);
+        TidalTokenResponse response = jsonb.fromJson(json, TidalTokenResponse.class);
 
         // Then: Should map correctly
         assertNotNull(response);
-        assertEquals("eyJhbGciOiJIUzI1NiIs...", response.accessToken);
-        assertEquals("Bearer", response.tokenType);
-        assertEquals(3600, response.expiresIn);
-        assertEquals("r_usr", response.scope);
+        assertEquals("eyJhbGciOiJIUzI1NiIs...", response.getAccessToken());
+        assertEquals(3600L, response.getExpiresIn());
         assertTrue(response.isValid());
     }
 
     @Test
-    void jsonSerialization_ShouldProduceCorrectJson() throws JsonProcessingException {
+    void jsonSerialization_ShouldProduceCorrectJson() throws Exception {
         // Given: Token response instance
-        TidalTokenResponse response = new TidalTokenResponse("token123", "Bearer", 3600);
-        response.scope = "r_usr";
+        TidalTokenResponse response = new TidalTokenResponse("token123", 3600L);
 
         // When: Serializing to JSON
-        String json = objectMapper.writeValueAsString(response);
+        String json = jsonb.toJson(response);
+        System.out.println("Generated JSON: " + json); // Pour déboguer
 
-        // Then: Should produce correct JSON
-        assertTrue(json.contains("\"access_token\":\"token123\""));
-        assertTrue(json.contains("\"token_type\":\"Bearer\""));
-        assertTrue(json.contains("\"expires_in\":3600"));
-        assertTrue(json.contains("\"scope\":\"r_usr\""));
+        // Then: Should produce correct JSON (avec espaces de JSON-B formaté)
+        assertTrue(json.contains("\"access_token\""));
+        assertTrue(json.contains("\"token123\""));
+        assertTrue(json.contains("\"expires_in\""));
+        assertTrue(json.contains("3600"));
     }
 
     @Test
     void isValid_WhenTokenExists_ShouldReturnTrue() {
         // Given: Response with token
-        TidalTokenResponse response = new TidalTokenResponse();
-        response.accessToken = "valid-token";
+        TidalTokenResponse response = new TidalTokenResponse("valid-token", 3600L);
 
         // When & Then: Should be valid
         assertTrue(response.isValid());
@@ -92,7 +102,7 @@ class TidalTokenResponseTest {
     void isValid_WhenTokenEmpty_ShouldReturnFalse() {
         // Given: Response with empty token
         TidalTokenResponse response = new TidalTokenResponse();
-        response.accessToken = "";
+        response.setAccessToken("");
 
         // When & Then: Should be invalid
         assertFalse(response.isValid());
@@ -102,7 +112,7 @@ class TidalTokenResponseTest {
     void isValid_WhenTokenNull_ShouldReturnFalse() {
         // Given: Response with null token
         TidalTokenResponse response = new TidalTokenResponse();
-        response.accessToken = null;
+        response.setAccessToken(null);
 
         // When & Then: Should be invalid
         assertFalse(response.isValid());
@@ -111,7 +121,7 @@ class TidalTokenResponseTest {
     @Test
     void getAuthorizationHeader_WhenValidToken_ShouldReturnBearerHeader() {
         // Given: Valid token response
-        TidalTokenResponse response = new TidalTokenResponse("token123", "Bearer", 3600);
+        TidalTokenResponse response = new TidalTokenResponse("token123", 3600L);
 
         // When: Getting authorization header
         String header = response.getAuthorizationHeader();
@@ -121,39 +131,26 @@ class TidalTokenResponseTest {
     }
 
     @Test
-    void getAuthorizationHeader_WhenCustomTokenType_ShouldUseCustomType() {
-        // Given: Token response with custom type
-        TidalTokenResponse response = new TidalTokenResponse("token123", "Custom", 3600);
-
-        // When: Getting authorization header
-        String header = response.getAuthorizationHeader();
-
-        // Then: Should use custom type
-        assertEquals("Custom token123", header);
-    }
-
-    @Test
-    void getAuthorizationHeader_WhenNoTokenType_ShouldDefaultToBearer() {
-        // Given: Token response without type
-        TidalTokenResponse response = new TidalTokenResponse("token123", null, 3600);
-
-        // When: Getting authorization header
-        String header = response.getAuthorizationHeader();
-
-        // Then: Should default to Bearer
-        assertEquals("Bearer token123", header);
-    }
-
-    @Test
     void getAuthorizationHeader_WhenInvalidToken_ShouldReturnNull() {
         // Given: Invalid token response
         TidalTokenResponse response = new TidalTokenResponse();
-        response.accessToken = null;
+        response.setAccessToken(null);
 
         // When: Getting authorization header
         String header = response.getAuthorizationHeader();
 
         // Then: Should return null
         assertNull(header);
+    }
+
+    @Test 
+    void expiresIn_WhenNull_ShouldBeHandledProperly() {
+        // Given: Response with null expiresIn
+        TidalTokenResponse response = new TidalTokenResponse("token123", null);
+
+        // When & Then: Should still be valid token and handle null expiresIn
+        assertTrue(response.isValid());
+        assertNull(response.getExpiresIn());
+        assertEquals("Bearer token123", response.getAuthorizationHeader());
     }
 }

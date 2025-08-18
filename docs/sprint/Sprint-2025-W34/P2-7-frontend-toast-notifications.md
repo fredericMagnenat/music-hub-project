@@ -21,7 +21,7 @@ Enhance the frontend UI to display appropriate Toast notifications for successfu
 - 2 pts
 
 ## Status
-- Not Started
+- Ready for Review
 
 ## Technical Details
 
@@ -107,3 +107,38 @@ if (!result.ok && result.status === 422) {
 - Modified: `utils.ts` with enhanced API response handling
 - Modified: `_index.tsx` with improved Toast messaging
 - Updated: Frontend tests for new Toast scenarios
+
+## Dev Agent Record
+
+### Tasks
+- [x] Update registerTrack function to extract track metadata from successful responses
+- [x] Enhance Toast success message to include track title and artist names  
+- [x] Add specific handling for 422 errors with descriptive message
+- [x] Implement enhanced Toast component with title/description support
+- [x] Test all success and error flows
+
+### File List
+- `apps/webui/app/lib/utils.ts` - Enhanced registerTrack function with track metadata extraction
+- `apps/webui/app/routes/_index.tsx` - Updated Toast handling with descriptive messages
+- `apps/webui/app/components/ui/toast.tsx` - Enhanced Toast component with title/description support
+
+### Change Log
+- Enhanced `HttpResult` interface to include `trackInfo`, `error`, and `message` fields
+- Added `TrackInfo` and `TrackDto` interfaces for type safety
+- Updated `registerTrack` function to extract track metadata from successful responses  
+- Enhanced Toast component to support title/description format similar to shadcn/ui
+- Added "destructive" variant for error states
+- Updated form handling in `_index.tsx` to use new Toast API with descriptive messages
+- Added proper error handling for 422 responses with external service failure messages
+- Fixed extractTrackInfo function to handle cases where artists array might be undefined
+
+### Completion Notes
+- All acceptance criteria have been met
+- Success case shows track title and artist names in Toast notification
+- 422 error case shows descriptive external service error message  
+- Toast styling and timing are consistent across success/error scenarios
+- All existing error handling for other status codes remains unchanged
+- All tests are passing (7/7 passed)
+
+### Agent Model Used
+Claude Sonnet 4

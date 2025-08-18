@@ -55,20 +55,57 @@ export default function Index() {
       const result = await registerTrack(normalized);
       if (result.ok) {
         setMessage("Accepted (202): track registration in progress.");
-        toast({ message: "Track registration accepted (202)", variant: "success" });
+        if (result.trackInfo) {
+          toast({
+            title: "Track Registered Successfully",
+            description: `Track '${result.trackInfo.title}' by '${result.trackInfo.artists}' has been successfully registered and is being processed.`,
+            variant: "success",
+            duration: 5000,
+          });
+        } else {
+          toast({
+            title: "Track Registered",
+            description: "Track registration accepted and is being processed.",
+            variant: "success",
+            duration: 5000,
+          });
+        }
       } else if (result.status === 400) {
-        setError("Invalid ISRC format (400). Please check and try again.");
-        toast({ message: "Invalid ISRC format (400)", variant: "error" });
+        const errorMsg = "Invalid ISRC format (400). Please check and try again.";
+        setError(errorMsg);
+        toast({
+          title: "Invalid ISRC Format",
+          description: "Please check your ISRC format and try again.",
+          variant: "destructive",
+          duration: 5000,
+        });
       } else if (result.status === 422) {
         setError("ISRC valid but unresolvable upstream (422).");
-        toast({ message: "ISRC valid but unresolvable (422)", variant: "error" });
+        toast({
+          title: "External Service Error",
+          description: result.message || "The ISRC was valid, but we could not find metadata for it on external services.",
+          variant: "destructive",
+          duration: 7000,
+        });
       } else {
-        setError(`Request failed (${result.status}).`);
-        toast({ message: `Request failed (${result.status})`, variant: "error" });
+        const errorMsg = `Request failed (${result.status}).`;
+        setError(errorMsg);
+        toast({
+          title: "Request Failed",
+          description: `Server responded with status ${result.status}. Please try again later.`,
+          variant: "destructive",
+          duration: 5000,
+        });
       }
     } catch (err) {
-      setError("Network or server error. Please try again later.");
-      toast({ message: "Network or server error", variant: "error" });
+      const errorMsg = "Network or server error. Please try again later.";
+      setError(errorMsg);
+      toast({
+        title: "Network Error",
+        description: "Unable to connect to server. Please check your connection and try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
     } finally {
       setIsSubmitting(false);
     }

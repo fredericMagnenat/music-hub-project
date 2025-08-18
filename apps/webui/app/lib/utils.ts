@@ -5,17 +5,44 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export interface TrackInfo {
+  title: string;
+  artists: string;
+}
+
 export interface HttpResult<T> {
   ok: boolean;
   status: number;
   data?: T;
+  error?: string;
+  message?: string;
+  trackInfo?: TrackInfo;
+}
+
+export interface TrackDto {
+  title: string;
+  artists: string[];
+  isrc: string;
+  status?: string;
 }
 
 export interface ProducerDto {
   id: string;
   producerCode: string;
   name?: string | null;
-  tracks: Array<unknown>;
+  tracks: TrackDto[];
+}
+
+function extractTrackInfo(data: ProducerDto): TrackInfo | undefined {
+  if (!data.tracks || data.tracks.length === 0) return undefined;
+  
+  const track = data.tracks[0]; // Get the first/latest track
+  if (!track.title || !track.artists || track.artists.length === 0) return undefined;
+  
+  return {
+    title: track.title,
+    artists: track.artists.join(", ")
+  };
 }
 
 export async function registerTrack(isrc: string): Promise<HttpResult<ProducerDto>> {
@@ -27,14 +54,28 @@ export async function registerTrack(isrc: string): Promise<HttpResult<ProducerDt
     body: JSON.stringify({ isrc }),
   })
 
-  if (response.status === 202) {
+  if (response.ok) {
+    const data = await response.json() as ProducerDto;
+    return { 
+      ok: true, 
+      status: response.status, 
+      data,
+      trackInfo: extractTrackInfo(data)
+    };
+  } else {
     try {
-      const data = (await response.json()) as ProducerDto
-      return { ok: true, status: 202, data }
+      const errorData = await response.json();
+      return { 
+        ok: false, 
+        status: response.status, 
+        error: errorData.error,
+        message: errorData.message 
+      };
     } catch {
-      return { ok: true, status: 202 }
+      return { 
+        ok: false, 
+        status: response.status 
+      };
     }
   }
-
-  return { ok: false, status: response.status }
 }

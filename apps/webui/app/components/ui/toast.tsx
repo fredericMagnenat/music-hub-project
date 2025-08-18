@@ -1,16 +1,20 @@
 import * as React from "react"
 import { cn } from "~/lib/utils"
 
-export type ToastVariant = "success" | "error" | "info"
+export type ToastVariant = "success" | "error" | "info" | "destructive"
 
 export interface ToastOptions {
-  message: string
+  message?: string
+  title?: string
+  description?: string
   variant?: ToastVariant
+  duration?: number
 }
 
 interface ToastItem extends ToastOptions {
   id: number
   variant: ToastVariant
+  duration: number
 }
 
 interface ToastContextValue {
@@ -32,14 +36,18 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const toast = React.useCallback((options: ToastOptions) => {
     const id = nextId++
+    const duration = options.duration ?? 3200
     const item: ToastItem = {
       id,
       message: options.message,
+      title: options.title,
+      description: options.description,
       variant: options.variant ?? "info",
+      duration,
     }
     setToasts((prev) => [...prev, item])
-    // Auto-dismiss after 3.2s
-    window.setTimeout(() => remove(id), 3200)
+    // Auto-dismiss after specified duration
+    window.setTimeout(() => remove(id), duration)
   }, [remove])
 
   const value = React.useMemo(() => ({ toast, remove, toasts }), [toast, remove, toasts])
@@ -67,13 +75,24 @@ export function Toaster() {
               "pointer-events-auto w-full max-w-sm rounded-md border p-3 shadow-sm transition-all",
               t.variant === "success" && "border-green-200 bg-green-50 text-green-800",
               t.variant === "error" && "border-red-200 bg-red-50 text-red-800",
+              t.variant === "destructive" && "border-red-200 bg-red-50 text-red-800",
               t.variant === "info" && "border-gray-200 bg-white text-gray-900"
             )}
             role="status"
             aria-live="polite"
           >
             <div className="flex items-start justify-between gap-3">
-              <div className="text-sm">{t.message}</div>
+              <div className="flex-1">
+                {t.title && (
+                  <div className="text-sm font-medium mb-1">{t.title}</div>
+                )}
+                {t.description && (
+                  <div className="text-sm">{t.description}</div>
+                )}
+                {t.message && !t.title && !t.description && (
+                  <div className="text-sm">{t.message}</div>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={() => remove(t.id)}

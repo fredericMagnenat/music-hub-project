@@ -1,43 +1,28 @@
 package com.musichub.producer.adapter.spi.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.json.bind.annotation.JsonbProperty;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * Response DTO for Tidal OAuth2 token requests.
  * Maps the JSON response from Tidal's /oauth2/token endpoint.
  */
+@Getter
+@Setter
+@NoArgsConstructor
 public class TidalTokenResponse {
 
-    /**
-     * The access token to use for API calls
-     */
-    @JsonProperty("access_token")
-    public String accessToken;
+    @JsonbProperty("access_token")
+    private String accessToken;
 
-    /**
-     * Token type (usually "Bearer")
-     */
-    @JsonProperty("token_type")
-    public String tokenType;
+    @JsonbProperty("expires_in")
+    private Long expiresIn;  // Changé de long à Long pour permettre null
 
-    /**
-     * Token expiration time in seconds
-     */
-    @JsonProperty("expires_in")
-    public Integer expiresIn;
-
-    /**
-     * Granted scopes (if any)
-     */
-    @JsonProperty("scope")
-    public String scope;
-
-    public TidalTokenResponse() {
-    }
-
-    public TidalTokenResponse(String accessToken, String tokenType, Integer expiresIn) {
+    public TidalTokenResponse(String accessToken, Long expiresIn) {
         this.accessToken = accessToken;
-        this.tokenType = tokenType;
         this.expiresIn = expiresIn;
     }
 
@@ -55,7 +40,6 @@ public class TidalTokenResponse {
         if (!isValid()) {
             return null;
         }
-        String type = tokenType != null ? tokenType : "Bearer";
-        return type + " " + accessToken;
+        return "Bearer " + accessToken;
     }
 }

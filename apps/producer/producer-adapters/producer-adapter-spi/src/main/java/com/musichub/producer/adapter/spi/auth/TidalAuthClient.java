@@ -20,23 +20,17 @@ import jakarta.ws.rs.core.MediaType;
 public interface TidalAuthClient {
 
     /**
-     * Obtain access token using client credentials flow.
-     * This is the OAuth2 client credentials grant type.
-     * 
-     * @param grantType Always "client_credentials" for this flow
-     * @param clientId The client ID provided by Tidal
-     * @param clientSecret The client secret provided by Tidal
-     * @param scope Optional scopes for the token
-     * @return TokenResponse containing the access token
+     *
+     * @param grantType
+     * @param clientId
+     * @param clientSecret
+     * @return
      */
     @POST
     @Path("/token")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
-    TidalTokenResponse getAccessToken(
-        @FormParam("grant_type") String grantType,
-        @FormParam("client_id") String clientId,
-        @FormParam("client_secret") String clientSecret,
-        @FormParam("scope") String scope
-    );
+    TidalTokenResponse getAccessToken(@FormParam("grant_type") String grantType,
+                                      @FormParam("client_id") String clientId,
+                                      @FormParam("client_secret") String clientSecret);
 }

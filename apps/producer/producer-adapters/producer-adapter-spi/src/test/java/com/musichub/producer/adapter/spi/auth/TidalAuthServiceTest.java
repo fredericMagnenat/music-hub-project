@@ -1,6 +1,5 @@
 package com.musichub.producer.adapter.spi.auth;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,15 +33,15 @@ class TidalAuthServiceTest {
         // Use reflection to set the config properties since @ConfigProperty doesn't work in unit tests
         setConfigProperty("clientId", Optional.of("test-client-id"));
         setConfigProperty("clientSecret", Optional.of("test-client-secret"));
-        setConfigProperty("scope", "r_usr");
+        setConfigProperty("grantType", "client_credentials");
     }
 
     @Test
     void getAccessToken_WhenValidCredentials_ShouldReturnToken() throws Exception {
         // Given: Valid token response from auth client
-        TidalTokenResponse mockResponse = new TidalTokenResponse("test-access-token", "Bearer", 3600);
-        when(authClient.getAccessToken(anyString(), anyString(), anyString(), anyString()))
-            .thenReturn(mockResponse);
+        TidalTokenResponse mockResponse = new TidalTokenResponse("test-access-token", 3600L);
+        when(authClient.getAccessToken(anyString(), anyString(), anyString()))
+                .thenReturn(mockResponse);
 
         // When: Getting access token
         String token = authService.getAccessToken();
@@ -50,17 +49,17 @@ class TidalAuthServiceTest {
         // Then: Should return the token
         assertNotNull(token);
         assertEquals("test-access-token", token);
-        
+
         // Verify correct parameters were passed
-        verify(authClient).getAccessToken("client_credentials", "test-client-id", "test-client-secret", "r_usr");
+        verify(authClient).getAccessToken("client_credentials", "test-client-id", "test-client-secret");
     }
 
     @Test
     void getAccessToken_WhenCachedTokenValid_ShouldReturnCachedToken() throws Exception {
         // Given: Valid token response that gets cached
-        TidalTokenResponse mockResponse = new TidalTokenResponse("cached-token", "Bearer", 3600);
-        when(authClient.getAccessToken(anyString(), anyString(), anyString(), anyString()))
-            .thenReturn(mockResponse);
+        TidalTokenResponse mockResponse = new TidalTokenResponse("cached-token", 3600L);
+        when(authClient.getAccessToken(anyString(), anyString(), anyString()))
+                .thenReturn(mockResponse);
 
         // When: Getting access token twice
         String firstToken = authService.getAccessToken();
@@ -69,7 +68,7 @@ class TidalAuthServiceTest {
         // Then: Should return same token and only call auth client once
         assertEquals("cached-token", firstToken);
         assertEquals("cached-token", secondToken);
-        verify(authClient, times(1)).getAccessToken(anyString(), anyString(), anyString(), anyString());
+        verify(authClient, times(1)).getAccessToken(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -82,7 +81,7 @@ class TidalAuthServiceTest {
 
         // Then: Should return null
         assertNull(token);
-        
+
         // Verify auth client was not called
         verifyNoInteractions(authClient);
     }
@@ -90,8 +89,8 @@ class TidalAuthServiceTest {
     @Test
     void getAccessToken_WhenAuthClientFails_ShouldReturnNull() throws Exception {
         // Given: Auth client throws exception
-        when(authClient.getAccessToken(anyString(), anyString(), anyString(), anyString()))
-            .thenThrow(new RuntimeException("Auth service unavailable"));
+        when(authClient.getAccessToken(anyString(), anyString(), anyString()))
+                .thenThrow(new RuntimeException("Auth service unavailable"));
 
         // When: Getting access token
         String token = authService.getAccessToken();
@@ -103,9 +102,9 @@ class TidalAuthServiceTest {
     @Test
     void getAuthorizationHeader_WhenValidToken_ShouldReturnBearerHeader() throws Exception {
         // Given: Valid token response
-        TidalTokenResponse mockResponse = new TidalTokenResponse("test-token", "Bearer", 3600);
-        when(authClient.getAccessToken(anyString(), anyString(), anyString(), anyString()))
-            .thenReturn(mockResponse);
+        TidalTokenResponse mockResponse = new TidalTokenResponse("test-token", 3600L);
+        when(authClient.getAccessToken(anyString(), anyString(), anyString()))
+                .thenReturn(mockResponse);
 
         // When: Getting authorization header
         String header = authService.getAuthorizationHeader();
@@ -130,9 +129,9 @@ class TidalAuthServiceTest {
     @Test
     void refreshAccessToken_WhenCalled_ShouldGetNewToken() throws Exception {
         // Given: Valid token response
-        TidalTokenResponse mockResponse = new TidalTokenResponse("refreshed-token", "Bearer", 3600);
-        when(authClient.getAccessToken(anyString(), anyString(), anyString(), anyString()))
-            .thenReturn(mockResponse);
+        TidalTokenResponse mockResponse = new TidalTokenResponse("refreshed-token", 3600L);
+        when(authClient.getAccessToken(anyString(), anyString(), anyString()))
+                .thenReturn(mockResponse);
 
         // When: Refreshing access token
         String token = authService.refreshAccessToken();

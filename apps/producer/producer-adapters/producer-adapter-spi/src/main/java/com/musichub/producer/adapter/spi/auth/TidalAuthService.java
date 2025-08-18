@@ -7,13 +7,16 @@ import org.slf4j.LoggerFactory;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.Optional;
 
 /**
  * Service for managing Tidal OAuth2 authentication tokens.
  * Handles token acquisition, caching, and renewal.
- * 
+ * <p>
  * This service implements the OAuth2 client credentials flow
  * and caches tokens until they expire.
  */
@@ -22,7 +25,6 @@ public class TidalAuthService {
 
     private static final Logger logger = LoggerFactory.getLogger(TidalAuthService.class);
     private static final String GRANT_TYPE = "client_credentials";
-    private static final String DEFAULT_SCOPE = "r_usr"; // Tidal default scope
 
     @Inject
     @RestClient
@@ -34,8 +36,8 @@ public class TidalAuthService {
     @ConfigProperty(name = "tidal.auth.client-secret")
     Optional<String> clientSecret;
 
-    @ConfigProperty(name = "tidal.auth.scope", defaultValue = DEFAULT_SCOPE)
-    String scope;
+    @ConfigProperty(name = "tidal.auth.grant-type", defaultValue = GRANT_TYPE)
+    String grantType;
 
     // Token cache
     private volatile TidalTokenResponse cachedToken;
@@ -44,13 +46,13 @@ public class TidalAuthService {
     /**
      * Get a valid access token for Tidal API calls.
      * Returns cached token if still valid, otherwise requests a new one.
-     * 
+     *
      * @return access token or null if authentication fails
      */
     public String getAccessToken() {
         if (isTokenValid()) {
             logger.debug("Using cached Tidal access token");
-            return cachedToken.accessToken;
+            return cachedToken.getAccessToken();
         }
 
         return refreshAccessToken();
@@ -58,7 +60,7 @@ public class TidalAuthService {
 
     /**
      * Get the full Authorization header value.
-     * 
+     *
      * @return "Bearer <token>" or null if authentication fails
      */
     public String getAuthorizationHeader() {
@@ -68,7 +70,7 @@ public class TidalAuthService {
 
     /**
      * Force refresh of the access token.
-     * 
+     *
      * @return new access token or null if authentication fails
      */
     public String refreshAccessToken() {
@@ -79,22 +81,21 @@ public class TidalAuthService {
 
         try {
             logger.debug("Requesting new Tidal access token");
-            
+
             TidalTokenResponse response = authClient.getAccessToken(
-                GRANT_TYPE,
-                clientId.get(),
-                clientSecret.get(),
-                scope
+                    grantType,
+                    clientId.get(),
+                    clientSecret.get()
             );
 
             if (response != null && response.isValid()) {
                 cachedToken = response;
                 // Set expiry time with 5-minute buffer for safety
-                int expiresIn = response.expiresIn != null ? response.expiresIn : 3600;
+                long expiresIn = response.getExpiresIn() != null ? response.getExpiresIn() : 3600L;
                 tokenExpiry = Instant.now().plusSeconds(expiresIn - 300);
-                
+
                 logger.info("Successfully obtained Tidal access token, expires in {} seconds", expiresIn);
-                return response.accessToken;
+                return response.getAccessToken();
             } else {
                 logger.error("Invalid response from Tidal auth API");
                 return null;
@@ -110,20 +111,20 @@ public class TidalAuthService {
      * Check if the cached token is still valid.
      */
     private boolean isTokenValid() {
-        return cachedToken != null 
-            && cachedToken.isValid() 
-            && tokenExpiry != null 
-            && Instant.now().isBefore(tokenExpiry);
+        return cachedToken != null
+                && cachedToken.isValid()
+                && tokenExpiry != null
+                && Instant.now().isBefore(tokenExpiry);
     }
 
     /**
      * Check if we have valid credentials configured.
      */
     private boolean hasValidCredentials() {
-        return clientId.isPresent() 
-            && clientSecret.isPresent()
-            && !clientId.get().trim().isEmpty()
-            && !clientSecret.get().trim().isEmpty()
-            && !"changeme".equals(clientId.get());
+        return clientId.isPresent()
+                && clientSecret.isPresent()
+                && !clientId.get().trim().isEmpty()
+                && !clientSecret.get().trim().isEmpty()
+                && !"changeme".equals(clientId.get());
     }
 }
