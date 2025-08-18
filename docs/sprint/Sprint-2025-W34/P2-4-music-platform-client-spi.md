@@ -5,6 +5,8 @@ Story: docs/stories/story-P2.md
 ## Description
 Create an HTTP client interface for external music platform API integration using Quarkus REST Client, with proper error handling and secret management for API keys.
 
+> **Note pour le MVP :** Ce client se connectera spécifiquement à l'API de **Tidal**. La prise en charge de plateformes supplémentaires (comme Spotify) sera traitée dans une story future.
+
 ## Acceptance Criteria
 - Given a MusicPlatformClient interface, when getTrackByIsrc is called, then it returns track metadata or appropriate error response
 - Interface uses Quarkus REST Client annotations for HTTP integration
