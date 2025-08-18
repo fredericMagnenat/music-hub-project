@@ -16,8 +16,8 @@ export function StatusBadge({ status, className, ...props }: StatusBadgeProps) {
       className={cn(
         "inline-flex items-center rounded px-2 py-0.5 text-xs font-medium",
         isVerified
-          ? "bg-[var(--hub-success)] text-[#065F46]"
-          : "bg-[var(--hub-warning)] text-[var(--hub-neutral-600)]",
+          ? "bg-[#10B981] text-[#065F46]"
+          : "bg-[#F59E0B] text-[#92400E]",
         className
       )}
       aria-label={`Status: ${status}`}

@@ -4,7 +4,7 @@ import { registerTrack } from "~/lib/utils";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { useToast } from "~/components/ui/toast";
-import { StatusBadge } from "~/components/ui/status-badge";
+import { RecentTracksList } from "~/components/RecentTracksList";
 
 export const meta: MetaFunction = () => {
   return [
@@ -26,15 +26,7 @@ function isValidISRC(input: string): boolean {
   return /^[A-Z]{2}[A-Z0-9]{3}\d{7}$/.test(normalized);
 }
 
-type TrackStatus = "Provisional" | "Verified";
-
-interface RecentTrackItem {
-  id: string;
-  title: string;
-  artists: string[];
-  isrc: string;
-  status: TrackStatus;
-}
+import type { RecentTrackItem } from "~/components/RecentTracksList";
 
 export default function Index() {
   const [rawIsrc, setRawIsrc] = useState("");
@@ -182,34 +174,7 @@ export default function Index() {
 
         <div className="mt-8">
           <h3 className="text-lg font-semibold mb-3">Recent Tracks</h3>
-          {recentTracks.length === 0 ? (
-            <div
-              className="rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700"
-              role="status"
-              aria-live="polite"
-            >
-              No recent tracks yet. Tracks you validate will appear here.
-            </div>
-          ) : (
-            <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0" aria-label="Recent Tracks">
-              {recentTracks.slice(0, 10).map((t) => (
-                <li key={t.id} className="rounded-md border border-gray-200 bg-white p-3 shadow-sm">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-gray-900" title={t.title}>
-                        {t.title}
-                      </p>
-                      <p className="truncate text-sm text-gray-600" title={t.artists.join(", ")}>
-                        {t.artists.join(", ")}
-                      </p>
-                      <p className="mt-1 font-mono text-xs text-gray-500">ISRC: {t.isrc}</p>
-                    </div>
-                    <StatusBadge status={t.status} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+          <RecentTracksList tracks={recentTracks} />
         </div>
       </div>
     </div>
