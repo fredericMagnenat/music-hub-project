@@ -88,6 +88,13 @@ public class RegisterTrackService implements RegisterTrackUseCase {
         
         try {
             ExternalTrackMetadata metadata = musicPlatformPort.getTrackByIsrc(isrcValue);
+            if (metadata == null) {
+                throw new ExternalServiceException(
+                    "No track metadata returned for ISRC: " + isrcValue,
+                    isrcValue,
+                    "external-api"
+                );
+            }
             logger.debug("Successfully fetched metadata for ISRC: {} - Title: '{}' by {}", 
                         isrcValue, metadata.getTitle(), metadata.getArtistNames());
             return metadata;

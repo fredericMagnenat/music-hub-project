@@ -20,6 +20,13 @@ import static org.mockito.Mockito.when;
 @DisplayName("ProducerResource Unit Tests")
 class ProducerResourceTest {
 
+    // Mock exception class to simulate ExternalServiceException
+    static class ExternalServiceException extends RuntimeException {
+        public ExternalServiceException(String message) {
+            super(message);
+        }
+    }
+
     @Mock
     RegisterTrackUseCase registerTrackUseCase;
 
@@ -111,6 +118,26 @@ class ProducerResourceTest {
         ProducerResource.ErrorResponse error = (ProducerResource.ErrorResponse) response.getEntity();
         assertEquals("InvalidISRCFormat", error.error);
         assertEquals("ISRC format is invalid", error.message);
+    }
+
+    @Test
+    @DisplayName("Should return 422 when use case throws ExternalServiceException")
+    void register_returns422_on_external_service_exception() {
+        // Given
+        ProducerResource.RegisterTrackRequest request = new ProducerResource.RegisterTrackRequest();
+        request.isrc = "FRLA12400001";
+        
+        when(registerTrackUseCase.registerTrack("FRLA12400001"))
+            .thenThrow(new ExternalServiceException("Track not found on external service"));
+
+        // When
+        Response response = producerResource.register(request);
+
+        // Then
+        assertEquals(422, response.getStatus());
+        ProducerResource.ErrorResponse error = (ProducerResource.ErrorResponse) response.getEntity();
+        assertEquals("TRACK_NOT_FOUND_EXTERNAL", error.error);
+        assertEquals("The ISRC was valid, but we could not find metadata for it on external services.", error.message);
     }
 
     @Test

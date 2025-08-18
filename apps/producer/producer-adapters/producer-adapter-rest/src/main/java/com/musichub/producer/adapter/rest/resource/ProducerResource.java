@@ -93,9 +93,20 @@ public class ProducerResource {
                     .entity(new ErrorResponse("InvalidISRCFormat", e.getMessage()))
                     .build();
         } catch (RuntimeException e) {
-            return Response.status(422)
-                    .entity(new ErrorResponse("UnresolvableISRC", e.getMessage()))
-                    .build();
+            // Check if this is an external service exception by examining the exception type name
+            // This handles both ExternalServiceException and TrackNotFoundInExternalServiceException
+            String simpleName = e.getClass().getSimpleName();
+            if (simpleName.contains("ExternalService") || 
+                simpleName.contains("TrackNotFoundInExternalService")) {
+                return Response.status(422)
+                        .entity(new ErrorResponse("TRACK_NOT_FOUND_EXTERNAL", 
+                            "The ISRC was valid, but we could not find metadata for it on external services."))
+                        .build();
+            } else {
+                return Response.status(422)
+                        .entity(new ErrorResponse("UnresolvableISRC", e.getMessage()))
+                        .build();
+            }
         }
     }
 

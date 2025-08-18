@@ -153,6 +153,13 @@
             <artifactId>rest-assured</artifactId>
             <scope>test</scope>
         </dependency>
+        
+        <!-- WireMock for external API simulation in integration tests -->
+        <dependency>
+            <groupId>io.quarkiverse.wiremock</groupId>
+            <artifactId>quarkus-wiremock-test</artifactId>
+            <scope>test</scope>
+        </dependency>
         <!-- H2 database for schema generation and testing -->
         <dependency>
             <groupId>io.quarkus</groupId>

@@ -350,15 +350,19 @@ class RegisterTrackServiceTest {
         @Test
         @DisplayName("Should handle null ISRC gracefully")
         void shouldHandleNullIsrcGracefully() {
-            // When & Then: External API call will fail first, wrapping the original error
+            // Given: Mock returns null for null ISRC (default behavior)
+            // This simulates the external service not finding any data for invalid input
+            
+            // When & Then: Should throw ExternalServiceException due to null metadata
             ExternalServiceException thrown = assertThrows(ExternalServiceException.class,
                 () -> registerTrackService.registerTrack(null));
 
-            // Then: Should contain the wrapped IllegalArgumentException
-            assertNotNull(thrown.getCause());
-            assertTrue(thrown.getCause() instanceof IllegalArgumentException);
+            // Then: Should mention no track metadata returned
+            assertTrue(thrown.getMessage().contains("No track metadata returned"));
+            assertNull(thrown.getIsrc());
+            assertEquals("external-api", thrown.getService());
             
-            // Then: Should call external dependencies but fail early
+            // Then: Should call external API but fail before repository
             verify(musicPlatformPort).getTrackByIsrc(null);
             verifyNoInteractions(producerRepository);
             verifyNoInteractions(trackRegisteredEvent);
@@ -367,15 +371,17 @@ class RegisterTrackServiceTest {
         @Test
         @DisplayName("Should handle empty ISRC gracefully")  
         void shouldHandleEmptyIsrcGracefully() {
-            // Given: Mock platform port returns null (or throws exception)
+            // Given: Mock platform port returns null for empty ISRC
             when(musicPlatformPort.getTrackByIsrc("")).thenReturn(null);
             
             // When & Then: Should fail due to null metadata
             ExternalServiceException thrown = assertThrows(ExternalServiceException.class,
                 () -> registerTrackService.registerTrack(""));
 
-            // Then: Should mention unexpected error
-            assertTrue(thrown.getMessage().contains("Unexpected error"));
+            // Then: Should mention no track metadata returned
+            assertTrue(thrown.getMessage().contains("No track metadata returned"));
+            assertEquals("", thrown.getIsrc());
+            assertEquals("external-api", thrown.getService());
             
             // Then: Should call external API but fail before repository
             verify(musicPlatformPort).getTrackByIsrc("");
