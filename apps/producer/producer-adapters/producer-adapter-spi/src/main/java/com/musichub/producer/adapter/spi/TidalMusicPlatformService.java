@@ -36,7 +36,7 @@ public class TidalMusicPlatformService {
     @Inject
     TidalResponseMapper responseMapper;
 
-    @ConfigProperty(name = "music-platform.default-country-code", defaultValue = "US")
+    @ConfigProperty(name = "tidal.default-country-code", defaultValue = "US")
     String defaultCountryCode;
 
     /**
