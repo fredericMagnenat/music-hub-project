@@ -1,37 +1,58 @@
 package com.musichub.producer.adapter.spi;
 
-import com.musichub.producer.adapter.spi.dto.TrackMetadataDto;
+import com.musichub.producer.adapter.spi.dto.tidal.TidalTracksResponse;
+import com.musichub.producer.adapter.spi.auth.TidalClientHeadersFactory;
+import org.eclipse.microprofile.rest.client.annotation.RegisterClientHeaders;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
 /**
- * REST client interface for external music platform API integration.
- * This interface provides access to external music platforms (like Tidal) 
- * to retrieve track metadata by ISRC.
+ * REST client interface for Tidal music platform API integration.
+ * This interface provides access to Tidal's OpenAPI v2 to retrieve track metadata by ISRC.
  * 
- * Configuration is managed through application.properties with:
- * - quarkus.rest-client.music-platform-client.url
+ * Uses Tidal's real API structure:
+ * - GET /tracks with query parameters
+ * - filter[isrc] parameter for ISRC search
+ * - include=artists parameter to fetch artist data
+ * - countryCode parameter (required by Tidal)
+ * - JSON:API response format
+ * 
+ * Authentication is handled by TidalClientHeadersFactory which adds:
+ * - Authorization header with Bearer token
+ * - Accept: application/vnd.api+json
+ * - X-Tidal-Client-ID header (if configured)
+ * 
+ * Configuration properties:
+ * - quarkus.rest-client.music-platform-client.url (should point to Tidal OpenAPI)
+ * - tidal.auth.client-id
+ * - tidal.auth.client-secret 
  * - music-platform.api.key
  */
 @RegisterRestClient(configKey = "music-platform-client")
-@Path("/api/v1")
+@RegisterClientHeaders(TidalClientHeadersFactory.class)
+@Path("/tracks")
 public interface MusicPlatformClient {
     
     /**
-     * Retrieves track metadata from the external music platform using ISRC.
+     * Retrieves track metadata from Tidal using ISRC filter.
+     * This matches Tidal's actual API structure: GET /tracks?filter[isrc]=XXXX&include=artists&countryCode=US
      * 
-     * @param isrc The International Standard Recording Code
-     * @return TrackMetadataDto containing track information
-     * @throws com.musichub.producer.adapter.spi.exception.TrackNotFoundInExternalServiceException 
-     *         when track is not found or service is unavailable
+     * @param isrc The International Standard Recording Code to search for
+     * @param include Related resources to include (typically "artists")
+     * @param countryCode ISO 3166-1 alpha-2 country code (required by Tidal)
+     * @return TidalTracksResponse containing track data in JSON:API format
+     * @throws jakarta.ws.rs.WebApplicationException for HTTP errors (404, 500, etc.)
      */
     @GET
-    @Path("/tracks/{isrc}")
-    @Produces(MediaType.APPLICATION_JSON)
-    TrackMetadataDto getTrackByIsrc(@PathParam("isrc") String isrc);
+    @Produces("application/vnd.api+json")
+    TidalTracksResponse getTracksByIsrc(
+        @QueryParam("filter[isrc]") String isrc,
+        @QueryParam("include") String include,
+        @QueryParam("countryCode") String countryCode
+    );
 }
