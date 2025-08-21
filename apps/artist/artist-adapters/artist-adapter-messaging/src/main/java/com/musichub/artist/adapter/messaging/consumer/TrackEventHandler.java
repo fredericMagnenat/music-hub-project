@@ -1,4 +1,4 @@
-package com.musichub.artist.adapter.messaging;
+package com.musichub.artist.adapter.messaging.consumer;
 
 import com.musichub.artist.domain.ports.in.ArtistTrackRegistrationUseCase;
 import com.musichub.shared.events.TrackWasRegistered;

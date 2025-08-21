@@ -2,14 +2,14 @@ package com.musichub.producer.application;
 
 import com.musichub.producer.application.dto.ExternalTrackMetadata;
 import com.musichub.producer.application.exception.ExternalServiceException;
+import com.musichub.producer.application.ports.out.EventPublisherPort;
 import com.musichub.producer.application.ports.out.MusicPlatformPort;
+import com.musichub.producer.application.service.RegisterTrackService;
 import com.musichub.producer.domain.model.Producer;
 import com.musichub.producer.domain.ports.out.ProducerRepository;
 import com.musichub.shared.domain.values.ISRC;
 import com.musichub.shared.domain.values.ProducerCode;
 import com.musichub.shared.events.TrackWasRegistered;
-import jakarta.enterprise.event.Event;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -41,7 +41,7 @@ class RegisterTrackServiceTest {
     private MusicPlatformPort musicPlatformPort;
 
     @Mock
-    private Event<TrackWasRegistered> trackRegisteredEvent;
+    private EventPublisherPort eventPublisherPort;
 
     @InjectMocks
     private RegisterTrackService registerTrackService;
@@ -87,7 +87,7 @@ class RegisterTrackServiceTest {
 
             // Then: Should publish event
             ArgumentCaptor<TrackWasRegistered> eventCaptor = ArgumentCaptor.forClass(TrackWasRegistered.class);
-            verify(trackRegisteredEvent).fire(eventCaptor.capture());
+            verify(eventPublisherPort).publishTrackRegistered(eventCaptor.capture());
             TrackWasRegistered capturedEvent = eventCaptor.getValue();
             assertEquals(ISRC.of(NORMALIZED_ISRC), capturedEvent.isrc());
             assertEquals("Bohemian Rhapsody", capturedEvent.title());
@@ -123,7 +123,7 @@ class RegisterTrackServiceTest {
             // Then: Should use existing producer
             verify(producerRepository).findByProducerCode(code);
             verify(producerRepository).save(any(Producer.class));
-            verify(trackRegisteredEvent).fire(any(TrackWasRegistered.class));
+            verify(eventPublisherPort).publishTrackRegistered(any(TrackWasRegistered.class));
 
             assertNotNull(result);
         }
@@ -149,7 +149,7 @@ class RegisterTrackServiceTest {
 
             // Then: Event should contain all artists
             ArgumentCaptor<TrackWasRegistered> eventCaptor = ArgumentCaptor.forClass(TrackWasRegistered.class);
-            verify(trackRegisteredEvent).fire(eventCaptor.capture());
+            verify(eventPublisherPort).publishTrackRegistered(eventCaptor.capture());
             TrackWasRegistered capturedEvent = eventCaptor.getValue();
             assertEquals(List.of("Queen", "David Bowie"), capturedEvent.artistNames());
         }
@@ -188,7 +188,7 @@ class RegisterTrackServiceTest {
             verify(producerRepository).save(any(Producer.class));
 
             // Then: Should NOT publish event for duplicate
-            verifyNoInteractions(trackRegisteredEvent);
+            verifyNoInteractions(eventPublisherPort);
         }
 
         @Test
@@ -215,7 +215,7 @@ class RegisterTrackServiceTest {
 
             // Then: Should use normalized ISRC internally
             ArgumentCaptor<TrackWasRegistered> eventCaptor = ArgumentCaptor.forClass(TrackWasRegistered.class);
-            verify(trackRegisteredEvent).fire(eventCaptor.capture());
+            verify(eventPublisherPort).publishTrackRegistered(eventCaptor.capture());
             assertEquals(ISRC.of(NORMALIZED_ISRC), eventCaptor.getValue().isrc());
         }
     }
@@ -245,7 +245,7 @@ class RegisterTrackServiceTest {
 
             // Then: Should not interact with repository or event bus
             verifyNoInteractions(producerRepository);
-            verifyNoInteractions(trackRegisteredEvent);
+            verifyNoInteractions(eventPublisherPort);
         }
 
         @Test
@@ -268,7 +268,7 @@ class RegisterTrackServiceTest {
 
             // Then: Should not interact with repository or event bus
             verifyNoInteractions(producerRepository);
-            verifyNoInteractions(trackRegisteredEvent);
+            verifyNoInteractions(eventPublisherPort);
         }
 
         @Test
@@ -283,7 +283,7 @@ class RegisterTrackServiceTest {
                 () -> registerTrackService.registerTrack(TEST_ISRC));
 
             // Then: Should not publish any event
-            verifyNoInteractions(trackRegisteredEvent);
+            verifyNoInteractions(eventPublisherPort);
             verifyNoInteractions(producerRepository);
         }
     }
@@ -312,7 +312,7 @@ class RegisterTrackServiceTest {
 
             // Then: Should save first, then publish event (verified by method order)
             verify(producerRepository).save(any(Producer.class));
-            verify(trackRegisteredEvent).fire(any(TrackWasRegistered.class));
+            verify(eventPublisherPort).publishTrackRegistered(any(TrackWasRegistered.class));
         }
 
         @Test
@@ -333,7 +333,7 @@ class RegisterTrackServiceTest {
 
             // Then: Event should have correct structure
             ArgumentCaptor<TrackWasRegistered> eventCaptor = ArgumentCaptor.forClass(TrackWasRegistered.class);
-            verify(trackRegisteredEvent).fire(eventCaptor.capture());
+            verify(eventPublisherPort).publishTrackRegistered(eventCaptor.capture());
             TrackWasRegistered event = eventCaptor.getValue();
 
             assertNotNull(event.isrc());
@@ -365,7 +365,7 @@ class RegisterTrackServiceTest {
             // Then: Should call external API but fail before repository
             verify(musicPlatformPort).getTrackByIsrc(null);
             verifyNoInteractions(producerRepository);
-            verifyNoInteractions(trackRegisteredEvent);
+            verifyNoInteractions(eventPublisherPort);
         }
 
         @Test
@@ -386,7 +386,7 @@ class RegisterTrackServiceTest {
             // Then: Should call external API but fail before repository
             verify(musicPlatformPort).getTrackByIsrc("");
             verifyNoInteractions(producerRepository);
-            verifyNoInteractions(trackRegisteredEvent);
+            verifyNoInteractions(eventPublisherPort);
         }
     }
 }

@@ -350,7 +350,7 @@ For production environments, use structured JSON logging for better machine read
 {
   "timestamp": "2025-08-16T14:30:15.123Z",
   "level": "INFO",
-  "logger": "com.musichub.producer.application.RegisterTrackService",
+  "logger": "com.musichub.producer.application.service.RegisterTrackService",
   "message": "Track registration completed successfully",
   "thread": "executor-thread-1",
   "mdc": {
@@ -1292,7 +1292,7 @@ public class ProducerRepositoryImpl implements ProducerRepository {
 {
   "timestamp": "2025-08-16T14:30:15.123Z",
   "level": "INFO",
-  "logger": "com.musichub.producer.application.RegisterTrackService",
+  "logger": "com.musichub.producer.application.service.RegisterTrackService",
   "message": "Track registration completed successfully",
   "thread": "executor-thread-1",
   "tracing": {
@@ -1437,7 +1437,7 @@ public class PerformantLogger {
 %prod.quarkus.log.category."org.hibernate".level=ERROR
 
 # Keep important business events
-%prod.quarkus.log.category."com.musichub.producer.application.RegisterTrackService".level=INFO
+%prod.quarkus.log.category."com.musichub.producer.application.service.RegisterTrackService".level=INFO
 
 # Disable debug/trace entirely in production
 %prod.quarkus.log.min-level=INFO
