@@ -162,9 +162,16 @@ class TidalMusicPlatformAdapterTest {
             // Given: Tidal service returns null
             when(tidalService.getTrackByIsrc(TEST_ISRC)).thenReturn(null);
 
-            // When & Then: Should throw NullPointerException (or handle gracefully)
-            assertThrows(NullPointerException.class,
+            // When & Then: Should wrap NullPointerException in ExternalServiceException
+            ExternalServiceException thrown = assertThrows(ExternalServiceException.class,
                 () -> adapter.getTrackByIsrc(TEST_ISRC));
+
+            // Then: Should have proper error details
+            assertEquals(TEST_ISRC, thrown.getIsrc());
+            assertEquals("tidal", thrown.getService());
+            assertTrue(thrown.getMessage().contains("Unexpected error"));
+            assertNotNull(thrown.getCause());
+            assertTrue(thrown.getCause() instanceof NullPointerException);
 
             verify(tidalService).getTrackByIsrc(TEST_ISRC);
         }
