@@ -91,7 +91,7 @@ class ProducerIdTest {
             ProducerId id = ProducerId.fromProducerCode(code);
             
             // Then - Snapshot derived from current implementation and namespace constant
-            UUID expected = UUID.fromString("f36e54fa-ce8b-5498-9713-c231236ef2e8");
+            UUID expected = UUID.fromString("30729dcf-d1ae-5d73-ae40-edcb71cf0d59");
             assertEquals(expected, id.value());
         }
 

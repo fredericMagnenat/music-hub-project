@@ -8,25 +8,25 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DisplayName("ArtistId Tests")
-class ArtistIdTest {
+@DisplayName("TrackId Tests")
+class TrackIdTest {
 
     @Nested
     @DisplayName("Construction")
     class Construction {
 
         @Test
-        @DisplayName("Should create ArtistId with valid UUID")
-        void shouldCreateArtistIdWithValidUuid() {
+        @DisplayName("Should create TrackId with valid UUID")
+        void shouldCreateTrackIdWithValidUuid() {
             // Given
             UUID uuid = UUID.randomUUID();
             
             // When
-            ArtistId artistId = new ArtistId(uuid);
+            TrackId trackId = new TrackId(uuid);
             
             // Then
-            assertNotNull(artistId);
-            assertEquals(uuid, artistId.value());
+            assertNotNull(trackId);
+            assertEquals(uuid, trackId.value());
         }
 
         @Test
@@ -35,10 +35,10 @@ class ArtistIdTest {
             // When & Then
             IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, 
-                () -> new ArtistId(null)
+                () -> new TrackId(null)
             );
             
-            assertEquals("ArtistId null", exception.getMessage());
+            assertEquals("TrackId null", exception.getMessage());
         }
     }
 
@@ -47,26 +47,26 @@ class ArtistIdTest {
     class FactoryMethod {
 
         @Test
-        @DisplayName("Should generate new ArtistId with random UUID")
-        void shouldGenerateNewArtistIdWithRandomUuid() {
+        @DisplayName("Should generate new TrackId with random UUID")
+        void shouldGenerateNewTrackIdWithRandomUuid() {
             // When
-            ArtistId artistId = ArtistId.newId();
+            TrackId trackId = TrackId.newId();
             
             // Then
-            assertNotNull(artistId);
-            assertNotNull(artistId.value());
+            assertNotNull(trackId);
+            assertNotNull(trackId.value());
         }
 
         @Test
         @DisplayName("Should generate different UUIDs for each call")
         void shouldGenerateDifferentUuidsForEachCall() {
             // When
-            ArtistId artistId1 = ArtistId.newId();
-            ArtistId artistId2 = ArtistId.newId();
+            TrackId trackId1 = TrackId.newId();
+            TrackId trackId2 = TrackId.newId();
             
             // Then
-            assertNotEquals(artistId1.value(), artistId2.value());
-            assertNotEquals(artistId1, artistId2);
+            assertNotEquals(trackId1.value(), trackId2.value());
+            assertNotEquals(trackId1, trackId2);
         }
     }
 
@@ -75,80 +75,80 @@ class ArtistIdTest {
     class DeterministicFactoryMethod {
 
         @Test
-        @DisplayName("Should generate same ArtistId for same artist name")
-        void shouldGenerateSameArtistIdForSameArtistName() {
+        @DisplayName("Should generate same TrackId for same ISRC")
+        void shouldGenerateSameTrackIdForSameISRC() {
             // Given
-            String artistName = "The Beatles";
+            String isrc = "USRC17607839";
             
             // When
-            ArtistId artistId1 = ArtistId.fromName(artistName);
-            ArtistId artistId2 = ArtistId.fromName(artistName);
+            TrackId trackId1 = TrackId.fromISRC(isrc);
+            TrackId trackId2 = TrackId.fromISRC(isrc);
             
             // Then
-            assertEquals(artistId1, artistId2);
-            assertEquals(artistId1.value(), artistId2.value());
+            assertEquals(trackId1, trackId2);
+            assertEquals(trackId1.value(), trackId2.value());
         }
 
         @Test
-        @DisplayName("Should generate different ArtistIds for different artist names")
-        void shouldGenerateDifferentArtistIdsForDifferentArtistNames() {
+        @DisplayName("Should generate different TrackIds for different ISRCs")
+        void shouldGenerateDifferentTrackIdsForDifferentISRCs() {
             // When
-            ArtistId artistId1 = ArtistId.fromName("The Beatles");
-            ArtistId artistId2 = ArtistId.fromName("Queen");
+            TrackId trackId1 = TrackId.fromISRC("USRC17607839");
+            TrackId trackId2 = TrackId.fromISRC("GBUM71505078");
             
             // Then
-            assertNotEquals(artistId1, artistId2);
-            assertNotEquals(artistId1.value(), artistId2.value());
+            assertNotEquals(trackId1, trackId2);
+            assertNotEquals(trackId1.value(), trackId2.value());
         }
 
         @Test
-        @DisplayName("Should handle whitespace in artist name")
-        void shouldHandleWhitespaceInArtistName() {
+        @DisplayName("Should handle whitespace in ISRC")
+        void shouldHandleWhitespaceInISRC() {
             // Given
-            String artistName = " The Beatles ";
+            String isrc = " USRC17607839 ";
             
             // When
-            ArtistId artistId1 = ArtistId.fromName(artistName);
-            ArtistId artistId2 = ArtistId.fromName("The Beatles");
+            TrackId trackId1 = TrackId.fromISRC(isrc);
+            TrackId trackId2 = TrackId.fromISRC("USRC17607839");
             
             // Then
-            assertEquals(artistId1, artistId2);
+            assertEquals(trackId1, trackId2);
         }
 
         @Test
-        @DisplayName("Should throw IllegalArgumentException when artist name is null")
-        void shouldThrowExceptionWhenArtistNameIsNull() {
+        @DisplayName("Should throw IllegalArgumentException when ISRC is null")
+        void shouldThrowExceptionWhenISRCIsNull() {
             // When & Then
             IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, 
-                () -> ArtistId.fromName(null)
+                () -> TrackId.fromISRC(null)
             );
             
-            assertEquals("Artist name must not be null", exception.getMessage());
+            assertEquals("ISRC must not be null", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Should throw IllegalArgumentException when artist name is empty")
-        void shouldThrowExceptionWhenArtistNameIsEmpty() {
+        @DisplayName("Should throw IllegalArgumentException when ISRC is empty")
+        void shouldThrowExceptionWhenISRCIsEmpty() {
             // When & Then
             IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, 
-                () -> ArtistId.fromName("")
+                () -> TrackId.fromISRC("")
             );
             
-            assertEquals("Artist name must not be empty", exception.getMessage());
+            assertEquals("ISRC must not be empty", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Should throw IllegalArgumentException when artist name is blank")
-        void shouldThrowExceptionWhenArtistNameIsBlank() {
+        @DisplayName("Should throw IllegalArgumentException when ISRC is blank")
+        void shouldThrowExceptionWhenISRCIsBlank() {
             // When & Then
             IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, 
-                () -> ArtistId.fromName("   ")
+                () -> TrackId.fromISRC("   ")
             );
             
-            assertEquals("Artist name must not be empty", exception.getMessage());
+            assertEquals("ISRC must not be empty", exception.getMessage());
         }
     }
 
@@ -161,44 +161,44 @@ class ArtistIdTest {
         void shouldBeEqualWhenUuidsAreSame() {
             // Given
             UUID uuid = UUID.randomUUID();
-            ArtistId artistId1 = new ArtistId(uuid);
-            ArtistId artistId2 = new ArtistId(uuid);
+            TrackId trackId1 = new TrackId(uuid);
+            TrackId trackId2 = new TrackId(uuid);
             
             // Then
-            assertEquals(artistId1, artistId2);
-            assertEquals(artistId1.hashCode(), artistId2.hashCode());
+            assertEquals(trackId1, trackId2);
+            assertEquals(trackId1.hashCode(), trackId2.hashCode());
         }
 
         @Test
         @DisplayName("Should not be equal when UUIDs are different")
         void shouldNotBeEqualWhenUuidsAreDifferent() {
             // Given
-            ArtistId artistId1 = new ArtistId(UUID.randomUUID());
-            ArtistId artistId2 = new ArtistId(UUID.randomUUID());
+            TrackId trackId1 = new TrackId(UUID.randomUUID());
+            TrackId trackId2 = new TrackId(UUID.randomUUID());
             
             // Then
-            assertNotEquals(artistId1, artistId2);
+            assertNotEquals(trackId1, trackId2);
         }
 
         @Test
         @DisplayName("Should not be equal to null")
         void shouldNotBeEqualToNull() {
             // Given
-            ArtistId artistId = new ArtistId(UUID.randomUUID());
+            TrackId trackId = new TrackId(UUID.randomUUID());
             
             // Then
-            assertNotEquals(artistId, null);
+            assertNotEquals(trackId, null);
         }
 
         @Test
         @DisplayName("Should not be equal to different type")
         void shouldNotBeEqualToDifferentType() {
             // Given
-            ArtistId artistId = new ArtistId(UUID.randomUUID());
-            String differentType = "not an ArtistId";
+            TrackId trackId = new TrackId(UUID.randomUUID());
+            String differentType = "not a TrackId";
             
             // Then
-            assertNotEquals(artistId, differentType);
+            assertNotEquals(trackId, differentType);
         }
     }
 
@@ -211,14 +211,14 @@ class ArtistIdTest {
         void shouldReturnStringRepresentationWithUuidValue() {
             // Given
             UUID uuid = UUID.randomUUID();
-            ArtistId artistId = new ArtistId(uuid);
+            TrackId trackId = new TrackId(uuid);
             
             // When
-            String result = artistId.toString();
+            String result = trackId.toString();
             
             // Then
             assertNotNull(result);
-            assertTrue(result.contains("ArtistId"));
+            assertTrue(result.contains("TrackId"));
             assertTrue(result.contains(uuid.toString()));
         }
     }
@@ -232,10 +232,10 @@ class ArtistIdTest {
         void shouldReturnSameUuidValueThatWasProvided() {
             // Given
             UUID expectedUuid = UUID.randomUUID();
-            ArtistId artistId = new ArtistId(expectedUuid);
+            TrackId trackId = new TrackId(expectedUuid);
             
             // When
-            UUID actualUuid = artistId.value();
+            UUID actualUuid = trackId.value();
             
             // Then
             assertEquals(expectedUuid, actualUuid);
