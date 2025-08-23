@@ -8,7 +8,9 @@ import com.musichub.producer.domain.model.Producer;
 import com.musichub.producer.domain.model.Track;
 import com.musichub.producer.domain.ports.in.RegisterTrackUseCase;
 import com.musichub.producer.domain.ports.out.ProducerRepository;
+import com.musichub.producer.domain.ports.out.TrackRepository;
 import com.musichub.producer.domain.values.Source;
+import com.musichub.producer.domain.values.TrackStatus;
 import com.musichub.shared.domain.values.ISRC;
 import com.musichub.shared.domain.values.ProducerCode;
 import com.musichub.shared.events.TrackWasRegistered;
@@ -18,6 +20,7 @@ import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Objects;
 
 @ApplicationScoped
@@ -26,15 +29,18 @@ public class RegisterTrackService implements RegisterTrackUseCase {
     private static final Logger logger = LoggerFactory.getLogger(RegisterTrackService.class);
 
     private final ProducerRepository producerRepository;
+    private final TrackRepository trackRepository;
     private final MusicPlatformPort musicPlatformPort;
     private final EventPublisherPort eventPublisherPort;
 
     @Inject
     public RegisterTrackService(
             ProducerRepository producerRepository,
+            TrackRepository trackRepository,
             MusicPlatformPort musicPlatformPort,
             EventPublisherPort eventPublisherPort) {
         this.producerRepository = Objects.requireNonNull(producerRepository);
+        this.trackRepository = Objects.requireNonNull(trackRepository);
         this.musicPlatformPort = Objects.requireNonNull(musicPlatformPort);
         this.eventPublisherPort = Objects.requireNonNull(eventPublisherPort);
     }
@@ -65,7 +71,11 @@ public class RegisterTrackService implements RegisterTrackUseCase {
         // 5. Save producer to database
         Producer savedProducer = producerRepository.save(producer);
 
-        // 6. NEW: Publish event only if track was actually added
+        // 6. NEW: Also save track details to track repository for queries
+        Track savedTrack = trackRepository.save(track);
+        logger.debug("Track details saved to track repository: {}", savedTrack.isrc().value());
+
+        // 7. NEW: Publish event only if track was actually added
         if (wasAdded) {
             logger.info("Track was added to producer, publishing TrackWasRegistered event for ISRC: {}", isrcValue);
             publishTrackWasRegisteredEvent(track, savedProducer);
@@ -123,9 +133,9 @@ public class RegisterTrackService implements RegisterTrackUseCase {
         logger.debug("Creating Track domain object from metadata: {}", metadata);
 
         ISRC isrc = ISRC.of(normalizeIsrc(metadata.getIsrc()));
-        Source source = Source.of(metadata.getPlatform().toUpperCase(), "v2");
+        Source source = Source.of(metadata.getPlatform().toUpperCase(), metadata.getIsrc());
 
-        Track track = Track.of(isrc, metadata.getTitle(), metadata.getArtistNames(), source);
+        Track track = Track.of(isrc, metadata.getTitle(), metadata.getArtistNames(), List.of(source), TrackStatus.PROVISIONAL);
         logger.debug("Created Track: {}", track);
 
         return track;

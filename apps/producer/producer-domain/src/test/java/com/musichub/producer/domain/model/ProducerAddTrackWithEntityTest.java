@@ -1,6 +1,7 @@
 package com.musichub.producer.domain.model;
 
 import com.musichub.producer.domain.values.Source;
+import com.musichub.producer.domain.values.TrackStatus;
 import com.musichub.shared.domain.values.ISRC;
 import com.musichub.shared.domain.values.ProducerCode;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +17,7 @@ class ProducerAddTrackWithEntityTest {
     @DisplayName("Should add valid Track entity and be idempotent on duplicate")
     void addValidTrackEntity_isIdempotent() {
         var producer = Producer.createNew(ProducerCode.of("FRLA1"), null);
-        var track = new Track(ISRC.of("FRLA12400001"), "Title", List.of("Artist"), Source.of("SPOTIFY", "v1"));
+        var track = new Track(ISRC.of("FRLA12400001"), "Title", List.of("Artist"), List.of(Source.of("SPOTIFY", "track123")), TrackStatus.PROVISIONAL);
 
         assertTrue(producer.addTrack(track));
         assertFalse(producer.addTrack(track));
@@ -27,7 +28,7 @@ class ProducerAddTrackWithEntityTest {
     @DisplayName("Should reject Track with mismatched producer code")
     void rejectTrackWithMismatchedProducerCode() {
         var producer = Producer.createNew(ProducerCode.of("GBUM7"), null);
-        var track = new Track(ISRC.of("FRLA12400001"), "Title", List.of("Artist"), Source.of("SPOTIFY", "v1"));
+        var track = new Track(ISRC.of("FRLA12400001"), "Title", List.of("Artist"), List.of(Source.of("SPOTIFY", "track123")), TrackStatus.PROVISIONAL);
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> producer.addTrack(track));
         assertTrue(ex.getMessage().contains("producer code"));

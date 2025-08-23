@@ -11,20 +11,20 @@ class SourceTest {
     @Test
     @DisplayName("Should normalize and create Source when inputs are valid")
     void shouldCreateValidSource() {
-        Source src = Source.of(" spotify ", " v1 ");
-        assertEquals("SPOTIFY", src.platform());
-        assertEquals("v1", src.apiVersion());
+        Source src = Source.of(" spotify ", " track123 ");
+        assertEquals("SPOTIFY", src.sourceName());
+        assertEquals("track123", src.sourceId());
     }
 
     @Test
-    @DisplayName("Should reject unsupported platform")
-    void shouldRejectUnsupportedPlatform() {
-        assertThrows(IllegalArgumentException.class, () -> Source.of("UNKNOWN", "v1"));
+    @DisplayName("Should reject unsupported sourceName")
+    void shouldRejectUnsupportedSourceName() {
+        assertThrows(IllegalArgumentException.class, () -> Source.of("UNKNOWN", "track123"));
     }
 
     @Test
-    @DisplayName("Should reject blank apiVersion")
-    void shouldRejectBlankApiVersion() {
+    @DisplayName("Should reject blank sourceId")
+    void shouldRejectBlankSourceId() {
         assertThrows(IllegalArgumentException.class, () -> Source.of("TIDAL", "   "));
     }
 }

@@ -1,6 +1,7 @@
 package com.musichub.producer.domain.model;
 
 import com.musichub.producer.domain.values.Source;
+import com.musichub.producer.domain.values.TrackStatus;
 import com.musichub.shared.domain.values.ISRC;
 
 import java.util.ArrayList;
@@ -18,23 +19,26 @@ public final class Track {
     private final ISRC isrc;
     private final String title;
     private final List<String> artistNames;
-    private final Source source;
+    private final List<Source> sources;
+    private final TrackStatus status;
 
-    public Track(ISRC isrc, String title, List<String> artistNames, Source source) {
+    public Track(ISRC isrc, String title, List<String> artistNames, List<Source> sources, TrackStatus status) {
         this.isrc = Objects.requireNonNull(isrc, "ISRC must not be null");
         this.title = validateNonBlank(title, "title");
         this.artistNames = validateArtistNames(artistNames);
-        this.source = Objects.requireNonNull(source, "source must not be null");
+        this.sources = validateSources(sources);
+        this.status = Objects.requireNonNull(status, "status must not be null");
     }
 
-    public static Track of(ISRC isrc, String title, List<String> artistNames, Source source) {
-        return new Track(isrc, title, artistNames, source);
+    public static Track of(ISRC isrc, String title, List<String> artistNames, List<Source> sources, TrackStatus status) {
+        return new Track(isrc, title, artistNames, sources, status);
     }
 
     public ISRC isrc() { return isrc; }
     public String title() { return title; }
     public List<String> artistNames() { return Collections.unmodifiableList(artistNames); }
-    public Source source() { return source; }
+    public List<Source> sources() { return Collections.unmodifiableList(sources); }
+    public TrackStatus status() { return status; }
 
     @Override
     public boolean equals(Object o) {
@@ -55,7 +59,8 @@ public final class Track {
                 .add("isrc=" + isrc.value())
                 .add("title='" + title + '\'')
                 .add("artistNames=" + artistNames)
-                .add("source=" + source)
+                .add("sources=" + sources)
+                .add("status=" + status)
                 .toString();
     }
 
@@ -80,6 +85,20 @@ public final class Track {
             normalized.add(n);
         }
         return normalized;
+    }
+
+    private static List<Source> validateSources(List<Source> sources) {
+        if (sources == null || sources.isEmpty()) {
+            throw new IllegalArgumentException("sources must not be null or empty");
+        }
+        List<Source> validated = new ArrayList<>(sources.size());
+        for (Source source : sources) {
+            if (source == null) {
+                throw new IllegalArgumentException("sources cannot contain null elements");
+            }
+            validated.add(source);
+        }
+        return validated;
     }
 
     private static String normalizeIsrcString(String input) {
