@@ -198,7 +198,7 @@ describe("Enhanced Toast notifications (P2-9)", () => {
       // Verify success styling
       await waitFor(() => {
         const successToast = screen.getByRole("status");
-        expect(successToast).not.toHaveClass("destructive");
+        expect(successToast).toHaveClass("border-green-200", "bg-green-50", "text-green-800");
       });
     });
 
@@ -311,7 +311,7 @@ describe("Enhanced Toast notifications (P2-9)", () => {
       // Verify error styling
       await waitFor(() => {
         const errorToast = screen.getByRole("alert");
-        expect(errorToast).toHaveClass("destructive");
+        expect(errorToast).toHaveClass("border-red-200", "bg-red-50", "text-red-800");
       });
     });
 

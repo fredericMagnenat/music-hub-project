@@ -1,4 +1,7 @@
+# <!-- Powered by BMAD™ Core -->
 markdownExploder: true
+qa:
+  qaLocation: docs/qa
 prd:
   prdFile: docs/prd.md
   prdVersion: v4
@@ -15,6 +18,8 @@ devLoadAlwaysFiles:
   - docs/architecture/coding-standards.md
   - docs/architecture/tech-stack.md
   - docs/architecture/source-tree.md
+  - docs/architecture/database-migration-flyway.md
+  - docs/architecture/testing-best-practices.md
 devDebugLog: .ai/debug-log.md
 devStoryLocation: docs/stories
 slashPrefix: BMad

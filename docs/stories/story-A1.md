@@ -1,5 +1,8 @@
 ### User Story: A1 - Update an Artist Following an Event
 
+## Status
+Done
+
 > **As an** Artist Context, **when** I receive a `TrackWasRegistered` event, **I want** to find the corresponding artist in my catalog or create them if unknown, then link the track to them, **in order to** autonomously maintain up-to-date profiles.
 
 ### Pre-requisites

@@ -1,6 +1,9 @@
 
 ### User Story: P1 - Validate and Create a Producer
 
+## Status
+Done
+
 > **As a** System, **when** a new ISRC is submitted, **I want** to validate that the "Producer Code" (the first 5 characters) exists, and create it if it's unknown, **in order to** ensure that each track has a referenced owner.
 
 ### Acceptance Criteria

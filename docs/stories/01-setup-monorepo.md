@@ -4,6 +4,10 @@
 
 ---
 
+## Status
+Done
+
+
 ### Tâches à faire
 
 - [x] Créer le répertoire racine du projet s'il n'existe pas.

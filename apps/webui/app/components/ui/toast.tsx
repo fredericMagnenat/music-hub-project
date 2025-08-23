@@ -78,8 +78,8 @@ export function Toaster() {
               t.variant === "destructive" && "border-red-200 bg-red-50 text-red-800",
               t.variant === "info" && "border-gray-200 bg-white text-gray-900"
             )}
-            role="status"
-            aria-live="polite"
+            role={t.variant === "error" || t.variant === "destructive" ? "alert" : "status"}
+            aria-live={t.variant === "error" || t.variant === "destructive" ? "assertive" : "polite"}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">

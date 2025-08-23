@@ -31,6 +31,10 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-jdbc-postgresql</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-jackson</artifactId>
+        </dependency>
         <!-- Flyway is brought by bootstrap; no direct dependency here -->
     </dependencies>
     <build>

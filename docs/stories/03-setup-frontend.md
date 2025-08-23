@@ -4,6 +4,10 @@
 
 ---
 
+## Status
+Done
+
+
 ### Tâches à faire
 
 - [x] S'assurer que PNPM est installé globalement.

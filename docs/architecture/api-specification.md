@@ -60,6 +60,20 @@ paths:
         '404':
           description: "Producer not found."
 
+  /tracks/recent:
+    get:
+      summary: "Get recent tracks across all producers"
+      description: "Returns the most recent 10 tracks submitted/validated, ordered by submission date (newest first)."
+      responses:
+        '200':
+          description: "List of recent tracks."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecentTrack"
+
   /artists:
     get:
       summary: "List all Artists"
@@ -108,6 +122,46 @@ components:
         status:
           type: string
           enum: [Provisional, Verified]
+
+    RecentTrack:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        isrc:
+          type: string
+          example: "FRLA12400001"
+        title:
+          type: string
+          example: "Track Title"
+        artistNames:
+          type: array
+          items:
+            type: string
+          example: ["Artist Name"]
+        source:
+          $ref: "#/components/schemas/Source"
+        status:
+          type: string
+          enum: [Provisional, Verified]
+          example: "Verified"
+        submissionDate:
+          type: string
+          format: date-time
+          example: "2025-08-22T10:30:00Z"
+        producer:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            producerCode:
+              type: string
+              example: "FRLA1"
+            name:
+              type: string
+              example: "Producer Name"
 
     Source:
       type: object

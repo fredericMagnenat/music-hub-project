@@ -4,6 +4,10 @@
 
 ---
 
+## Status
+Done
+
+
 ### Tâches à faire
 
 - [x] Dans le fichier `.github/workflows/ci.yaml`, définir un workflow qui se déclenche sur les `push` et `pull_request` vers la branche principale.

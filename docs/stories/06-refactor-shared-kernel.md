@@ -2,6 +2,11 @@
 
 > **As an** Architect, **I want** to introduce a Shared Kernel with `shared-domain` and `shared-events` modules and adopt a `UseCase` naming convention for application ports, **in order to** improve decoupling between bounded contexts, enforce a single source of truth for shared concepts, and clarify application entry points.
 
+## Status
+Done
+
+
+
 ### Context & Rationale
 
 During the initial implementation and architectural review, several points of potential friction and tight coupling were identified. This refactoring addresses them proactively to establish a more robust and scalable architecture.

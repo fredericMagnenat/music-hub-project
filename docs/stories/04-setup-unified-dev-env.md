@@ -3,6 +3,9 @@
 **En tant que** Développeur, **je veux** être capable de lancer une seule commande (`quarkus dev`) pour démarrer à la fois le backend et le frontend avec rechargement à chaud, **afin de** bénéficier d'une expérience de développement fluide et productive.
 
 ---
+## Status
+Done
+
 
 ### Tâches à faire
 

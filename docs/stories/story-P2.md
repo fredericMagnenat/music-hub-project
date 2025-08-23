@@ -1,5 +1,8 @@
 ### User Story: P2 - Integrate a Track and Publish an Event
 
+## Status
+Done
+
 > **As a** Producer (user), **when** I validate the addition of a track, **I want** the track to be added to the correct "Producer" aggregate and a `TrackWasRegistered` event to be published, **in order to** secure the track's registration and inform the rest of the system.
 
 ### Acceptance Criteria
