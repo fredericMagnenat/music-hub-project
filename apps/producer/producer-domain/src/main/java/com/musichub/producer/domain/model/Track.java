@@ -13,6 +13,9 @@ import java.util.StringJoiner;
 /**
  * Domain entity representing a Track within the Producer bounded context.
  * Equality is based on ISRC only.
+ * 
+ * <p>This entity is immutable and thread-safe. All collections are defensively copied
+ * and returned as unmodifiable views.</p>
  */
 public final class Track {
 
@@ -25,19 +28,49 @@ public final class Track {
     public Track(ISRC isrc, String title, List<String> artistNames, List<Source> sources, TrackStatus status) {
         this.isrc = Objects.requireNonNull(isrc, "ISRC must not be null");
         this.title = validateNonBlank(title, "title");
-        this.artistNames = validateArtistNames(artistNames);
-        this.sources = validateSources(sources);
+        this.artistNames = Collections.unmodifiableList(validateArtistNames(artistNames));
+        this.sources = Collections.unmodifiableList(validateSources(sources));
         this.status = Objects.requireNonNull(status, "status must not be null");
     }
 
+    /**
+     * Factory method to create a new Track instance.
+     *
+     * @param isrc the unique ISRC identifier
+     * @param title the track title (will be trimmed)
+     * @param artistNames list of artist names (will be validated and trimmed)
+     * @param sources list of sources (must not be empty)
+     * @param status the current track status
+     * @return a new immutable Track instance
+     * @throws IllegalArgumentException if any validation fails
+     */
     public static Track of(ISRC isrc, String title, List<String> artistNames, List<Source> sources, TrackStatus status) {
         return new Track(isrc, title, artistNames, sources, status);
     }
 
+    /**
+     * @return the unique ISRC identifier for this track
+     */
     public ISRC isrc() { return isrc; }
+    
+    /**
+     * @return the track title (trimmed and validated)
+     */
     public String title() { return title; }
-    public List<String> artistNames() { return Collections.unmodifiableList(artistNames); }
-    public List<Source> sources() { return Collections.unmodifiableList(sources); }
+    
+    /**
+     * @return an unmodifiable list of artist names
+     */
+    public List<String> artistNames() { return artistNames; }
+    
+    /**
+     * @return an unmodifiable list of sources
+     */
+    public List<Source> sources() { return sources; }
+    
+    /**
+     * @return the current status of this track
+     */
     public TrackStatus status() { return status; }
 
     @Override
@@ -45,12 +78,21 @@ public final class Track {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Track track = (Track) o;
-        return normalizeIsrcString(isrc.value()).equals(normalizeIsrcString(track.isrc.value()));
+        // Normalize ISRC values for comparison to handle different formats
+        return normalizeIsrc(isrc.value()).equals(normalizeIsrc(track.isrc.value()));
     }
 
     @Override
     public int hashCode() {
-        return normalizeIsrcString(isrc.value()).hashCode();
+        return normalizeIsrc(isrc.value()).hashCode();
+    }
+    
+    /**
+     * Normalizes ISRC string by removing dashes, trimming, and converting to uppercase.
+     * This ensures consistent comparison across different ISRC formats.
+     */
+    private static String normalizeIsrc(String input) {
+        return input.replace("-", "").trim().toUpperCase();
     }
 
     @Override
@@ -101,7 +143,4 @@ public final class Track {
         return validated;
     }
 
-    private static String normalizeIsrcString(String input) {
-        return input.replace("-", "").trim().toUpperCase();
-    }
 }

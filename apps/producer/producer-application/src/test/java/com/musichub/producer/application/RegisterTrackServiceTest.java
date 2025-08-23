@@ -6,7 +6,10 @@ import com.musichub.producer.application.ports.out.EventPublisherPort;
 import com.musichub.producer.application.ports.out.MusicPlatformPort;
 import com.musichub.producer.application.service.RegisterTrackService;
 import com.musichub.producer.domain.model.Producer;
+import com.musichub.producer.domain.model.Track;
 import com.musichub.producer.domain.ports.out.ProducerRepository;
+import com.musichub.producer.domain.values.Source;
+import com.musichub.producer.domain.values.TrackStatus;
 import com.musichub.shared.domain.values.ISRC;
 import com.musichub.shared.domain.values.ProducerCode;
 import com.musichub.shared.events.TrackWasRegistered;
@@ -65,13 +68,12 @@ class RegisterTrackServiceTest {
             );
             when(musicPlatformPort.getTrackByIsrc(TEST_ISRC)).thenReturn(mockMetadata);
 
-            // Given: No existing producer
+            // Given: No existing producer (code derived from ISRC by service)
             ProducerCode code = ProducerCode.with(ISRC.of(NORMALIZED_ISRC));
             when(producerRepository.findByProducerCode(code)).thenReturn(Optional.empty());
 
-            // Given: Repository save returns the producer
-            Producer savedProducer = Producer.createNew(code, null);
-            when(producerRepository.save(any(Producer.class))).thenReturn(savedProducer);
+            // Given: Repository save returns the same producer that was passed to it
+            when(producerRepository.save(any(Producer.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // When: Registering track
             Producer result = registerTrackService.registerTrack(TEST_ISRC);
@@ -114,8 +116,8 @@ class RegisterTrackServiceTest {
             Producer existingProducer = Producer.createNew(code, "Queen Music");
             when(producerRepository.findByProducerCode(code)).thenReturn(Optional.of(existingProducer));
 
-            // Given: Repository save returns the producer
-            when(producerRepository.save(any(Producer.class))).thenReturn(existingProducer);
+            // Given: Repository save returns the same producer that was passed to it
+            when(producerRepository.save(any(Producer.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // When: Registering track
             Producer result = registerTrackService.registerTrack(TEST_ISRC);
@@ -142,7 +144,7 @@ class RegisterTrackServiceTest {
 
             ProducerCode code = ProducerCode.with(ISRC.of(NORMALIZED_ISRC));
             when(producerRepository.findByProducerCode(code)).thenReturn(Optional.empty());
-            when(producerRepository.save(any(Producer.class))).thenReturn(Producer.createNew(code, null));
+            when(producerRepository.save(any(Producer.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // When: Registering track
             registerTrackService.registerTrack(TEST_ISRC);
@@ -174,9 +176,15 @@ class RegisterTrackServiceTest {
             // Given: Producer already has this track
             ProducerCode code = ProducerCode.with(ISRC.of(NORMALIZED_ISRC));
             Producer existingProducer = Producer.createNew(code, null);
-            existingProducer.addTrack(ISRC.of(NORMALIZED_ISRC)); // Pre-add the track
+            // Use registerTrack method (which creates complete Track internally)
+            existingProducer.registerTrack(
+                ISRC.of(NORMALIZED_ISRC),
+                "Bohemian Rhapsody",
+                List.of("Queen"),
+                List.of(Source.of("MANUAL", "existing-track"))
+            );
             when(producerRepository.findByProducerCode(code)).thenReturn(Optional.of(existingProducer));
-            when(producerRepository.save(any(Producer.class))).thenReturn(existingProducer);
+            when(producerRepository.save(any(Producer.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // When: Registering same track again
             registerTrackService.registerTrack(TEST_ISRC);
@@ -205,7 +213,7 @@ class RegisterTrackServiceTest {
 
             ProducerCode code = ProducerCode.with(ISRC.of(NORMALIZED_ISRC));
             when(producerRepository.findByProducerCode(code)).thenReturn(Optional.empty());
-            when(producerRepository.save(any(Producer.class))).thenReturn(Producer.createNew(code, null));
+            when(producerRepository.save(any(Producer.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // When: Registering track with formatted ISRC
             registerTrackService.registerTrack("GB-UM7-15-07409");
@@ -303,9 +311,8 @@ class RegisterTrackServiceTest {
 
             // Given: Producer setup
             ProducerCode code = ProducerCode.with(ISRC.of(NORMALIZED_ISRC));
-            Producer producer = Producer.createNew(code, null);
             when(producerRepository.findByProducerCode(code)).thenReturn(Optional.empty());
-            when(producerRepository.save(any(Producer.class))).thenReturn(producer);
+            when(producerRepository.save(any(Producer.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // When: Registering track
             registerTrackService.registerTrack(TEST_ISRC);
@@ -326,7 +333,7 @@ class RegisterTrackServiceTest {
 
             ProducerCode code = ProducerCode.with(ISRC.of(NORMALIZED_ISRC));
             when(producerRepository.findByProducerCode(code)).thenReturn(Optional.empty());
-            when(producerRepository.save(any(Producer.class))).thenReturn(Producer.createNew(code, null));
+            when(producerRepository.save(any(Producer.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // When: Registering track
             registerTrackService.registerTrack(TEST_ISRC);

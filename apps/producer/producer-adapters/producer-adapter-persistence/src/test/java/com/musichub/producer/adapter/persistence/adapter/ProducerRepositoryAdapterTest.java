@@ -1,15 +1,19 @@
-package com.musichub.producer.adapter.persistence;
+package com.musichub.producer.adapter.persistence.adapter;
 
+import com.musichub.producer.adapter.persistence.config.PersistenceTestProfile;
 import com.musichub.producer.domain.model.Producer;
 import com.musichub.producer.domain.values.ProducerId;
+import com.musichub.producer.domain.values.Source;
 import com.musichub.shared.domain.values.ISRC;
 import com.musichub.shared.domain.values.ProducerCode;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.TestTransaction;
+import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,10 +21,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
 @DisplayName("ProducerRepositoryImpl Integration Tests")
-class ProducerRepositoryImplTest {
+@TestProfile(PersistenceTestProfile.class)
+class ProducerRepositoryAdapterTest {
 
     @Inject
-    ProducerRepositoryImpl repository;
+    ProducerRepositoryAdapter repository;
 
     @Test
     @TestTransaction
@@ -29,8 +34,9 @@ class ProducerRepositoryImplTest {
         // Given
         ProducerCode producerCode = ProducerCode.of("FRLA1");
         Producer producer = Producer.createNew(producerCode, "Test Producer");
-        producer.addTrack("FRLA12400001");
-        producer.addTrack("FRLA12400002");
+        Source source = Source.of("SPOTIFY", "test-source");
+        producer.registerTrack(ISRC.of("FRLA12400001"), "Track 1", List.of("Artist 1"), List.of(source));
+        producer.registerTrack(ISRC.of("FRLA12400002"), "Track 2", List.of("Artist 2"), List.of(source));
 
         // When - Save
         Producer savedProducer = repository.save(producer);
@@ -64,8 +70,9 @@ class ProducerRepositoryImplTest {
         // Given
         ProducerCode code = ProducerCode.of("FRLA2");
         Producer producer = Producer.createNew(code, null);
-        producer.addTrack("FRLA12400001");
-        producer.addTrack("FRLA12400002");
+        Source source = Source.of("SPOTIFY", "test-source");
+        producer.registerTrack(ISRC.of("FRLA22400001"), "Track 1", List.of("Artist 1"), List.of(source));
+        producer.registerTrack(ISRC.of("FRLA22400002"), "Track 2", List.of("Artist 2"), List.of(source));
 
         // When
         Producer saved = repository.save(producer);
@@ -77,8 +84,8 @@ class ProducerRepositoryImplTest {
         
         Producer found = foundOptional.get();
         assertEquals(2, found.tracks().size());
-        assertTrue(found.hasTrack(ISRC.of("FRLA12400001")));
-        assertTrue(found.hasTrack(ISRC.of("FRLA12400002")));
+        assertTrue(found.hasTrack(ISRC.of("FRLA22400001")));
+        assertTrue(found.hasTrack(ISRC.of("FRLA22400002")));
     }
 
     @Test
@@ -102,14 +109,15 @@ class ProducerRepositoryImplTest {
         // Given
         ProducerCode producerCode = ProducerCode.of("UPDT1");
         Producer originalProducer = Producer.createNew(producerCode, "Original Name");
-        originalProducer.addTrack("UPDT12400001");
+        Source source = Source.of("SPOTIFY", "test-source");
+        originalProducer.registerTrack(ISRC.of("UPDT12400001"), "Track 1", List.of("Artist 1"), List.of(source));
         
         // Save original
         Producer savedOriginal = repository.save(originalProducer);
         
         // Modify producer
         savedOriginal.rename("Updated Name");
-        savedOriginal.addTrack("UPDT12400002");
+        savedOriginal.registerTrack(ISRC.of("UPDT12400002"), "Track 2", List.of("Artist 2"), List.of(source));
 
         // When - Save updated producer
         repository.save(savedOriginal);
@@ -184,7 +192,8 @@ class ProducerRepositoryImplTest {
         // Given
         ProducerCode code = ProducerCode.of("BYID1");
         Producer producer = Producer.createNew(code, "Find By ID Test");
-        producer.addTrack("BYID12400001");
+        Source source = Source.of("SPOTIFY", "test-source");
+        producer.registerTrack(ISRC.of("BYID12400001"), "Track 1", List.of("Artist 1"), List.of(source));
         
         // Save producer
         Producer saved = repository.save(producer);

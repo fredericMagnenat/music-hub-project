@@ -1,25 +1,31 @@
 package com.musichub.producer.domain.model;
 
 import com.musichub.producer.domain.values.ProducerId;
+import com.musichub.producer.domain.values.Source;
+import com.musichub.producer.domain.values.TrackStatus;
 import com.musichub.shared.domain.values.ISRC;
 import com.musichub.shared.domain.values.ProducerCode;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 /**
- * Producer aggregate root. Owns a set of Tracks identified by ISRC.
+ * Producer aggregate root. Owns a set of Track entities with complete metadata.
  */
 public final class Producer {
+
+    private static final String ISRC_MUST_NOT_BE_NULL = "ISRC must not be null";
 
     private final ProducerId id;
     private final ProducerCode producerCode;
     private String name; // optional, mutable business attribute
-    private final Set<ISRC> tracks; // normalized ISRCs only
+    private final Set<Track> tracks; // Track entities with complete metadata
 
-    private Producer(ProducerId id, ProducerCode producerCode, String name, Set<ISRC> tracks) {
+    private Producer(ProducerId id, ProducerCode producerCode, String name, Set<Track> tracks) {
         this.id = Objects.requireNonNull(id, "Producer.id must not be null");
         this.producerCode = Objects.requireNonNull(producerCode, "Producer.producerCode must not be null");
         this.name = name; // nullable allowed
@@ -32,7 +38,7 @@ public final class Producer {
         return new Producer(producerId, producerCode, name, new LinkedHashSet<>());
     }
 
-    public static Producer from(ProducerId id, ProducerCode producerCode, String name, Set<ISRC> tracks) {
+    public static Producer from(ProducerId id, ProducerCode producerCode, String name, Set<Track> tracks) {
         return new Producer(id, producerCode, name, tracks);
     }
 
@@ -52,20 +58,22 @@ public final class Producer {
         this.name = newName;
     }
 
-    public Set<ISRC> tracks() {
+    public Set<Track> tracks() {
         return Collections.unmodifiableSet(tracks);
     }
 
     public boolean hasTrack(ISRC isrc) {
-        Objects.requireNonNull(isrc, "ISRC must not be null");
-        return tracks.contains(normalize(isrc));
+        Objects.requireNonNull(isrc, ISRC_MUST_NOT_BE_NULL);
+        return tracks.stream().anyMatch(track -> normalize(track.isrc()).equals(normalize(isrc)));
     }
 
-    public boolean addTrack(ISRC isrc) {
-        Objects.requireNonNull(isrc, "ISRC must not be null");
-        ISRC normalized = normalize(isrc);
-        return tracks.add(normalized); // idempotent due to Set
+    public Optional<Track> getTrack(ISRC isrc) {
+        Objects.requireNonNull(isrc, ISRC_MUST_NOT_BE_NULL);
+        return tracks.stream()
+            .filter(track -> normalize(track.isrc()).equals(normalize(isrc)))
+            .findFirst();
     }
+
 
     /**
      * Adds a Track entity to this Producer aggregate, enforcing business rules.
@@ -79,13 +87,27 @@ public final class Producer {
         if (!this.producerCode.equals(trackProducerCode)) {
             throw new IllegalArgumentException("Track producer code does not match aggregate producer code");
         }
-        return addTrack(track.isrc());
+        return tracks.add(track); // idempotent due to Track.equals() based on ISRC
     }
 
-    public boolean addTrack(String isrcValue) {
-        Objects.requireNonNull(isrcValue, "isrcValue must not be null");
-        ISRC normalized = ISRC.of(normalizeIsrcString(isrcValue));
-        return addTrack(normalized);
+    /**
+     * Factory method to register a track with complete metadata in the Producer aggregate.
+     * This enforces DDD principles by keeping track creation within the aggregate boundary.
+     */
+    public boolean registerTrack(ISRC isrc, String title, List<String> artistNames, List<Source> sources) {
+        Objects.requireNonNull(isrc, ISRC_MUST_NOT_BE_NULL);
+        Objects.requireNonNull(title, "title must not be null");
+        Objects.requireNonNull(artistNames, "artistNames must not be null");
+        Objects.requireNonNull(sources, "sources must not be null");
+        
+        // Validate producer code consistency using ISRC-derived ProducerCode
+        ProducerCode trackProducerCode = ProducerCode.with(isrc);
+        if (!this.producerCode.equals(trackProducerCode)) {
+            throw new IllegalArgumentException("Track producer code does not match aggregate producer code");
+        }
+        
+        Track track = Track.of(normalize(isrc), title, artistNames, sources, TrackStatus.PROVISIONAL);
+        return tracks.add(track);
     }
 
     private static ISRC normalize(ISRC isrc) {

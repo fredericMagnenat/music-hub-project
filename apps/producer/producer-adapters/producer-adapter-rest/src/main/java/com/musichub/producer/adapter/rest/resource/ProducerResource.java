@@ -58,7 +58,7 @@ public class ProducerResource {
             response.producerCode = producer.producerCode().value();
             response.name = producer.name();
             response.tracks = producer.tracks().stream()
-                .map(ISRC::value)
+                .map(track -> track.isrc().value())
                 .collect(java.util.LinkedHashSet::new, Set::add, Set::addAll);
             return response;
         }

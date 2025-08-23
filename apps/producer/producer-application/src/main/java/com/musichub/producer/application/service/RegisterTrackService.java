@@ -8,9 +8,7 @@ import com.musichub.producer.domain.model.Producer;
 import com.musichub.producer.domain.model.Track;
 import com.musichub.producer.domain.ports.in.RegisterTrackUseCase;
 import com.musichub.producer.domain.ports.out.ProducerRepository;
-import com.musichub.producer.domain.ports.out.TrackRepository;
 import com.musichub.producer.domain.values.Source;
-import com.musichub.producer.domain.values.TrackStatus;
 import com.musichub.shared.domain.values.ISRC;
 import com.musichub.shared.domain.values.ProducerCode;
 import com.musichub.shared.events.TrackWasRegistered;
@@ -29,18 +27,15 @@ public class RegisterTrackService implements RegisterTrackUseCase {
     private static final Logger logger = LoggerFactory.getLogger(RegisterTrackService.class);
 
     private final ProducerRepository producerRepository;
-    private final TrackRepository trackRepository;
     private final MusicPlatformPort musicPlatformPort;
     private final EventPublisherPort eventPublisherPort;
 
     @Inject
     public RegisterTrackService(
             ProducerRepository producerRepository,
-            TrackRepository trackRepository,
             MusicPlatformPort musicPlatformPort,
             EventPublisherPort eventPublisherPort) {
         this.producerRepository = Objects.requireNonNull(producerRepository);
-        this.trackRepository = Objects.requireNonNull(trackRepository);
         this.musicPlatformPort = Objects.requireNonNull(musicPlatformPort);
         this.eventPublisherPort = Objects.requireNonNull(eventPublisherPort);
     }
@@ -56,29 +51,28 @@ public class RegisterTrackService implements RegisterTrackUseCase {
 
         // 2. Existing logic: normalize ISRC, find/create Producer
         // Only proceed if external API call was successful
-        ISRC isrc = ISRC.of(normalizeIsrc(isrcValue));
-        ProducerCode code = ProducerCode.with(isrc);
+        ISRC normalizedIsrc = ISRC.of(normalizeIsrc(isrcValue));
+        ProducerCode code = ProducerCode.with(normalizedIsrc);
 
         Producer producer = producerRepository.findByProducerCode(code)
                 .orElseGet(() -> Producer.createNew(code, null));
 
-        // 3. NEW: Create Track domain object
-        Track track = createTrackFromMetadata(metadata);
-
-        // 4. NEW: Add track to producer (idempotent)
-        boolean wasAdded = producer.addTrack(track);
+        // 3. NEW: Register track with complete metadata in Producer aggregate (DDD best practice)
+        Source source = Source.of(metadata.getPlatform().toUpperCase(), metadata.getIsrc());
+        boolean wasAdded = producer.registerTrack(normalizedIsrc, metadata.getTitle(), metadata.getArtistNames(), List.of(source));
 
         // 5. Save producer to database
         Producer savedProducer = producerRepository.save(producer);
 
-        // 6. NEW: Also save track details to track repository for queries
-        Track savedTrack = trackRepository.save(track);
-        logger.debug("Track details saved to track repository: {}", savedTrack.isrc().value());
+        logger.debug("Track details saved to producer aggregate for ISRC: {}", normalizedIsrc.value());
 
         // 7. NEW: Publish event only if track was actually added
         if (wasAdded) {
             logger.info("Track was added to producer, publishing TrackWasRegistered event for ISRC: {}", isrcValue);
-            publishTrackWasRegisteredEvent(track, savedProducer);
+            // Get the registered track from producer for event publishing
+            Track registeredTrack = savedProducer.getTrack(normalizedIsrc)
+                .orElseThrow(() -> new IllegalStateException("Track should exist after registration"));
+            publishTrackWasRegisteredEvent(registeredTrack, savedProducer);
         } else {
             logger.debug("Track already exists in producer, no event will be published for ISRC: {}", isrcValue);
         }
@@ -123,23 +117,6 @@ public class RegisterTrackService implements RegisterTrackUseCase {
         }
     }
 
-    /**
-     * Creates a Track domain object from external API metadata.
-     *
-     * @param metadata The metadata from the external API
-     * @return Track domain object
-     */
-    private Track createTrackFromMetadata(ExternalTrackMetadata metadata) {
-        logger.debug("Creating Track domain object from metadata: {}", metadata);
-
-        ISRC isrc = ISRC.of(normalizeIsrc(metadata.getIsrc()));
-        Source source = Source.of(metadata.getPlatform().toUpperCase(), metadata.getIsrc());
-
-        Track track = Track.of(isrc, metadata.getTitle(), metadata.getArtistNames(), List.of(source), TrackStatus.PROVISIONAL);
-        logger.debug("Created Track: {}", track);
-
-        return track;
-    }
 
     /**
      * Publishes TrackWasRegistered event to the Vert.x event bus.
