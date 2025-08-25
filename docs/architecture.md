@@ -635,11 +635,15 @@ This section covers resilience patterns, application monitoring, and performance
 
 ## Logging Best Practices
 
+**Updated**: This section reflects SonarQube-compliant exception handling patterns implemented in the codebase (Story DOC-1).
+
 ### 1. Logging Strategy & Philosophy
 
 Our logging approach follows these principles:
+- **SonarQube Compliance**: "Either log OR rethrow" pattern prevents duplicate logging
 - **Structured Logging**: JSON format for easier analysis
 - **Contextual Information**: Correlation IDs for request tracing
+- **Hexagonal Architecture**: Clear logging responsibilities per layer
 - **Performance Awareness**: Asynchronous logging to minimize impact
 - **Security First**: Automatic masking of sensitive data
 
@@ -687,16 +691,41 @@ Centralized configuration using:
 
 ### 6. Hexagonal Architecture Logging Patterns
 
+**Exception Handling Compliance - SonarQube "Either log OR rethrow" Rule**
+
+Our architecture follows strict exception handling patterns to prevent duplicate logging and ensure clean error flow:
+
+| Layer | Responsibility | Pattern |
+|-------|---------------|---------|
+| **Domain** | Business rules | Log business events + throw domain exceptions |
+| **Application** | Use case orchestration | Log + rethrow OR log + handle completely |
+| **Adapter** | Infrastructure context | Rethrow with technical context (NO logging) |
+| **REST** | HTTP boundary | Log final error + convert to HTTP response |
+
 ```java
+// ✅ COMPLIANT: Adapter rethrows with context - NO duplicate logging
+@ApplicationScoped
+public class ProducerRepositoryAdapter {
+    try {
+        // Database operations...
+        return result;
+    } catch (Exception e) {
+        // ✅ Rethrow with context - do NOT log here
+        throw new ProducerPersistenceException(
+            String.format("Failed to retrieve producer (correlationId: %s)", 
+                correlationId), e);
+    }
+}
+
+// Application Layer - Log and rethrow for higher layers
+log.error("Track registration failed - persistence error: {}", correlationId, e);
+throw e; // Rethrow for REST layer to handle
+
 // Domain Layer - Business Events
 log.info("Producer created with code: {}", producerCode.value());
-
-// Application Layer - Use Case Execution  
-log.info("Starting track registration for ISRC: {}", isrc.value());
-
-// Adapter Layer - Technical Details
-log.debug("Executing SQL query: {}", sql);
 ```
+
+**Reference**: Complete patterns and examples in [Logging Best Practices](architecture/logging-best-practices.md)
 
 ### 7. Security & Sensitive Data
 

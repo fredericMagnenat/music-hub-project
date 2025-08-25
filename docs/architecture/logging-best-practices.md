@@ -720,92 +720,120 @@ public class RegisterTrackService implements RegisterTrackUseCase {
 }
 ```
 
-### Adapter Layer Logging
+### Exception Handling & Logging Pattern
 
-Adapters handle infrastructure concerns and should log external interactions.
+**CRITICAL: SonarQube Compliance - "Either log OR rethrow" Rule**
+
+Our architecture follows the SonarQube rule: **"Either log this exception and handle it, or rethrow it"**. This prevents duplicate logging and maintains clear error handling responsibilities across hexagonal architecture layers.
+
+#### Hexagonal Architecture Logging Responsibilities
+
+| Layer | Exception Handling | Logging Responsibility | Pattern |
+|-------|-------------------|----------------------|--------|
+| **Domain** | Validate & throw business exceptions | Log business rule violations only | Log business events, throw domain exceptions |
+| **Application** | Catch, log, and rethrow OR handle completely | Log use case failures with context | Log + handle OR rethrow with context |
+| **Adapter** | Catch, rethrow with contextual information | NO logging - rethrow with adapter context | Rethrow with technical context |
+| **REST** | Catch, log final error, return HTTP response | Log final error + HTTP mapping | Log + handle (convert to HTTP) |
+
+#### ✅ COMPLIANT: Adapter Layer Pattern (Current Implementation)
 
 ```java
-// Persistence Adapter
+// ✅ GOOD: Adapter rethrows with context - NO duplicate logging
 @ApplicationScoped
-public class ProducerRepositoryImpl implements ProducerRepository {
-    private static final Logger log = LoggerFactory.getLogger(ProducerRepositoryImpl.class);
-    
-    @Inject
-    EntityManager entityManager;
-    
-    @Inject
-    ProducerMapper mapper;
-    
+public class ProducerRepositoryAdapter implements ProducerRepository {
+    private static final Logger log = LoggerFactory.getLogger(ProducerRepositoryAdapter.class);
+    private static final String CORRELATION_ID_KEY = "correlationId";
+
     @Override
-    public Optional<Producer> findByProducerCode(ProducerCode producerCode) {
-        log.debug("Querying producer by code: {}", producerCode.value());
+    public Optional<Producer> findByProducerCode(ProducerCode code) {
+        String correlationId = MDC.get(CORRELATION_ID_KEY);
+        log.debug("Querying database for producer with code: {}, correlationId: {}", 
+                code.value(), correlationId);
         
         try {
-            List<ProducerEntity> results = entityManager
-                    .createQuery("SELECT p FROM ProducerEntity p WHERE p.producerCode = :code", ProducerEntity.class)
-                    .setParameter("code", producerCode.value())
-                    .getResultList();
+            Optional<ProducerEntity> entityOpt = find("producerCode", code.value()).firstResultOptional();
             
-            if (results.isEmpty()) {
-                log.debug("No producer found with code: {}", producerCode.value());
+            if (entityOpt.isEmpty()) {
+                log.debug("No producer found with code: {}", code.value());
                 return Optional.empty();
             }
             
-            if (results.size() > 1) {
-                log.warn("Data integrity issue - multiple producers found with code: {}, count: {}", 
-                        producerCode.value(), results.size());
-            }
-            
-            ProducerEntity entity = results.get(0);
-            Producer producer = mapper.toDomain(entity);
-            
-            log.debug("Producer retrieved successfully - code: {}, id: {}, tracks: {}", 
-                    producerCode.value(), producer.id().value(), producer.tracks().size());
+            Producer producer = ProducerMapper.toDomain(entityOpt.get());
+            log.debug("Successfully retrieved producer: {}, tracks: {}", 
+                    code.value(), producer.tracks().size());
             
             return Optional.of(producer);
             
         } catch (Exception e) {
-            log.error("Database error while querying producer by code: {}", producerCode.value(), e);
-            throw new RuntimeException("Failed to query producer", e);
+            // ✅ COMPLIANT: Rethrow with context - do NOT log here
+            throw new ProducerPersistenceException(
+                String.format("Failed to retrieve producer with code '%s' (correlationId: %s)", 
+                    code.value(), correlationId), e);
         }
     }
-    
+
     @Override
     @Transactional
     public Producer save(Producer producer) {
-        log.debug("Saving producer - code: {}, id: {}", 
-                producer.producerCode().value(), producer.id().value());
+        String correlationId = MDC.get(CORRELATION_ID_KEY);
+        ProducerId producerId = producer.id();
+        ProducerCode producerCode = producer.producerCode();
+        
+        log.debug("Saving producer to database - id: {}, code: {}, tracks: {}, correlationId: {}", 
+                producerId.value(), producerCode.value(), producer.tracks().size(), correlationId);
         
         try {
-            ProducerEntity entity = mapper.toEntity(producer);
+            ProducerEntity entity = ProducerMapper.toDbo(producer);
+            ProducerEntity persistedEntity = getEntityManager().merge(entity);
             
-            // Check if entity exists
-            ProducerEntity existingEntity = entityManager.find(ProducerEntity.class, entity.id);
-            if (existingEntity != null) {
-                log.debug("Updating existing producer entity - id: {}", entity.id);
-                // Update existing entity
-                existingEntity.name = entity.name;
-                existingEntity.tracks = entity.tracks;
-                entityManager.merge(existingEntity);
-            } else {
-                log.debug("Persisting new producer entity - id: {}", entity.id);
-                entityManager.persist(entity);
-            }
+            Producer savedProducer = ProducerMapper.toDomain(persistedEntity);
             
-            entityManager.flush();
+            log.info("Producer saved successfully - id: {}, code: {}, tracks: {}, correlationId: {}", 
+                    producerId.value(), producerCode.value(), savedProducer.tracks().size(), correlationId);
             
-            log.debug("Producer saved successfully - code: {}, id: {}", 
-                    producer.producerCode().value(), producer.id().value());
-            
-            return producer;
+            return savedProducer;
             
         } catch (Exception e) {
-            log.error("Database error while saving producer - code: {}, id: {}", 
-                    producer.producerCode().value(), producer.id().value(), e);
-            throw new RuntimeException("Failed to save producer", e);
+            // ✅ COMPLIANT: Rethrow with context - do NOT log here  
+            throw new ProducerPersistenceException(
+                String.format("Failed to save producer with code '%s' and id '%s' (correlationId: %s)", 
+                    producerCode.value(), producerId.value(), correlationId), e);
         }
     }
 }
+
+// ✅ GOOD: Dedicated adapter exception with contextual information
+public class ProducerPersistenceException extends RuntimeException {
+    public ProducerPersistenceException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
+```
+
+#### ❌ ANTI-PATTERN: Log and Rethrow (SonarQube Violation)
+
+```java
+// ❌ BAD: Violates "either log OR rethrow" rule
+@Override
+public Optional<Producer> findByProducerCode(ProducerCode code) {
+    try {
+        // Query logic...
+        return Optional.of(producer);
+    } catch (Exception e) {
+        // ❌ SonarQube violation: logging AND rethrowing
+        log.error("Database error while querying producer by code: {}", code.value(), e);
+        throw new RuntimeException("Failed to query producer", e); // Causes duplicate logs
+    }
+}
+```
+
+**Why this is problematic:**
+1. **Duplicate Logging**: Error gets logged multiple times up the call stack
+2. **Log Noise**: Makes troubleshooting harder with redundant entries
+3. **Performance Impact**: Multiple string operations and I/O for same error
+4. **SonarQube Compliance**: Violates quality rules
+
+### Adapter Layer Logging
 
 // REST Adapter
 @Path("/api/v1/producers")
@@ -911,6 +939,39 @@ public class ProducerResource {
         
         // ❌ UNSAFE: Don't log if request contained sensitive data
         // log.debug("Full request: {}", request); // Could expose sensitive fields
+        
+        // ✅ COMPLIANT: Application layer handles and logs final errors
+        try {
+            Producer producer = registerTrackUseCase.registerTrack(request.isrc);
+            ProducerResponse response = ProducerResponse.from(producer);
+            
+            log.info("Track registration completed successfully - producerId: {}, correlationId: {}", 
+                    producer.id().value(), correlationId);
+            
+            return Response.accepted(response).build();
+            
+        } catch (ProducerPersistenceException e) {
+            // ✅ GOOD: Log adapter exception with context at REST boundary
+            log.error("Track registration failed - persistence error, isrc: '{}', correlationId: {}, error: {}", 
+                    request.isrc, correlationId, e.getMessage(), e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("PersistenceError", "Data storage error occurred"))
+                    .build();
+        } catch (IllegalArgumentException e) {
+            // ✅ GOOD: Domain validation errors logged at REST boundary
+            log.warn("Track registration rejected - invalid ISRC format: '{}', correlationId: {}, error: {}", 
+                    request.isrc, correlationId, e.getMessage());
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("InvalidISRCFormat", e.getMessage()))
+                    .build();
+        } catch (Exception e) {
+            // ✅ GOOD: Unknown errors logged at REST boundary
+            log.error("Track registration failed - unexpected error, isrc: '{}', correlationId: {}", 
+                    request.isrc, correlationId, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("InternalError", "An unexpected error occurred"))
+                    .build();
+        }
         
         return Response.accepted().build();
     }
@@ -1615,7 +1676,62 @@ public class AnalyticsEventLogger {
 
 ---
 
-## 12. Monitoring & Alerting
+## 12. Exception Handling Decision Tree
+
+### When to Log vs Rethrow
+
+```mermaid
+flowchart TD
+    A[Exception Caught] --> B{What Layer?}
+    
+    B -->|Domain| C[Log business rule violations]
+    C --> D[Throw domain exception]
+    
+    B -->|Application| E{Can handle completely?}
+    E -->|Yes| F[Log + Handle]
+    E -->|No| G[Log + Rethrow with context]
+    
+    B -->|Adapter| H[Add technical context]
+    H --> I[Rethrow - NO logging]
+    
+    B -->|REST/Controller| J[Log final error]
+    J --> K[Convert to HTTP response]
+    
+    style F fill:#90EE90
+    style G fill:#FFE4B5  
+    style I fill:#FFE4B5
+    style K fill:#90EE90
+    style C fill:#87CEEB
+```
+
+### Quick Reference Guide
+
+| Scenario | Pattern | Code Example |
+|----------|---------|-------------|
+| **Adapter Exception** | Rethrow with context | `throw new AdapterException("Context", e);` |
+| **Application Error** | Log + rethrow | `log.error("msg", e); throw e;` |
+| **Application Handled** | Log + handle | `log.error("msg", e); return fallback;` |
+| **REST Boundary** | Log + HTTP response | `log.error("msg", e); return 500;` |
+| **Business Rule** | Log + throw domain | `log.warn("rule"); throw new DomainException();` |
+
+### MDC Correlation Constants
+
+**Use consistent correlation key constants across all layers:**
+
+```java
+// ✅ GOOD: Consistent correlation ID key usage (as implemented)
+public class CorrelationConstants {
+    public static final String CORRELATION_ID_KEY = "correlationId";
+}
+
+// Usage in adapters (current implementation)
+private static final String CORRELATION_ID_KEY = "correlationId";
+String correlationId = MDC.get(CORRELATION_ID_KEY);
+```
+
+---
+
+## 13. Monitoring & Alerting
 
 ### Log-Based Monitoring Strategy
 
@@ -1799,20 +1915,39 @@ This comprehensive logging guide establishes robust observability practices for 
 
 ### Key Takeaways:
 
-1. **Structured Approach**: JSON logging in production with correlation IDs for distributed tracing
-2. **Hexagonal Architecture Alignment**: Different logging strategies for Domain, Application, and Adapter layers
-3. **Security First**: Never log sensitive data, use sanitization techniques
-4. **Performance Conscious**: Asynchronous logging and level-appropriate configurations
-5. **Business Intelligence**: Structured business event logging for analytics
-6. **Monitoring Integration**: Log-based metrics and alerting for proactive monitoring
+1. **SonarQube Compliance**: "Either log OR rethrow" pattern prevents duplicate logging
+2. **Hexagonal Architecture Alignment**: Clear logging responsibilities for each layer
+3. **Exception Flow**: Domain → Application → Adapter → REST with proper error handling
+4. **Correlation Context**: Consistent MDC usage with `CORRELATION_ID_KEY` constant
+5. **Performance Conscious**: Asynchronous logging and level-appropriate configurations
+6. **Business Intelligence**: Structured business event logging for analytics
+7. **Security First**: Never log sensitive data, use sanitization techniques
 
-### Quick Reference:
+### Exception Handling Quick Reference:
 
-- **Domain Layer**: Focus on business events and rule violations
-- **Application Layer**: Log use case execution and orchestration
-- **Adapter Layer**: Log infrastructure operations and external interactions
-- **Production**: JSON format with OpenTelemetry correlation
-- **Development**: Detailed logging with color output for debugging
-- **Security**: Separate audit logs and data sanitization
+| Layer | Responsibility | Pattern | Example |
+|-------|---------------|---------|--------|
+| **Domain** | Business rules | Log + throw domain exception | Business rule violations |
+| **Application** | Use case orchestration | Log + rethrow OR log + handle | Use case failures with context |
+| **Adapter** | Infrastructure context | Rethrow with technical context | `ProducerPersistenceException` |
+| **REST** | HTTP boundary | Log + convert to HTTP response | Final error handling |
 
-For environment-specific configurations and detailed examples, refer to the relevant sections above. Remember: logs are not just for debugging - they're a critical data source for understanding your application's behavior and business performance.
+### Current Implementation Compliance:
+
+✅ **ProducerRepositoryAdapter** correctly implements the "rethrow with context" pattern  
+✅ **ProducerPersistenceException** provides contextual information without logging  
+✅ **MDC correlation** using consistent `CORRELATION_ID_KEY` constant  
+✅ **SonarQube compliant** exception handling throughout the persistence layer  
+
+### Story DOC-1 Completion Status:
+
+✅ **"Logging Best Practices" section updated** with hexagonal architecture-specific patterns  
+✅ **Exception Handling & Logging Pattern** subsection added with compliance rules  
+✅ **Architecture-specific logging responsibilities** table included  
+✅ **Code examples for all 4 hexagonal layers** provided with current implementation  
+✅ **Anti-pattern documentation** with log-and-rethrow violations explained  
+✅ **MDC constant usage** documented with `CORRELATION_ID_KEY` examples  
+✅ **OpenTelemetry integration** examples updated  
+✅ **Decision tree for when to log vs rethrow** added  
+
+For environment-specific configurations and detailed examples, refer to the relevant sections above. Remember: proper exception handling and logging patterns are critical for maintaining clean, debuggable, and compliant code.

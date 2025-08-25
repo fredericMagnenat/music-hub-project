@@ -20,6 +20,7 @@ devLoadAlwaysFiles:
   - docs/architecture/source-tree.md
   - docs/architecture/database-migration-flyway.md
   - docs/architecture/testing-best-practices.md
+  - docs/architecture/logging-best-practices.md
 devDebugLog: .ai/debug-log.md
 devStoryLocation: docs/stories
 slashPrefix: BMad

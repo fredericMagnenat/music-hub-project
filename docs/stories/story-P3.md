@@ -1,0 +1,210 @@
+### User Story: P3 - Recent Tracks API Endpoint
+
+## Status
+Ready for Development
+
+> **As a** Dashboard User, **when** I view the recent tracks section, **I want** to see the most recent tracks from all producers retrieved from the backend API, **in order to** have consistent, synchronized data across all users and sessions.
+
+### Context
+
+**Issue:** Story 9 (Dashboard - Recent Tracks) was delivered with localStorage-based data, but the corresponding backend API endpoint `GET /api/v1/tracks/recent` does not exist. This creates data inconsistency between users and sessions in production.
+
+**Solution:** Implement the missing API endpoint and integrate it with the existing frontend component `RecentTracksList`.
+
+### Acceptance Criteria
+
+1.  **Given** the system has tracks from multiple producers
+    **When** a `GET /api/v1/tracks/recent` request is made
+    **Then** the system returns the 10 most recently submitted tracks
+    **And** the tracks are ordered by submission date (newest first)
+    **And** the response format matches the existing Track schema.
+
+2.  **Given** the system has fewer than 10 tracks total
+    **When** a `GET /api/v1/tracks/recent` request is made
+    **Then** the system returns all available tracks
+    **And** they are still ordered by submission date (newest first).
+
+3.  **Given** the system has no tracks
+    **When** a `GET /api/v1/tracks/recent` request is made
+    **Then** the system returns an empty array `[]`
+    **And** the response status is `200 OK`.
+
+4.  **Given** the recent tracks API endpoint exists
+    **When** the Dashboard page loads
+    **Then** the `RecentTracksList` component fetches data from the API
+    **And** displays loading state while the request is in progress
+    **And** no longer uses localStorage for data source.
+
+5.  **Given** the recent tracks API is called
+    **When** the request completes successfully
+    **Then** the response time is under 1 second
+    **And** the data is displayed in the existing RecentTracksList component
+    **And** the UI remains visually unchanged.
+
+6.  **Given** the recent tracks API call fails
+    **When** there is a network error or server error
+    **Then** the component displays an appropriate error state
+    **And** provides a retry mechanism for the user
+    **And** gracefully handles the error without breaking the dashboard.
+
+### Backend Technical Tasks
+
+1.  **Module `producer-application`:**
+    *   Add a new method `getRecentTracks()` to the existing `ProducerService` or create a dedicated `TrackQueryService`.
+    *   The method should query all producers, collect their tracks, sort by submission date (newest first), and limit to 10 results.
+    *   Return a list of Track DTOs suitable for API consumption.
+
+2.  **Module `producer-adapter-persistence`:**
+    *   If needed, add a query method to `ProducerRepository` or create a dedicated query repository.
+    *   Implement efficient database query to retrieve recent tracks across all producers (consider using JPQL or native query for performance).
+    *   Ensure proper indexing on track submission date for optimal performance.
+
+3.  **Module `producer-adapter-rest`:**
+    *   Add a new endpoint `GET /tracks/recent` to the existing REST controller.
+    *   Map the service response to the API response format.
+    *   Include proper error handling and HTTP status codes.
+    *   Ensure the endpoint follows the established `/api/v1` base path.
+    *   Add basic input validation and request/response logging.
+
+4.  **Module `packages/shared-types` (TypeScript):**
+    *   Define the `RecentTracksResponse` interface if not already covered by existing Track types.
+    *   Ensure type consistency between backend and frontend.
+
+### Frontend Technical Tasks (`apps/webui`)
+
+1.  **API Service:**
+    *   In `apps/webui/app/services/`, update `producer.service.ts` (or create `tracks.service.ts`).
+    *   Implement `getRecentTracks()` method that calls `GET /api/v1/tracks/recent`.
+    *   Handle success and error responses appropriately.
+    *   Use proper TypeScript types from `@repo/shared-types`.
+
+2.  **Component Updates (`app/components/RecentTracksList.tsx`):**
+    *   Remove localStorage dependency completely.
+    *   Integrate with the new API service method.
+    *   Implement loading state (skeleton or spinner using `shadcn/ui`).
+    *   Add error state with retry button.
+    *   Maintain the existing visual design and user experience.
+    *   Ensure proper cleanup of API calls (avoid memory leaks).
+
+3.  **State Management:**
+    *   Use appropriate React patterns (useState, useEffect) for API data management.
+    *   Implement proper loading, success, and error states.
+    *   Consider caching strategy if needed (short-term cache to avoid excessive API calls).
+
+### Technical Requirements
+
+- **Performance:** API response time < 1 second
+- **Scalability:** Query should be optimized for larger datasets
+- **Error Handling:** Graceful degradation when API is unavailable
+- **Backward Compatibility:** No breaking changes to existing API
+- **Security:** Follow existing authentication/authorization patterns
+
+### API Specification
+
+**Endpoint:** `GET /api/v1/tracks/recent`
+
+**Request:** No parameters required
+
+**Response (200 OK):**
+```json
+[
+  {
+    "id": "uuid",
+    "isrc": "FR-LA1-24-00001",
+    "title": "Track Title",
+    "artistNames": ["Artist Name"],
+    "source": {
+      "name": "Source Name",
+      "externalId": "external-id"
+    },
+    "status": "VALIDATED",
+    "submissionDate": "2025-08-22T10:30:00Z",
+    "producer": {
+      "id": "producer-uuid",
+      "producerCode": "FRLA1",
+      "name": "Producer Name"
+    }
+  }
+]
+```
+
+**Response (Empty - 200 OK):**
+```json
+[]
+```
+
+### Migration Strategy
+
+1. **Phase 1:** Implement backend endpoint with tests
+2. **Phase 2:** Update frontend component to use API
+3. **Phase 3:** Remove localStorage fallback code
+4. **Phase 4:** Deploy and validate data consistency
+
+### Tests to Plan
+
+*   **Backend:**
+    *   Unit tests for the service method `getRecentTracks()`:
+        *   Test with multiple producers having tracks
+        *   Test with fewer than 10 tracks total
+        *   Test with no tracks (empty result)
+        *   Test proper sorting by submission date
+    *   Integration tests (`@QuarkusTest`) for the REST endpoint:
+        *   Test successful response format and status codes
+        *   Test performance (response time under 1s)
+        *   Test error handling scenarios
+    *   Database query performance tests with larger datasets
+
+*   **Frontend:**
+    *   Unit tests for `RecentTracksList` component:
+        *   Test loading state display
+        *   Test successful data rendering
+        *   Test error state and retry functionality
+        *   Test proper cleanup on component unmount
+    *   Integration tests:
+        *   Test API service integration
+        *   Test component behavior with real API responses
+        *   Test migration from localStorage to API (no data loss)
+
+### Definition of Done
+
+- [ ] Backend endpoint `GET /api/v1/tracks/recent` implemented and tested
+- [ ] Frontend component updated to use API instead of localStorage
+- [ ] All existing visual functionality preserved
+- [ ] Loading and error states implemented
+- [ ] Unit and integration tests passing
+- [ ] API response time < 1 second
+- [ ] Documentation updated (API specification)
+- [ ] Code review completed
+- [ ] QA testing completed
+- [ ] No regression in existing functionality
+- [ ] Data consistency verified across users/sessions
+
+### Dependencies
+
+- **Requires:** Stories P1 and P2 completed (Producer and Track entities exist)
+- **Requires:** Story 9 completed (RecentTracksList component exists)
+- **Blocks:** None (this is a technical enhancement)
+
+### Estimates
+
+- **Backend Development:** 1 day
+- **Frontend Integration:** 0.5 day
+- **Testing:** 0.5 day
+- **Total Effort:** 2 days
+
+### Priority
+
+**HIGH** - Production issue with data inconsistency between users
+
+### Technical Notes
+
+- Consider database indexing on track submission dates for optimal query performance
+- Ensure proper error boundaries in frontend to prevent dashboard crashes
+- Monitor API performance after deployment
+- Consider implementing basic caching if API is called frequently
+
+### Links
+
+- **Related Epic:** [Epic 1 - Core Producer Management](../epics/epic-1-core-producer-management.md)
+- **Sprint Change Proposal:** [docs/sprint-change-proposal-recent-tracks-api.md](../changes/sprint-change-proposal-recent-tracks-api.md)
+- **Frontend Story:** [Story 9 - Dashboard Recent Tracks](09.dashboard-recent-tracks.md)

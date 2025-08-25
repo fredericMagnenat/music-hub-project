@@ -41,19 +41,31 @@ class TrackMapperTest {
 
             // Then
             assertNotNull(entity, "Entity should not be null");
-            assertEquals("FRLA12400001", entity.isrc, "ISRC should be mapped correctly");
-            assertEquals("Test Track", entity.title, "Title should be mapped correctly");
-            assertEquals("PROVISIONAL", entity.status, "Status should be mapped as enum name");
+            assertEquals("FRLA12400001", entity.getIsrc(), "ISRC should be mapped correctly");
+            assertEquals("Test Track", entity.getTitle(), "Title should be mapped correctly");
+            assertEquals("PROVISIONAL", entity.getStatus(), "Status should be mapped as enum name");
 
-            assertEquals(2, entity.artistNames.size(), "Should have 2 artists");
-            assertTrue(entity.artistNames.contains("Artist 1"), "Should contain first artist");
-            assertTrue(entity.artistNames.contains("Artist 2"), "Should contain second artist");
+            assertEquals(2, entity.getArtistNames().size(), "Should have 2 artists");
+            assertTrue(entity.getArtistNames().contains("Artist 1"), "Should contain first artist");
+            assertTrue(entity.getArtistNames().contains("Artist 2"), "Should contain second artist");
 
-            assertNotNull(entity.sourcesJson, "Sources JSON should not be null");
-            assertTrue(entity.sourcesJson.contains("SPOTIFY"), "JSON should contain Spotify source");
-            assertTrue(entity.sourcesJson.contains("APPLE_MUSIC"), "JSON should contain Apple Music source");
-            assertTrue(entity.sourcesJson.contains("spotify-123"), "JSON should contain Spotify ID");
-            assertTrue(entity.sourcesJson.contains("apple-456"), "JSON should contain Apple Music ID");
+            assertNotNull(entity.getSources(), "Sources should not be null");
+            assertEquals(2, entity.getSources().size(), "Should have 2 sources");
+            
+            // Verify sources are correctly mapped
+            Source spotifySource = entity.getSources().stream()
+                    .filter(s -> "SPOTIFY".equals(s.sourceName()))
+                    .findFirst()
+                    .orElse(null);
+            assertNotNull(spotifySource, "Should have Spotify source");
+            assertEquals("spotify-123", spotifySource.sourceId(), "Spotify source ID should match");
+            
+            Source appleSource = entity.getSources().stream()
+                    .filter(s -> "APPLE_MUSIC".equals(s.sourceName()))
+                    .findFirst()
+                    .orElse(null);
+            assertNotNull(appleSource, "Should have Apple Music source");
+            assertEquals("apple-456", appleSource.sourceId(), "Apple Music source ID should match");
         }
 
         @Test
@@ -82,14 +94,14 @@ class TrackMapperTest {
             TrackEntity entity = TrackMapper.toDbo(domain);
 
             // Then
-            assertNotNull(entity.sourcesJson);
-            assertTrue(entity.sourcesJson.contains("MANUAL"));
-            assertTrue(entity.sourcesJson.contains("manual-001"));
-            assertTrue(entity.sourcesJson.startsWith("["));
-            assertTrue(entity.sourcesJson.endsWith("]"));
+            assertNotNull(entity.getSources());
+            assertEquals(1, entity.getSources().size());
+            Source manualSource = entity.getSources().get(0);
+            assertEquals("MANUAL", manualSource.sourceName());
+            assertEquals("manual-001", manualSource.sourceId());
 
-            assertEquals(1, entity.artistNames.size());
-            assertTrue(entity.artistNames.contains("Solo Artist"));
+            assertEquals(1, entity.getArtistNames().size());
+            assertTrue(entity.getArtistNames().contains("Solo Artist"));
         }
     }
 
@@ -102,13 +114,15 @@ class TrackMapperTest {
         void toDomain_shouldConvertCompleteEntity() {
             // Given
             TrackEntity entity = new TrackEntity();
-            entity.id = UUID.randomUUID();
-            entity.isrc = "FRLA12400001";
-            entity.title = "Test Track";
-            entity.status = "PROVISIONAL";
-            entity.artistNames = List.of("Artist 1", "Artist 2");
-            entity.sourcesJson = "[{\"sourceName\":\"SPOTIFY\",\"sourceId\":\"spotify-123\"}," +
-                    "{\"sourceName\":\"APPLE_MUSIC\",\"sourceId\":\"apple-456\"}]";
+            entity.setId(UUID.randomUUID());
+            entity.setIsrc("FRLA12400001");
+            entity.setTitle("Test Track");
+            entity.setStatus("PROVISIONAL");
+            entity.setArtistNames(List.of("Artist 1", "Artist 2"));
+            entity.setSources(List.of(
+                    Source.of("SPOTIFY", "spotify-123"),
+                    Source.of("APPLE_MUSIC", "apple-456")
+            ));
 
             // When
             Track domain = TrackMapper.toDomain(entity);
@@ -152,24 +166,25 @@ class TrackMapperTest {
         }
 
         @Test
-        @DisplayName("Should throw exception for invalid JSON sources")
-        void toDomain_shouldThrowExceptionForInvalidJson() {
+        @DisplayName("Should handle entity with valid sources")
+        void toDomain_shouldHandleValidSources() {
             // Given
             TrackEntity entity = new TrackEntity();
-            entity.id = UUID.randomUUID();
-            entity.isrc = "FRLA12400006";
-            entity.title = "Invalid JSON Track";
-            entity.status = "PROVISIONAL";
-            entity.artistNames = List.of("Artist");
-            entity.sourcesJson = "{invalid json}";
+            entity.setId(UUID.randomUUID());
+            entity.setIsrc("FRLA12400006");
+            entity.setTitle("Valid Sources Track");
+            entity.setStatus("PROVISIONAL");
+            entity.setArtistNames(List.of("Artist"));
+            entity.setSources(List.of(Source.of("SPOTIFY", "test-123")));
 
-            // When & Then
-            RuntimeException exception = assertThrows(RuntimeException.class,
-                    () -> TrackMapper.toDomain(entity));
-            assertTrue(exception.getMessage().contains("Failed to deserialize sources from JSON"),
-                    "Exception should mention JSON deserialization failure");
-            assertTrue(exception.getMessage().contains("{invalid json}"),
-                    "Exception should include the invalid JSON for debugging");
+            // When
+            Track domain = TrackMapper.toDomain(entity);
+
+            // Then
+            assertNotNull(domain, "Domain should not be null");
+            assertEquals(1, domain.sources().size(), "Should have 1 source");
+            assertEquals("SPOTIFY", domain.sources().get(0).sourceName());
+            assertEquals("test-123", domain.sources().get(0).sourceId());
         }
     }
 
@@ -182,12 +197,12 @@ class TrackMapperTest {
         void toDomain_shouldFailWithEmptyArtistNames() {
             // Given - Entity with empty artistNames (violates domain rule)
             TrackEntity entity = new TrackEntity();
-            entity.id = UUID.randomUUID();
-            entity.isrc = "FRLA12400007";
-            entity.title = "Empty Artists Track";
-            entity.status = "PROVISIONAL";
-            entity.artistNames = List.of(); // Empty list violates domain rule
-            entity.sourcesJson = "[{\"sourceName\":\"SPOTIFY\",\"sourceId\":\"test-123\"}]";
+            entity.setId(UUID.randomUUID());
+            entity.setIsrc("FRLA12400007");
+            entity.setTitle("Empty Artists Track");
+            entity.setStatus("PROVISIONAL");
+            entity.setArtistNames(List.of()); // Empty list violates domain rule
+            entity.setSources(List.of(Source.of("SPOTIFY", "test-123")));
 
             // When & Then - Should fail due to domain validation
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -201,12 +216,12 @@ class TrackMapperTest {
         void toDomain_shouldFailWithNullArtistNames() {
             // Given - Entity with null artistNames (violates domain rule)
             TrackEntity entity = new TrackEntity();
-            entity.id = UUID.randomUUID();
-            entity.isrc = "FRLA12400008";
-            entity.title = "Null Artists Track";
-            entity.status = "PROVISIONAL";
-            entity.artistNames = null; // Null violates domain rule
-            entity.sourcesJson = "[{\"sourceName\":\"SPOTIFY\",\"sourceId\":\"test-123\"}]";
+            entity.setId(UUID.randomUUID());
+            entity.setIsrc("FRLA12400008");
+            entity.setTitle("Null Artists Track");
+            entity.setStatus("PROVISIONAL");
+            entity.setArtistNames(null); // Null violates domain rule
+            entity.setSources(List.of(Source.of("SPOTIFY", "test-123")));
 
             // When & Then - Should fail due to domain validation
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -218,14 +233,14 @@ class TrackMapperTest {
         @Test
         @DisplayName("Should fail when trying to create Track with empty sources via mapper")
         void toDomain_shouldFailWithEmptySources() {
-            // Given - Entity with empty sources JSON (violates domain rule)
+            // Given - Entity with empty sources (violates domain rule)
             TrackEntity entity = new TrackEntity();
-            entity.id = UUID.randomUUID();
-            entity.isrc = "FRLA12400009";
-            entity.title = "Empty Sources Track";
-            entity.status = "PROVISIONAL";
-            entity.artistNames = List.of("Artist");
-            entity.sourcesJson = "[]"; // Empty sources violates domain rule
+            entity.setId(UUID.randomUUID());
+            entity.setIsrc("FRLA12400009");
+            entity.setTitle("Empty Sources Track");
+            entity.setStatus("PROVISIONAL");
+            entity.setArtistNames(List.of("Artist"));
+            entity.setSources(List.of()); // Empty sources violates domain rule
 
             // When & Then - Should fail due to domain validation
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -237,14 +252,14 @@ class TrackMapperTest {
         @Test
         @DisplayName("Should fail when trying to create Track with null sources via mapper")
         void toDomain_shouldFailWithNullSources() {
-            // Given - Entity with null sources JSON (violates domain rule)
+            // Given - Entity with null sources (violates domain rule)
             TrackEntity entity = new TrackEntity();
-            entity.id = UUID.randomUUID();
-            entity.isrc = "FRLA12400010";
-            entity.title = "Null Sources Track";
-            entity.status = "PROVISIONAL";
-            entity.artistNames = List.of("Artist");
-            entity.sourcesJson = null; // Null sources violates domain rule
+            entity.setId(UUID.randomUUID());
+            entity.setIsrc("FRLA12400010");
+            entity.setTitle("Null Sources Track");
+            entity.setStatus("PROVISIONAL");
+            entity.setArtistNames(List.of("Artist"));
+            entity.setSources(null); // Null sources violates domain rule
 
             // When & Then - Should fail due to domain validation
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -258,12 +273,12 @@ class TrackMapperTest {
         void toDomain_shouldFailWithBlankTitle() {
             // Given - Entity with blank title (violates domain rule)
             TrackEntity entity = new TrackEntity();
-            entity.id = UUID.randomUUID();
-            entity.isrc = "FRLA12400011";
-            entity.title = "   "; // Blank title violates domain rule
-            entity.status = "PROVISIONAL";
-            entity.artistNames = List.of("Artist");
-            entity.sourcesJson = "[{\"sourceName\":\"SPOTIFY\",\"sourceId\":\"test-123\"}]";
+            entity.setId(UUID.randomUUID());
+            entity.setIsrc("FRLA12400011");
+            entity.setTitle("   "); // Blank title violates domain rule
+            entity.setStatus("PROVISIONAL");
+            entity.setArtistNames(List.of("Artist"));
+            entity.setSources(List.of(Source.of("SPOTIFY", "test-123")));
 
             // When & Then - Should fail due to domain validation
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,

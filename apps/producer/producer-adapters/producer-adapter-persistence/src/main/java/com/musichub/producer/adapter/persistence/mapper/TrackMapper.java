@@ -1,24 +1,19 @@
 package com.musichub.producer.adapter.persistence.mapper;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.musichub.producer.adapter.persistence.entity.TrackEntity;
 import com.musichub.producer.domain.model.Track;
 import com.musichub.producer.domain.values.Source;
 import com.musichub.producer.domain.values.TrackStatus;
+import com.musichub.shared.domain.id.TrackId;
 import com.musichub.shared.domain.values.ISRC;
 
 import java.util.List;
 
 /**
  * Mapper between Track domain model and TrackEntity persistence model.
- * Handles JSON serialization/deserialization of Sources and Value Object conversions.
+ * With @JdbcTypeCode(SqlTypes.JSON) mapping, Sources are handled directly by Hibernate.
  */
 public final class TrackMapper {
-
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-    private static final TypeReference<List<Source>> SOURCE_LIST_TYPE = new TypeReference<>() {};
 
     private TrackMapper() {
         // Utility class - prevent instantiation
@@ -36,11 +31,13 @@ public final class TrackMapper {
         }
 
         TrackEntity entity = new TrackEntity();
-        entity.isrc = domain.isrc().value();
-        entity.title = domain.title();
-        entity.status = domain.status().name();
-        entity.artistNames = List.copyOf(domain.artistNames());
-        entity.sourcesJson = serializeSourcesToJson(domain.sources());
+        // Generate deterministic TrackId based on ISRC
+        entity.setTrackId(TrackId.fromISRC(domain.isrc().value()));
+        entity.setIsrc(domain.isrc().value());
+        entity.setTitle(domain.title());
+        entity.setStatus(domain.status().name());
+        entity.setArtistNames(List.copyOf(domain.artistNames()));
+        entity.setSources(domain.sources()); // JsonB handles serialization automatically
 
         return entity;
     }
@@ -56,31 +53,13 @@ public final class TrackMapper {
             return null;
         }
 
-        ISRC isrc = ISRC.of(entity.isrc);
-        TrackStatus status = TrackStatus.valueOf(entity.status);
-        List<Source> sources = deserializeSourcesFromJson(entity.sourcesJson);
+        ISRC isrc = ISRC.of(entity.getIsrc());
+        TrackStatus status = TrackStatus.valueOf(entity.getStatus());
+        List<Source> sources = entity.getSources(); // JsonB handles deserialization automatically
 
-        return Track.of(isrc, entity.title, entity.artistNames, sources, status);
+        return Track.of(isrc, entity.getTitle(), entity.getArtistNames(), sources, status);
     }
 
-    private static String serializeSourcesToJson(List<Source> sources) {
-        try {
-            return objectMapper.writeValueAsString(sources);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to serialize sources to JSON: " + sources, e);
-        }
-    }
-
-    private static List<Source> deserializeSourcesFromJson(String sourcesJson) {
-        if (sourcesJson == null) {
-            // Return null to let Track.of() validate and throw proper domain exception
-            return null;
-        }
-        
-        try {
-            return objectMapper.readValue(sourcesJson, SOURCE_LIST_TYPE);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to deserialize sources from JSON: " + sourcesJson, e);
-        }
-    }
+    // Note: JSON serialization/deserialization is handled automatically by Hibernate + JsonB
+    // thanks to @JdbcTypeCode(SqlTypes.JSON) annotation on the sources field
 }

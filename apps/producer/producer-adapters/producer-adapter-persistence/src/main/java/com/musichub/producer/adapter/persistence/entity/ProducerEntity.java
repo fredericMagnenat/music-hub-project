@@ -2,7 +2,9 @@ package com.musichub.producer.adapter.persistence.entity;
 
 import com.musichub.producer.domain.values.ProducerId;
 import jakarta.persistence.*;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -13,6 +15,9 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "producers")
+@Data
+@NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class ProducerEntity {
 
     @Id
@@ -28,6 +33,7 @@ public class ProducerEntity {
 
 
     @Column(name = "producer_code", unique = true, nullable = false, length = 5)
+    @EqualsAndHashCode.Include
     public String producerCode;
 
     @Column(name = "name")
@@ -36,10 +42,11 @@ public class ProducerEntity {
     @Column(name = "status", length = 20)
     public String status;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "producer_tracks", joinColumns = @JoinColumn(name = "producer_id"))
-    @Column(name = "track_isrc", nullable = false, length = 12)
-    public Set<String> tracks = new LinkedHashSet<>();
+    @OneToMany(mappedBy = "producer",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY,
+            orphanRemoval = true)
+    public Set<TrackEntity> tracks = new LinkedHashSet<>();
 
     public ProducerId getProducerId() {
         return new ProducerId(this.id);
