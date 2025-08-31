@@ -47,7 +47,7 @@ function extractTrackInfo(data: ProducerDto): TrackInfo | undefined {
 }
 
 export async function registerTrack(isrc: string): Promise<HttpResult<ProducerDto>> {
-  const response = await fetch("/api/v1/producers", {
+  const response = await fetch("/api/producers", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -57,25 +57,25 @@ export async function registerTrack(isrc: string): Promise<HttpResult<ProducerDt
 
   if (response.ok) {
     const data = await response.json() as ProducerDto;
-    return { 
-      ok: true, 
-      status: response.status, 
+    return {
+      ok: true,
+      status: response.status,
       data,
       trackInfo: extractTrackInfo(data)
     };
   } else {
     try {
       const errorData = await response.json();
-      return { 
-        ok: false, 
-        status: response.status, 
+      return {
+        ok: false,
+        status: response.status,
         error: errorData.error,
-        message: errorData.message 
+        message: errorData.message
       };
     } catch {
-      return { 
-        ok: false, 
-        status: response.status 
+      return {
+        ok: false,
+        status: response.status
       };
     }
   }
@@ -83,7 +83,7 @@ export async function registerTrack(isrc: string): Promise<HttpResult<ProducerDt
 
 export async function getRecentTracks(): Promise<HttpResult<RecentTracksApiResponse>> {
   try {
-    const response = await fetch("/api/v1/tracks/recent", {
+    const response = await fetch("/api/tracks/recent", {
       method: "GET",
       headers: {
         "Accept": "application/json",

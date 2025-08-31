@@ -26,6 +26,13 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
         },
+        // ✅ Proxy pour API avec rewrite pour éviter le double préfixe
+        "/api": {
+          target: "http://localhost:8080",
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/api/, ""), // Supprime /api du début
+        },
       },
     },
     test: {

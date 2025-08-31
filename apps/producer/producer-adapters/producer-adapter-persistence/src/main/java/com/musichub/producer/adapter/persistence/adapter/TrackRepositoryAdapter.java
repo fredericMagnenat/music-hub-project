@@ -48,7 +48,6 @@ public class TrackRepositoryAdapter implements TrackRepository, PanacheRepositor
             
             log.debug("Query returned {} TrackEntity objects", trackEntities.size());
             
-            // ✅ Délégation au mapper dédié
             List<TrackInfo> trackInfos = TrackInfoMapper.toDtoList(trackEntities);
             
             long duration = System.currentTimeMillis() - startTime;
