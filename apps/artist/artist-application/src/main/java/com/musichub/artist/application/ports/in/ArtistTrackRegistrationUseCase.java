@@ -1,4 +1,4 @@
-package com.musichub.artist.domain.ports.in;
+package com.musichub.artist.application.ports.in;
 
 
 import com.musichub.shared.events.TrackWasRegistered;

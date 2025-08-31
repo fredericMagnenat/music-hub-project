@@ -7,6 +7,6 @@
  * <p>Event handlers in this package receive external events and delegate
  * to the appropriate application layer use cases for processing.
  * 
- * @see com.musichub.artist.domain.ports.in.ArtistTrackRegistrationUseCase
+ * @see com.musichub.artist.application.ports.in.ArtistTrackRegistrationUseCase
  */
 package com.musichub.artist.adapter.messaging.consumer;

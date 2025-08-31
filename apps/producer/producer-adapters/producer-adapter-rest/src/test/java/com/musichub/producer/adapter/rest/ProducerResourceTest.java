@@ -1,9 +1,9 @@
-package com.musichub.producer.adapter.rest.resource;
+package com.musichub.producer.adapter.rest;
 
+import com.musichub.producer.adapter.rest.resource.producer.ProducerResource;
 import com.musichub.producer.domain.model.Producer;
-import com.musichub.producer.domain.ports.in.RegisterTrackUseCase;
+import com.musichub.producer.application.ports.in.RegisterTrackUseCase;
 import com.musichub.shared.domain.values.ProducerCode;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

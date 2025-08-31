@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { RecentTracksApiResponse } from "@repo/shared-types"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -77,5 +78,49 @@ export async function registerTrack(isrc: string): Promise<HttpResult<ProducerDt
         status: response.status 
       };
     }
+  }
+}
+
+export async function getRecentTracks(): Promise<HttpResult<RecentTracksApiResponse>> {
+  try {
+    const response = await fetch("/api/v1/tracks/recent", {
+      method: "GET",
+      headers: {
+        "Accept": "application/json",
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json() as RecentTracksApiResponse;
+      return {
+        ok: true,
+        status: response.status,
+        data
+      };
+    } else {
+      try {
+        const errorData = await response.json();
+        return {
+          ok: false,
+          status: response.status,
+          error: errorData.error,
+          message: errorData.message
+        };
+      } catch {
+        return {
+          ok: false,
+          status: response.status,
+          error: "NetworkError",
+          message: "Failed to fetch recent tracks"
+        };
+      }
+    }
+  } catch (error) {
+    return {
+      ok: false,
+      status: 0,
+      error: "NetworkError",
+      message: error instanceof Error ? error.message : "Network error occurred"
+    };
   }
 }

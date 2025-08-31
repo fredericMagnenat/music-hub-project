@@ -26,8 +26,6 @@ function isValidISRC(input: string): boolean {
   return /^[A-Z]{2}[A-Z0-9]{3}\d{7}$/.test(normalized);
 }
 
-import type { RecentTrackItem } from "~/components/RecentTracksList";
-
 export default function Index() {
   const [rawIsrc, setRawIsrc] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -103,19 +101,6 @@ export default function Index() {
     }
   }, [normalized, toast]);
 
-  // Placeholder recent tracks (replace with data when available)
-  const recentTracks: RecentTrackItem[] = useMemo(
-    () => [
-      { id: "1", title: "Midnight Echoes", artists: ["N. Rivera"], isrc: "FRLA12400001", status: "Verified" },
-      { id: "2", title: "Cloud Runner", artists: ["Ada Fox", "Miles K."], isrc: "USRC17607839", status: "Provisional" },
-      { id: "3", title: "Neon Garden", artists: ["The Lumen"], isrc: "GBAYE6800011", status: "Verified" },
-      { id: "4", title: "Low Tide", artists: ["Élodie"], isrc: "FRZAA2400123", status: "Provisional" },
-      { id: "5", title: "Paper Planes", artists: ["Quiet Parade"], isrc: "USQX91501234", status: "Verified" },
-      { id: "6", title: "Afterglow", artists: ["K. Tanaka"], isrc: "JPZ123400567", status: "Provisional" },
-    ],
-    []
-  );
-
   return (
     <div className="min-h-dvh font-sans antialiased">
       <div className="mx-auto max-w-xl p-6 md:max-w-3xl">
@@ -174,7 +159,7 @@ export default function Index() {
 
         <div className="mt-8">
           <h3 className="text-lg font-semibold mb-3">Recent Tracks</h3>
-          <RecentTracksList tracks={recentTracks} />
+          <RecentTracksList />
         </div>
       </div>
     </div>

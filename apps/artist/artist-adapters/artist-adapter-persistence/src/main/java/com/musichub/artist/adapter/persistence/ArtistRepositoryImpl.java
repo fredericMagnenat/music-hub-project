@@ -2,7 +2,7 @@ package com.musichub.artist.adapter.persistence;
 
 import com.musichub.artist.domain.model.Artist;
 
-import com.musichub.artist.domain.ports.out.ArtistRepository;
+import com.musichub.artist.application.ports.out.ArtistRepository;
 import com.musichub.shared.domain.values.ISRC;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;

@@ -1,147 +1,268 @@
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
-import { RecentTracksList, type RecentTrackItem } from './RecentTracksList';
+import { render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { RecentTracksList } from './RecentTracksList';
+import * as utils from '~/lib/utils';
+import { RecentTrackResponse } from '@repo/shared-types';
 
-const mockTracks: RecentTrackItem[] = [
+// Mock the utils module
+vi.mock('~/lib/utils', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('~/lib/utils')>();
+  return {
+    ...actual,
+    getRecentTracks: vi.fn()
+  };
+});
+
+const mockTracks: RecentTrackResponse[] = [
   {
     id: '1',
-    title: 'Test Track 1',
-    artists: ['Artist 1'],
     isrc: 'FRLA12400001',
-    status: 'Verified'
+    title: 'Test Track 1',
+    artistNames: ['Artist 1'],
+    source: { name: 'TIDAL', externalId: 'ext-1' },
+    status: 'VALIDATED',
+    submissionDate: '2025-08-25T10:30:00Z',
+    producer: { id: 'prod-1', producerCode: 'FRLA1', name: 'Producer 1' }
   },
   {
-    id: '2', 
-    title: 'Test Track 2',
-    artists: ['Artist 2', 'Artist 3'],
+    id: '2',
     isrc: 'USRC17607839',
-    status: 'Provisional'
+    title: 'Test Track 2',
+    artistNames: ['Artist 2', 'Artist 3'],
+    source: { name: 'TIDAL', externalId: 'ext-2' },
+    status: 'PROVISIONAL',
+    submissionDate: '2025-08-25T09:30:00Z',
+    producer: { id: 'prod-2', producerCode: 'USRC1', name: 'Producer 2' }
   }
 ];
 
 describe('RecentTracksList', () => {
-  describe('empty state', () => {
-    it('displays empty state when no tracks provided', () => {
-      render(<RecentTracksList tracks={[]} />);
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
+
+  describe('loading state', () => {
+    it('displays loading state initially', async () => {
+      const mockGetRecentTracks = vi.mocked(utils.getRecentTracks);
+      mockGetRecentTracks.mockImplementation(() => new Promise(() => {})); // Never resolves
+
+      render(<RecentTracksList />);
       
-      const emptyState = screen.getByTestId('empty-state');
-      expect(emptyState).toBeInTheDocument();
-      expect(emptyState).toHaveTextContent('No recent tracks yet. Tracks you validate will appear here.');
-      expect(emptyState).toHaveAttribute('role', 'status');
-      expect(emptyState).toHaveAttribute('aria-live', 'polite');
+      const loadingState = screen.getByTestId('loading-state');
+      expect(loadingState).toBeInTheDocument();
+      expect(loadingState).toHaveTextContent('Loading recent tracks...');
+      expect(loadingState).toHaveAttribute('role', 'status');
+      expect(loadingState).toHaveAttribute('aria-live', 'polite');
     });
   });
 
-  describe('with 1 track', () => {
-    it('renders single track with all required information', () => {
-      render(<RecentTracksList tracks={[mockTracks[0]]} />);
+  describe('error state', () => {
+    it('displays error state when API call fails', async () => {
+      const mockGetRecentTracks = vi.mocked(utils.getRecentTracks);
+      mockGetRecentTracks.mockResolvedValue({
+        ok: false,
+        status: 500,
+        error: 'InternalError',
+        message: 'Failed to load recent tracks'
+      });
+
+      render(<RecentTracksList />);
       
-      const trackList = screen.getByRole('list', { name: 'Recent Tracks' });
-      expect(trackList).toBeInTheDocument();
+      await waitFor(() => {
+        const errorState = screen.getByTestId('error-state');
+        expect(errorState).toBeInTheDocument();
+        expect(errorState).toHaveTextContent('Failed to load recent tracks');
+        expect(errorState).toHaveAttribute('role', 'alert');
+      });
+    });
+
+    it('displays retry button in error state', async () => {
+      const mockGetRecentTracks = vi.mocked(utils.getRecentTracks);
+      mockGetRecentTracks.mockResolvedValue({
+        ok: false,
+        status: 500,
+        error: 'NetworkError',
+        message: 'Failed to load recent tracks'
+      });
+
+      render(<RecentTracksList />);
       
-      const trackItem = screen.getByRole('listitem');
-      expect(trackItem).toBeInTheDocument();
-      expect(trackItem).toHaveAttribute('tabIndex', '0');
+      await waitFor(() => {
+        const retryButton = screen.getByRole('button', { name: 'Retry loading recent tracks' });
+        expect(retryButton).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('empty state', () => {
+    it('displays empty state when no tracks are returned', async () => {
+      const mockGetRecentTracks = vi.mocked(utils.getRecentTracks);
+      mockGetRecentTracks.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: []
+      });
+
+      render(<RecentTracksList />);
       
+      await waitFor(() => {
+        const emptyState = screen.getByTestId('empty-state');
+        expect(emptyState).toBeInTheDocument();
+        expect(emptyState).toHaveTextContent('No recent tracks yet. Tracks you validate will appear here.');
+        expect(emptyState).toHaveAttribute('role', 'status');
+        expect(emptyState).toHaveAttribute('aria-live', 'polite');
+      });
+    });
+  });
+
+  describe('success state', () => {
+    it('renders tracks when API call succeeds', async () => {
+      const mockGetRecentTracks = vi.mocked(utils.getRecentTracks);
+      mockGetRecentTracks.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: mockTracks
+      });
+
+      render(<RecentTracksList />);
+      
+      await waitFor(() => {
+        const trackList = screen.getByRole('list', { name: 'Recent Tracks' });
+        expect(trackList).toBeInTheDocument();
+      });
+
+      const trackItems = screen.getAllByRole('listitem');
+      expect(trackItems).toHaveLength(2);
+      
+      // Check first track
       expect(screen.getByText('Test Track 1')).toBeInTheDocument();
       expect(screen.getByText('Artist 1')).toBeInTheDocument();
       expect(screen.getByText('ISRC: FRLA12400001')).toBeInTheDocument();
-      expect(screen.getByText('Verified')).toBeInTheDocument();
-    });
-  });
-
-  describe('with 10 tracks', () => {
-    const tenTracks: RecentTrackItem[] = Array.from({ length: 10 }, (_, i) => ({
-      id: `${i + 1}`,
-      title: `Track ${i + 1}`,
-      artists: [`Artist ${i + 1}`],
-      isrc: `TEST${String(i + 1).padStart(8, '0')}`,
-      status: i % 2 === 0 ? 'Verified' : 'Provisional' as const
-    }));
-
-    it('renders all 10 tracks', () => {
-      render(<RecentTracksList tracks={tenTracks} />);
       
-      const trackItems = screen.getAllByRole('listitem');
-      expect(trackItems).toHaveLength(10);
-      
-      // Check first and last tracks are rendered
-      expect(screen.getByText('Track 1')).toBeInTheDocument();
-      expect(screen.getByText('Track 10')).toBeInTheDocument();
+      // Check second track
+      expect(screen.getByText('Test Track 2')).toBeInTheDocument();
+      expect(screen.getByText('Artist 2, Artist 3')).toBeInTheDocument();
+      expect(screen.getByText('ISRC: USRC17607839')).toBeInTheDocument();
     });
 
-    it('limits display to maximum 10 items even with more tracks', () => {
-      const elevenTracks = [...tenTracks, {
-        id: '11',
-        title: 'Track 11',
-        artists: ['Artist 11'],
-        isrc: 'TEST00000011',
-        status: 'Verified' as const
-      }];
+    it('maps track status correctly', async () => {
+      const mockGetRecentTracks = vi.mocked(utils.getRecentTracks);
+      mockGetRecentTracks.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: mockTracks
+      });
+
+      render(<RecentTracksList />);
       
-      render(<RecentTracksList tracks={elevenTracks} />);
+      await waitFor(() => {
+        // VALIDATED should map to "Verified"
+        expect(screen.getByText('Verified')).toBeInTheDocument();
+        
+        // PROVISIONAL should map to "Provisional"
+        expect(screen.getByText('Provisional')).toBeInTheDocument();
+      });
+    });
+
+    it('limits display to 10 tracks maximum', async () => {
+      const manyTracks = Array.from({ length: 15 }, (_, i) => ({
+        ...mockTracks[0],
+        id: `track-${i}`,
+        isrc: `FRLA1240${String(i).padStart(4, '0')}`,
+        title: `Track ${i + 1}`
+      }));
+
+      const mockGetRecentTracks = vi.mocked(utils.getRecentTracks);
+      mockGetRecentTracks.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: manyTracks
+      });
+
+      render(<RecentTracksList />);
       
-      const trackItems = screen.getAllByRole('listitem');
-      expect(trackItems).toHaveLength(10);
-      
-      // Verify 11th track is not rendered
-      expect(screen.queryByText('Track 11')).not.toBeInTheDocument();
+      await waitFor(() => {
+        const trackItems = screen.getAllByRole('listitem');
+        expect(trackItems).toHaveLength(10);
+      });
     });
   });
 
   describe('accessibility', () => {
-    it('has proper ARIA labels and roles', () => {
-      render(<RecentTracksList tracks={mockTracks} />);
+    it('has proper ARIA labels and roles', async () => {
+      const mockGetRecentTracks = vi.mocked(utils.getRecentTracks);
+      mockGetRecentTracks.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: mockTracks
+      });
+
+      render(<RecentTracksList />);
       
-      const trackList = screen.getByRole('list', { name: 'Recent Tracks' });
-      expect(trackList).toBeInTheDocument();
-      
-      const trackItems = screen.getAllByRole('listitem');
-      trackItems.forEach((item, index) => {
-        expect(item).toHaveAttribute('tabIndex', '0');
-        expect(item).toHaveAttribute('aria-describedby', `track-${mockTracks[index].id}-info`);
+      await waitFor(() => {
+        const trackList = screen.getByRole('list', { name: 'Recent Tracks' });
+        expect(trackList).toBeInTheDocument();
+        
+        const trackItems = screen.getAllByRole('listitem');
+        trackItems.forEach((item, index) => {
+          expect(item).toHaveAttribute('tabIndex', '0');
+          expect(item).toHaveAttribute('aria-describedby', `track-${mockTracks[index].id}-info`);
+        });
       });
     });
 
-    it('provides accessible track information', () => {
-      render(<RecentTracksList tracks={mockTracks} />);
-      
-      // Check track info sections exist with proper IDs
-      expect(document.querySelector('#track-1-info')).toBeInTheDocument();
-      expect(document.querySelector('#track-2-info')).toBeInTheDocument();
-    });
+    it('provides accessible track information', async () => {
+      const mockGetRecentTracks = vi.mocked(utils.getRecentTracks);
+      mockGetRecentTracks.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: mockTracks
+      });
 
-    it('supports keyboard navigation', () => {
-      render(<RecentTracksList tracks={mockTracks} />);
+      render(<RecentTracksList />);
       
-      const trackItems = screen.getAllByRole('listitem');
-      trackItems.forEach(item => {
-        expect(item).toHaveAttribute('tabIndex', '0');
+      await waitFor(() => {
+        // Check track info sections exist with proper IDs
+        expect(document.querySelector('#track-1-info')).toBeInTheDocument();
+        expect(document.querySelector('#track-2-info')).toBeInTheDocument();
       });
     });
   });
 
-  describe('multiple artists handling', () => {
-    it('displays multiple artists correctly', () => {
-      render(<RecentTracksList tracks={[mockTracks[1]]} />);
+  describe('API integration', () => {
+    it('calls getRecentTracks on component mount', () => {
+      const mockGetRecentTracks = vi.mocked(utils.getRecentTracks);
+      mockGetRecentTracks.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: []
+      });
+
+      render(<RecentTracksList />);
       
-      expect(screen.getByText('Artist 2, Artist 3')).toBeInTheDocument();
+      expect(mockGetRecentTracks).toHaveBeenCalledTimes(1);
     });
 
-    it('sets correct title attribute for truncated artists', () => {
-      render(<RecentTracksList tracks={[mockTracks[1]]} />);
-      
-      const artistElement = screen.getByText('Artist 2, Artist 3');
-      expect(artistElement).toHaveAttribute('title', 'Artist 2, Artist 3');
-    });
-  });
+    it('calls getRecentTracks again when retry button is clicked', async () => {
+      const mockGetRecentTracks = vi.mocked(utils.getRecentTracks);
+      mockGetRecentTracks.mockResolvedValue({
+        ok: false,
+        status: 500,
+        message: 'Server error'
+      });
 
-  describe('responsive layout', () => {
-    it('applies responsive grid classes', () => {
-      render(<RecentTracksList tracks={mockTracks} />);
+      render(<RecentTracksList />);
       
-      const trackList = screen.getByRole('list');
-      expect(trackList).toHaveClass('space-y-3', 'md:grid', 'md:grid-cols-2', 'md:gap-4', 'md:space-y-0');
+      await waitFor(() => {
+        const retryButton = screen.getByRole('button', { name: 'Retry loading recent tracks' });
+        retryButton.click();
+      });
+
+      expect(mockGetRecentTracks).toHaveBeenCalledTimes(2);
     });
   });
 });

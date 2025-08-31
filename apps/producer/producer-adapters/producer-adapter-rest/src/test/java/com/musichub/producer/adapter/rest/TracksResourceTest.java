@@ -1,0 +1,275 @@
+package com.musichub.producer.adapter.rest;
+
+import com.musichub.producer.adapter.rest.dto.RecentTrackResponse;
+import com.musichub.producer.adapter.rest.resource.track.TracksResource;
+import com.musichub.producer.application.dto.TrackInfo;
+import com.musichub.producer.application.ports.in.GetRecentTracksUseCase;
+import com.musichub.producer.domain.values.Source;
+import com.musichub.producer.domain.values.TrackStatus;
+import com.musichub.shared.domain.values.ISRC;
+import jakarta.ws.rs.core.Response;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+@DisplayName("TracksResource REST Adapter Tests")
+class TracksResourceTest {
+
+    @Mock
+    private GetRecentTracksUseCase getRecentTracksUseCase;
+
+    @InjectMocks
+    private TracksResource resource;
+
+    @Test
+    @DisplayName("Should return 200 with tracks when tracks exist")
+    void getRecentTracks_shouldReturn200WithTracks_whenTracksExist() {
+        // Given
+        TrackInfo track1 = createTrackInfo("FRLA12400001", "Track 1");
+        TrackInfo track2 = createTrackInfo("FRLA12400002", "Track 2");
+        List<TrackInfo> tracks = Arrays.asList(track1, track2);
+
+        when(getRecentTracksUseCase.getRecentTracks()).thenReturn(tracks);
+
+        // When
+        Response response = resource.getRecentTracks();
+
+        // Then
+        assertThat(response.getStatus()).isEqualTo(200);
+        
+        @SuppressWarnings("unchecked")
+        List<RecentTrackResponse> responseBody = (List<RecentTrackResponse>) response.getEntity();
+        
+        assertThat(responseBody)
+                .hasSize(2)
+                .extracting("title")
+                .containsExactly("Track 1", "Track 2");
+                
+        assertThat(responseBody)
+                .extracting("isrc")
+                .containsExactly("FRLA12400001", "FRLA12400002");
+
+        verify(getRecentTracksUseCase).getRecentTracks();
+    }
+
+    @Test
+    @DisplayName("Should return 200 with empty array when no tracks exist")
+    void getRecentTracks_shouldReturn200WithEmptyArray_whenNoTracksExist() {
+        // Given
+        when(getRecentTracksUseCase.getRecentTracks()).thenReturn(Collections.emptyList());
+
+        // When
+        Response response = resource.getRecentTracks();
+
+        // Then
+        assertThat(response.getStatus()).isEqualTo(200);
+        
+        @SuppressWarnings("unchecked")
+        List<RecentTrackResponse> responseBody = (List<RecentTrackResponse>) response.getEntity();
+        
+        assertThat(responseBody).isEmpty();
+
+        verify(getRecentTracksUseCase).getRecentTracks();
+    }
+
+    @Test
+    @DisplayName("Should return 500 when use case throws exception")
+    void getRecentTracks_shouldReturn500_whenUseCaseThrowsException() {
+        // Given
+        when(getRecentTracksUseCase.getRecentTracks()).thenThrow(new RuntimeException("Database error"));
+
+        // When
+        Response response = resource.getRecentTracks();
+
+        // Then
+        assertThat(response.getStatus()).isEqualTo(500);
+        
+        TracksResource.ErrorResponse errorResponse = (TracksResource.ErrorResponse) response.getEntity();
+        assertThat(errorResponse.error).isEqualTo("InternalError");
+        assertThat(errorResponse.message).isEqualTo("An unexpected error occurred");
+        
+        verify(getRecentTracksUseCase).getRecentTracks();
+    }
+
+    @Test
+    @DisplayName("Should map TrackInfo to RecentTrackResponse correctly")
+    void shouldMapTrackInfoCorrectly() {
+        // Given
+        TrackInfo trackInfo = createTrackInfo("FRLA12400001", "Test Track");
+        List<TrackInfo> tracks = List.of(trackInfo);
+
+        when(getRecentTracksUseCase.getRecentTracks()).thenReturn(tracks);
+
+        // When
+        Response response = resource.getRecentTracks();
+
+        // Then
+        assertThat(response.getStatus()).isEqualTo(200);
+        
+        @SuppressWarnings("unchecked")
+        List<RecentTrackResponse> responseBody = (List<RecentTrackResponse>) response.getEntity();
+        
+        assertThat(responseBody).hasSize(1);
+        RecentTrackResponse mappedResponse = responseBody.get(0);
+        
+        assertThat(mappedResponse)
+                .satisfies(r -> {
+                    assertThat(r.isrc).isEqualTo("FRLA12400001");
+                    assertThat(r.title).isEqualTo("Test Track");
+                    assertThat(r.artistNames).containsExactly("Artist Name");
+                    assertThat(r.status).isEqualTo("PROVISIONAL");
+                    assertThat(r.submissionDate).isNotNull();
+                });
+        
+        assertThat(mappedResponse.source)
+                .satisfies(source -> {
+                    assertThat(source.name).isEqualTo("TIDAL");
+                    assertThat(source.externalId).isEqualTo("FRLA12400001");
+                });
+    }
+
+    @Test
+    @DisplayName("Should map multiple sources correctly")
+    void shouldMapMultipleSourcesCorrectly() {
+        // Given
+        TrackInfo trackInfo = new TrackInfo(
+            ISRC.of("FRLA12400001"),
+            "Test Track",
+            List.of("Artist Name"),
+            List.of(
+                Source.of("TIDAL", "tidal-123"),
+                Source.of("SPOTIFY", "spotify-456")
+            ),
+            TrackStatus.PROVISIONAL,
+            LocalDateTime.now().minusHours(1)
+        );
+        
+        when(getRecentTracksUseCase.getRecentTracks()).thenReturn(List.of(trackInfo));
+
+        // When
+        Response response = resource.getRecentTracks();
+
+        // Then
+        @SuppressWarnings("unchecked")
+        List<RecentTrackResponse> responseBody = (List<RecentTrackResponse>) response.getEntity();
+        
+        assertThat(responseBody).hasSize(1);
+        RecentTrackResponse mappedResponse = responseBody.get(0);
+        
+        // Seule la première source est mappée selon la logique actuelle
+        assertThat(mappedResponse.source)
+                .satisfies(source -> {
+                    assertThat(source.name).isEqualTo("TIDAL");
+                    assertThat(source.externalId).isEqualTo("tidal-123");
+                });
+    }
+
+    @Test
+    @DisplayName("Should handle empty sources list")
+    void shouldHandleEmptySourcesList() {
+        // Given
+        TrackInfo trackInfo = new TrackInfo(
+            ISRC.of("FRLA12400001"),
+            "Test Track",
+            List.of("Artist Name"),
+            Collections.emptyList(),
+            TrackStatus.PROVISIONAL,
+            LocalDateTime.now().minusHours(1)
+        );
+        
+        when(getRecentTracksUseCase.getRecentTracks()).thenReturn(List.of(trackInfo));
+
+        // When
+        Response response = resource.getRecentTracks();
+
+        // Then
+        @SuppressWarnings("unchecked")
+        List<RecentTrackResponse> responseBody = (List<RecentTrackResponse>) response.getEntity();
+        
+        assertThat(responseBody).hasSize(1);
+        RecentTrackResponse mappedResponse = responseBody.get(0);
+        
+        assertThat(mappedResponse.source).isNull();
+        assertThat(mappedResponse.isrc).isEqualTo("FRLA12400001");
+        assertThat(mappedResponse.title).isEqualTo("Test Track");
+    }
+
+    @Test
+    @DisplayName("Should handle multiple artists correctly")
+    void shouldHandleMultipleArtistsCorrectly() {
+        // Given
+        TrackInfo trackInfo = new TrackInfo(
+            ISRC.of("FRLA12400001"),
+            "Collaboration Track",
+            List.of("Artist 1", "Artist 2", "Featured Artist"),
+            List.of(Source.of("SPOTIFY", "spotify-123")),
+            TrackStatus.VERIFIED,
+            LocalDateTime.now().minusHours(2)
+        );
+        
+        when(getRecentTracksUseCase.getRecentTracks()).thenReturn(List.of(trackInfo));
+
+        // When
+        Response response = resource.getRecentTracks();
+
+        // Then
+        @SuppressWarnings("unchecked")
+        List<RecentTrackResponse> responseBody = (List<RecentTrackResponse>) response.getEntity();
+        
+        assertThat(responseBody).hasSize(1);
+        RecentTrackResponse mappedResponse = responseBody.get(0);
+        
+        assertThat(mappedResponse.artistNames)
+                .hasSize(3)
+                .containsExactly("Artist 1", "Artist 2", "Featured Artist");
+        assertThat(mappedResponse.status).isEqualTo("VERIFIED");
+    }
+
+    @Test
+    @DisplayName("Should handle basic DTO mapping structure")
+    void shouldHandleBasicDTOMappingStructure() {
+        // Given
+        TrackInfo trackInfo = createTrackInfo("FRLA12400001", "Test Track");
+        when(getRecentTracksUseCase.getRecentTracks()).thenReturn(List.of(trackInfo));
+
+        // When
+        Response response = resource.getRecentTracks();
+
+        // Then
+        @SuppressWarnings("unchecked")
+        List<RecentTrackResponse> responseBody = (List<RecentTrackResponse>) response.getEntity();
+        
+        assertThat(responseBody).hasSize(1);
+        RecentTrackResponse mappedResponse = responseBody.get(0);
+        
+        // Verify all essential fields are properly mapped
+        assertThat(mappedResponse.isrc).isEqualTo("FRLA12400001");
+        assertThat(mappedResponse.title).isEqualTo("Test Track");
+        assertThat(mappedResponse.artistNames).isNotEmpty();
+        assertThat(mappedResponse.status).isNotNull();
+        assertThat(mappedResponse.submissionDate).isNotNull();
+    }
+
+    private TrackInfo createTrackInfo(String isrcValue, String title) {
+        return new TrackInfo(
+            ISRC.of(isrcValue),
+            title,
+            List.of("Artist Name"),
+            List.of(Source.of("TIDAL", isrcValue)),
+            TrackStatus.PROVISIONAL,
+            LocalDateTime.now().minusHours(1)
+        );
+    }
+}

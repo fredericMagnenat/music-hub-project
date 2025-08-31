@@ -6,7 +6,7 @@ import io.restassured.http.ContentType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.musichub.producer.domain.ports.in.RegisterTrackUseCase;
+import com.musichub.producer.application.ports.in.RegisterTrackUseCase;
 
 import static io.restassured.RestAssured.given;
 import static org.mockito.Mockito.when;

@@ -1,8 +1,7 @@
-package com.musichub.producer.adapter.rest.resource;
+package com.musichub.producer.adapter.rest.resource.producer;
 
 import com.musichub.producer.domain.model.Producer;
-import com.musichub.producer.domain.ports.in.RegisterTrackUseCase;
-import com.musichub.shared.domain.values.ISRC;
+import com.musichub.producer.application.ports.in.RegisterTrackUseCase;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -11,7 +10,6 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -29,8 +27,11 @@ import java.util.Set;
 @Tag(name = "Producers", description = "Endpoints for producer operations")
 public class ProducerResource {
 
-    @Inject
-    RegisterTrackUseCase registerTrackUseCase;
+    private final RegisterTrackUseCase registerTrackUseCase;
+
+    public ProducerResource(RegisterTrackUseCase registerTrackUseCase) {
+        this.registerTrackUseCase = registerTrackUseCase;
+    }
 
     public static final class RegisterTrackRequest {
         @Schema(required = true, example = "FRLA12400001")

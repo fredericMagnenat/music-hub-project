@@ -11,7 +11,8 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Optional;
 
-import com.musichub.artist.domain.ports.out.ArtistRepository;
+import com.musichub.artist.application.ports.out.ArtistRepository;
+import com.musichub.artist.application.service.ArtistService;
 import com.musichub.shared.events.TrackWasRegistered;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

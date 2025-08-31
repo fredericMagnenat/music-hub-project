@@ -1,11 +1,15 @@
 package com.musichub.producer.adapter.persistence.adapter;
 
 import com.musichub.producer.adapter.persistence.entity.ProducerEntity;
+import com.musichub.producer.adapter.persistence.entity.TrackEntity;
 import com.musichub.producer.adapter.persistence.exception.ProducerPersistenceException;
 import com.musichub.producer.adapter.persistence.mapper.ProducerMapper;
+import com.musichub.producer.application.dto.TrackInfo;
 import com.musichub.producer.domain.model.Producer;
-import com.musichub.producer.domain.ports.out.ProducerRepository;
+import com.musichub.producer.application.ports.out.ProducerRepository;
 import com.musichub.producer.domain.values.ProducerId;
+import com.musichub.producer.domain.values.TrackStatus;
+import com.musichub.shared.domain.values.ISRC;
 import com.musichub.shared.domain.values.ProducerCode;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -14,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -107,4 +112,6 @@ public class ProducerRepositoryAdapter implements ProducerRepository, PanacheRep
                     producerCode.value(), producerId.value(), correlationId), e);
         }
     }
+
+
 }
