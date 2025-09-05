@@ -20,7 +20,7 @@ Implémenter un système autonome de gestion d'artistes réagissant aux événem
 
 ## Stories
 
-1. **Story A1:** Update an Artist Following an Event - Gestion autonome des artistes via événements
+1. **Story 2-01:** Update an Artist Following an Event - Gestion autonome des artistes via événements
    - TrackEventHandler écoutant les événements TrackWasRegistered
    - Agrégat Artist avec génération d'ID UUIDv4 et logique métier
    - ArtistService pour orchestration et gestion des artistes
@@ -45,7 +45,7 @@ Implémenter un système autonome de gestion d'artistes réagissant aux événem
 
 ## Definition of Done
 
-- ✅ All stories completed with acceptance criteria met (A1)
+- ✅ All stories completed with acceptance criteria met (2-01)
 - ✅ Existing functionality verified through testing (pas d'impact sur contexte Producer)
 - ✅ Integration points working correctly (événements TrackWasRegistered traités)
 - ✅ Documentation updated appropriately (architecture contexte Artist)
@@ -79,6 +79,6 @@ Implémenter un système autonome de gestion d'artistes réagissant aux événem
 
 ---
 
-**Status:** ✅ **COMPLETED** - Story A1 implemented and validated
+**Status:** ✅ **COMPLETED** - Story 2-01 implemented and validated
 **Created:** 2025-08-22 by Sarah (Product Owner)  
 **Epic Type:** Brownfield Enhancement

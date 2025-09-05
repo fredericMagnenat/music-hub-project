@@ -18,9 +18,13 @@ devLoadAlwaysFiles:
   - docs/architecture/coding-standards.md
   - docs/architecture/tech-stack.md
   - docs/architecture/source-tree.md
-  - docs/architecture/database-migration-flyway.md
+  - docs/architecture/database-migration-with-flyway.md
   - docs/architecture/testing-best-practices.md
-  - docs/architecture/logging-best-practices.md
 devDebugLog: .ai/debug-log.md
 devStoryLocation: docs/stories
+storyNamingConvention: "story-{epic-number}-{sequence}-{short-description}.md"
+storyExamples:
+  - "story-1-01-validate-create-producer.md"
+  - "story-2-01-update-artist-following-event.md"  
+  - "story-0-01-setup-monorepo.md"
 slashPrefix: BMad

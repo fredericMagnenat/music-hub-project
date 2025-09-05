@@ -20,19 +20,19 @@
 
 ## Stories
 
-1. **Story P1:** Validate and Create a Producer - Validation ISRC et création automatique de producteurs
+1. **Story 1-01:** Validate and Create a Producer - Validation ISRC et création automatique de producteurs
    - Implémentation des Value Objects (ISRC, ProducerCode) dans shared-kernel
    - Création de l'agrégat Producer avec logique métier
    - API REST endpoint `/api/v1/producers` avec validation et gestion d'erreurs
    - Interface utilisateur avec formulaire ISRC et feedback
 
-2. **Story P2:** Integrate a Track and Publish an Event - Intégration des tracks avec publication d'événements
+2. **Story 1-02:** Integrate a Track and Publish an Event - Intégration des tracks avec publication d'événements
    - Client HTTP pour intégration API externe (MusicPlatformClient)
    - Entité Track et logique d'ajout dans l'agrégat Producer
    - Publication d'événements TrackWasRegistered sur le bus Vert.x
    - Gestion des erreurs d'API externe et feedback utilisateur
 
-3. **Story P3:** Recent Tracks API Endpoint - Endpoint pour dashboard tracks récentes
+3. **Story 1-03:** Recent Tracks API Endpoint - Endpoint pour dashboard tracks récentes
    - Implémentation de `GET /api/v1/tracks/recent`
    - Service de récupération des 10 tracks les plus récentes
    - Tri par date de soumission décroissante
@@ -56,7 +56,7 @@
 
 ## Definition of Done
 
-- ✅ All stories completed with acceptance criteria met (P1, P2, P3)
+- ✅ All stories completed with acceptance criteria met (1-01, 1-02, 1-03)
 - ✅ Existing functionality verified through testing (regression tests)
 - ✅ Integration points working correctly (API REST, événements)
 - ✅ Documentation updated appropriately (architecture, API spec)
@@ -83,6 +83,6 @@
 
 ---
 
-**Status:** 🔄 **IN PROGRESS** - Stories P1 and P2 completed, P3 ready for development
+**Status:** 🔄 **IN PROGRESS** - Stories 1-01 and 1-02 completed, 1-03 ready for development
 **Created:** 2025-08-22 by Sarah (Product Owner)
 **Epic Type:** Brownfield Enhancement

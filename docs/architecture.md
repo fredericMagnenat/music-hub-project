@@ -4,7 +4,7 @@
 * **Date:** September 4, 2025
 * **Author:** Winston (Architect)
 
-## 1\. Introduction
+## Introduction
 
 This document describes the complete full-stack architecture for the Music Hub project, including backend systems, frontend implementation, and their integration. It serves as the single source of truth for development, ensuring consistency across the entire technology stack. This unified approach is designed to streamline the development process for this application where backend and frontend concerns are tightly coupled.
 
@@ -24,7 +24,7 @@ Project analysis reveals that it is not based on a predefined full-stack starter
 
 ---
 
-## 2\. High-Level Architecture
+## High-Level Architecture
 
 ### Technical Summary
 
@@ -75,7 +75,7 @@ sequenceDiagram
 
 -----
 
-## 3\. Tech Stack
+## Tech Stack
 
 This table is the single source of truth for all technologies, frameworks, and versions to be used.
 
@@ -109,11 +109,11 @@ This table is the single source of truth for all technologies, frameworks, and v
 
 -----
 
-## 4\. Data Models
+## Data Models
 
 These TypeScript interfaces serve as the official API contract between the backend and the frontend.
 
-#### "Producer"
+### "Producer"
 
 ```typescript
 interface Producer {
@@ -124,7 +124,7 @@ interface Producer {
 }
 ```
 
-#### "Track" & Dependencies
+### "Track" & Dependencies
 
 ```typescript
 interface ArtistCredit {
@@ -148,7 +148,7 @@ interface Track {
 }
 ```
 
-#### "Artist"
+### "Artist"
 
 ```typescript
 interface Contribution {
@@ -171,7 +171,7 @@ interface Artist {
 
 -----
 
-## 5\. API Specification
+## API Specification
 
 The following OpenAPI 3.0 specification serves as the formal technical contract for the REST API.
 
@@ -251,7 +251,7 @@ components:
 
 -----
 
-## 6\. Testing Strategy
+## Testing Strategy
 
 The testing strategy combines multiple levels to ensure quality:
 
@@ -262,7 +262,7 @@ The testing strategy combines multiple levels to ensure quality:
 
 -----
 
-## 7\. Resilience and Observability
+## Resilience and Observability
 
 ### Observability
 
@@ -276,11 +276,11 @@ The testing strategy combines multiple levels to ensure quality:
 
 -----
 
-## 8\. Logging Best Practices
+## Logging Best Practices
 
 **Updated**: This section reflects SonarQube-compliant exception handling patterns implemented in the codebase (Story DOC-1).
 
-### 1\. Logging Strategy & Philosophy
+### Logging Strategy & Philosophy
 
 Our logging approach follows these principles:
 
@@ -291,7 +291,7 @@ Our logging approach follows these principles:
 - **Performance Awareness**: Asynchronous logging to minimize impact
 - **Security First**: Automatic masking of sensitive data
 
-### 2\. Quarkus Logging Framework
+### Quarkus Logging Framework
 
 Centralized configuration using:
 
@@ -300,7 +300,7 @@ Centralized configuration using:
 - **JSON Encoder** for structuring
 - **OpenTelemetry** for correlation
 
-### 3\. Log Levels & Usage Guidelines
+### Log Levels & Usage Guidelines
 
 | Level | Usage | Examples |
 |-------|--------|----------|
@@ -310,7 +310,7 @@ Centralized configuration using:
 | DEBUG | Development details | SQL queries, method parameters |
 | TRACE | Detailed flow | Method entry/exit, loop iterations |
 
-### 4\. Structured Logging with JSON
+### Structured Logging with JSON
 
 ```json
 {
@@ -327,14 +327,14 @@ Centralized configuration using:
 }
 ```
 
-### 5\. Contextual Logging & Correlation
+### Contextual Logging & Correlation
 
 - **Request Correlation**: UUID generated per request
 - **Business Context**: Business metadata in each log
 - **User Context**: User identification (if applicable)
 - **Performance Context**: Execution times and metrics
 
-### 6\. Hexagonal Architecture Logging Patterns
+### Hexagonal Architecture Logging Patterns
 
 **Exception Handling Compliance - SonarQube "Either log OR rethrow" Rule**
 
@@ -372,14 +372,14 @@ log.info("Producer created with code: {}", producerCode.value());
 
 **Reference**: Complete patterns and examples in [Logging Best Practices](https://www.google.com/search?q=architecture/logging-best-practices.md)
 
-### 7\. Security & Sensitive Data
+### Security & Sensitive Data
 
 - **Auto-masking**: Partial ISRCs, user IDs
 - **Whitelist Approach**: Only authorized data is logged
 - **Audit Trail**: Traceability of sensitive actions
 - **Data Classification**: Log marking by sensitivity level
 
-### 8\. Environment-Specific Configuration
+### Environment-Specific Configuration
 
 ```properties
 # Development - Verbose logging
@@ -392,28 +392,28 @@ log.info("Producer created with code: {}", producerCode.value());
 %prod.quarkus.log.console.json.pretty-print=false
 ```
 
-### 9\. OpenTelemetry Integration
+### OpenTelemetry Integration
 
 - **Traces**: Correlation with APM metrics
 - **Spans**: Distributed context between services
 - **Baggage**: Business metadata propagation
 - **Sampling**: Intelligent trace configuration
 
-### 10\. Performance Considerations
+### Performance Considerations
 
 - **Async Logging**: Non-blocking queue
 - **Log Rotation**: Automatic size management
 - **Buffer Management**: Memory optimization
 - **Network Efficiency**: Compression for remote logs
 
-### 11\. Business Event Logging
+### Business Event Logging
 
 - **Domain Events**: Business event logging
 - **State Changes**: Important state transitions
 - **Business Metrics**: KPIs and business indicators
 - **Compliance**: Regulatory traceability
 
-### 12\. Monitoring & Alerting
+### Monitoring & Alerting
 
 - **Error Rate**: Alerts on error spikes
 - **Performance**: Latency thresholds
@@ -422,11 +422,11 @@ log.info("Producer created with code: {}", producerCode.value());
 
 -----
 
-## 9\. Source Tree
+## Source Tree
 
 This section outlines the concrete project structure within our monorepo, optimized for our chosen stack (Quarkus + Remix) and architectural decisions. It uses a multi-module Maven setup for the backend to enforce architectural boundaries.
 
-## Monorepo Root Structure
+### Monorepo Root Structure
 
 ```plaintext
 music-hub-project/
@@ -441,7 +441,7 @@ music-hub-project/
 └── README.md
 ```
 
-## Backend Modules Structure (`apps/`)
+### Backend Modules Structure (`apps/`)
 
 The backend is organized as a multi-module Maven project to strictly enforce the boundaries of our Hexagonal and Domain-Driven Design. Each context and layer is an independent module with explicitly defined dependencies. Module names are prefixed to ensure clarity and global uniqueness of artifacts. The parent aggregator is `apps/pom.xml`.
 
@@ -491,7 +491,7 @@ apps/
             └── pom.xml     # --- Implements external service clients (secondary adapter)
 ```
 
-## Frontend Testing Layout
+### Frontend Testing Layout
 
 - Frontend tests (Vitest + React Testing Library) are co-located with the Remix code in `apps/webui/app/`.
 - Example: `apps/webui/app/routes/_index.test.tsx` for the route `apps/webui/app/routes/_index.tsx`.
@@ -500,23 +500,23 @@ apps/
 
 -----
 
-## 10\. Testing Best Practices
+## Testing Best Practices
 
-## Table of Contents
+### Table of Contents
 
-- [1. Testing Philosophy & Principles](#1-testing-philosophy--principles)
-- [2. Backend Testing Standards](#2-backend-testing-standards)
-- [3. Frontend Testing Standards](#3-frontend-testing-standards)
-- [4. AI Agent Guidelines](#4-ai-agent-guidelines)
-- [5. Templates & Boilerplates](#5-templates--boilerplates)
-- [6. Performance Standards & Metrics](#6-performance-standards--metrics)
-- [7. Common Anti-patterns to Avoid](#7-common-anti-patterns-to-avoid)
+- [1. Testing Philosophy & Principles](#testing-philosophy--principles)
+- [2. Backend Testing Standards](#backend-testing-standards)
+- [3. Frontend Testing Standards](#frontend-testing-standards)
+- [4. AI Agent Guidelines](#ai-agent-guidelines)
+- [5. Templates & Boilerplates](#templates--boilerplates)
+- [6. Performance Standards & Metrics](#performance-standards--metrics)
+- [7. Common Anti-patterns to Avoid](#common-anti-patterns-to-avoid)
 
 -----
 
-## 1\. Testing Philosophy & Principles
+### Testing Philosophy & Principles
 
-### Testing Strategy Overview
+#### Testing Strategy Overview
 
 Our testing approach follows the **Test Pyramid** with a focus on **Hexagonal Architecture** testing patterns:
 
@@ -529,7 +529,7 @@ graph TD
     end
 ```
 
-### Core Testing Principles
+#### Core Testing Principles
 
 1.  **Domain-First Testing**: Start with domain logic tests - they provide the highest ROI
 2.  **Test Behavior, Not Implementation**: Focus on business outcomes, not internal mechanisms
@@ -537,7 +537,7 @@ graph TD
 4.  **Test Isolation**: Each test should be independent and repeatable
 5.  **Clear Test Intent**: Use descriptive names and Given/When/Then structure
 
-### Hexagonal Architecture Testing Approach
+#### Hexagonal Architecture Testing Approach
 
 ```mermaid
 graph LR
@@ -551,13 +551,13 @@ graph LR
 
 -----
 
-## 2\. Backend Testing Standards
+### Backend Testing Standards
 
-### 2.1 Domain Layer Testing
+#### Domain Layer Testing
 
 **Philosophy**: Domain tests are pure unit tests with no framework dependencies. They test business logic in isolation.
 
-#### ✅ Excellent Example from Our Codebase
+##### ✅ Excellent Example from Our Codebase
 
 ```java
 // From: apps/producer/producer-domain/src/test/java/.../ProducerTest.java
@@ -596,7 +596,7 @@ class ProducerTest {
 }
 ```
 
-#### Domain Testing Standards
+##### Domain Testing Standards
 
 - **Test Structure**: Use `@Nested` classes for logical grouping
 - **Naming Convention**: `[MethodName]_should[ExpectedBehavior]_when[Condition]`
@@ -605,7 +605,7 @@ class ProducerTest {
 - **Value Objects**: Create real instances, never mock them
 - **Defensive Programming**: Test null guards and edge cases
 
-#### Maven Configuration for Domain Tests
+##### Maven Configuration for Domain Tests
 
 ```xml
 <dependencies>
@@ -622,11 +622,11 @@ class ProducerTest {
 </dependencies>
 ```
 
-### 2.2 Application Layer Testing
+#### Application Layer Testing
 
 **Philosophy**: Test application services with mocked ports to verify orchestration logic.
 
-#### ✅ Excellent Example from Our Codebase
+##### ✅ Excellent Example from Our Codebase
 
 ```java
 // From: apps/producer/producer-application/src/test/java/.../RegisterTrackServiceTest.java
@@ -667,7 +667,7 @@ class RegisterTrackServiceTest {
 }
 ```
 
-#### Application Testing Standards
+##### Application Testing Standards
 
 - **Mock Only Ports**: Mock repository interfaces, not domain objects
 - **Verify Interactions**: Check that ports are called correctly
@@ -675,11 +675,11 @@ class RegisterTrackServiceTest {
 - **Business Scenarios**: Test complete use case flows
 - **Error Handling**: Verify exception propagation and handling
 
-### 2.3 Adapter Testing (Unit Level)
+#### Adapter Testing (Unit Level)
 
 **Philosophy**: Adapters are tested in isolation with all dependencies mocked.
 
-#### REST Adapter Testing Standards
+##### REST Adapter Testing Standards
 
 ```java
 // Template based on producer-adapter-rest tests
@@ -718,7 +718,7 @@ class ProducerResourceTest {
 }
 ```
 
-#### Persistence Adapter Testing Standards
+##### Persistence Adapter Testing Standards
 
 ```java
 // Template for persistence adapters
@@ -757,11 +757,11 @@ class ProducerRepositoryImplTest {
 }
 ```
 
-### 2.4 Bootstrap Integration Testing
+#### Bootstrap Integration Testing
 
 **Philosophy**: End-to-end tests with real infrastructure to verify complete flows.
 
-#### ✅ Excellent Example from Our Codebase
+##### ✅ Excellent Example from Our Codebase
 
 ```java
 // From: apps/bootstrap/src/test/java/.../ProducerRegistrationIntegrationTest.java
@@ -838,9 +838,9 @@ quarkus.hibernate-orm.log.sql=true
 
 -----
 
-## 3\. Frontend Testing Standards
+### Frontend Testing Standards
 
-### 3.1 Vitest Configuration
+#### Vitest Configuration
 
 Our frontend uses **Vitest** + **React Testing Library** for component testing.
 
@@ -880,9 +880,9 @@ afterEach(() => {
 expect.extend(matchers as any);
 ```
 
-### 3.2 Component Testing Standards
+#### Component Testing Standards
 
-#### ✅ Excellent Example from Our Codebase
+##### ✅ Excellent Example from Our Codebase
 
 ```typescript
 // From: apps/webui/tests/_index.test.tsx
@@ -945,7 +945,7 @@ describe("Index route (ISRC form)", () => {
 - **Provider Wrapping**: Wrap components with necessary providers (Toast, Router, etc.)
 - **Mock External Calls**: Mock API utilities, not internal component logic
 
-### 3.3 API Mocking Strategy
+#### API Mocking Strategy
 
 ```typescript
 // Mock strategy for API calls
@@ -962,7 +962,7 @@ const { registerTrack } = await import("~/lib/utils");
 (registerTrack as any).mockResolvedValueOnce({ ok: false, status: 400 });
 ```
 
-### 3.4 Package.json Scripts
+#### Package.json Scripts
 
 ```json
 {
@@ -976,11 +976,11 @@ const { registerTrack } = await import("~/lib/utils");
 
 -----
 
-## 4\. AI Agent Guidelines
+### AI Agent Guidelines
 
-### 4.1 Test Creation Rules for AI Agents
+#### Test Creation Rules for AI Agents
 
-#### CRITICAL RULES - ALWAYS FOLLOW
+##### CRITICAL RULES - ALWAYS FOLLOW
 
 1.  **ALWAYS use @DisplayName with descriptive business language**
 
@@ -1088,9 +1088,9 @@ class [ServiceName]Test {
 }
 ```
 
-### 4.2 Test Naming Conventions for AI
+#### Test Naming Conventions for AI
 
-#### Method Naming Pattern:
+##### Method Naming Pattern:
 
 `[methodUnderTest]_should[ExpectedBehavior]_when[InputCondition]`
 
@@ -1113,7 +1113,7 @@ shouldReturn400_whenISRCFormatInvalid()
 shouldReturn422_whenISRCValidButUnresolvable()
 ```
 
-### 4.3 Common AI Mistakes to Avoid
+#### Common AI Mistakes to Avoid
 
 #### ❌ DON'T Mock Value Objects
 
@@ -1137,7 +1137,7 @@ verify(producer).validateTrack(any()); // private method
 assertTrue(producer.hasTrack(isrc));
 ```
 
-#### ❌ DON'T Use Overly Complex Mocking
+##### ❌ DON'T Use Overly Complex Mocking
 
 ```java
 // ❌ WRONG - Complex mock setup
@@ -1153,9 +1153,9 @@ when(repository.findByProducerCode(code)).thenReturn(Optional.of(producer));
 
 -----
 
-## 5\. Templates & Boilerplates
+### Templates & Boilerplates
 
-### 5.1 Domain Entity Test Template
+#### Domain Entity Test Template
 
 ```java
 package com.musichub.[context].domain.model;
@@ -1216,7 +1216,7 @@ class [EntityName]Test {
 }
 ```
 
-### 5.2 Application Service Test Template
+#### Application Service Test Template
 
 ```java
 package com.musichub.[context].application;
@@ -1288,7 +1288,7 @@ class [ServiceName]Test {
 }
 ```
 
-### 5.3 REST Adapter Test Template
+#### REST Adapter Test Template
 
 ```java
 package com.musichub.[context].adapter.rest;
@@ -1362,7 +1362,7 @@ class [ResourceName]Test {
 }
 ```
 
-### 5.4 Integration Test Template (Bootstrap)
+#### Integration Test Template (Bootstrap)
 
 ```java
 package com.musichub.bootstrap.[context];
@@ -1445,7 +1445,7 @@ class [FeatureName]IntegrationTest {
 }
 ```
 
-### 5.5 Frontend Component Test Template
+#### Frontend Component Test Template
 
 ```typescript
 // Template for component tests
@@ -1514,11 +1514,11 @@ describe("[ComponentName]", () => {
 
 -----
 
-## 6\. Performance Standards & Metrics
+### Performance Standards & Metrics
 
-### 6.1 Test Execution Time Targets
+#### Test Execution Time Targets
 
-#### Time Limits by Test Type
+##### Time Limits by Test Type
 
 | Test Type | Target Time | Maximum Time | Rationale |
 |-----------|-------------|--------------|-----------|
@@ -1543,9 +1543,9 @@ describe("[ComponentName]", () => {
 </plugin>
 ```
 
-### 6.2 Test Coverage Standards
+#### Test Coverage Standards
 
-#### Coverage Targets by Layer
+##### Coverage Targets by Layer
 
 | Layer | Line Coverage | Branch Coverage | Justification |
 |-------|---------------|-----------------|---------------|
@@ -1556,7 +1556,7 @@ describe("[ComponentName]", () => {
 | Overall Backend | 80%+ | 75%+ | PRD requirement |
 | Frontend Components | 80%+ | 70%+ | PRD requirement |
 
-#### JaCoCo Configuration
+##### JaCoCo Configuration
 
 ```xml
 <plugin>
@@ -1601,9 +1601,9 @@ describe("[ComponentName]", () => {
 </plugin>
 ```
 
-### 6.3 Database Performance for Tests
+#### Database Performance for Tests
 
-#### Test Database Strategy
+##### Test Database Strategy
 
 ```java
 @BeforeEach
@@ -1622,7 +1622,7 @@ void slowCleanup() {
 }
 ```
 
-#### H2 vs PostgreSQL for Tests
+##### H2 vs PostgreSQL for Tests
 
 ```properties
 # Fast tests - H2 in memory
@@ -1637,9 +1637,9 @@ void slowCleanup() {
 %integration-test.quarkus.datasource.password=test
 ```
 
-### 6.4 CI/CD Performance Optimization
+#### CI/CD Performance Optimization
 
-#### Parallel Test Execution
+##### Parallel Test Execution
 
 ```xml
 <plugin>
@@ -1667,11 +1667,11 @@ void slowCleanup() {
 
 -----
 
-## 7\. Common Anti-patterns to Avoid
+### Common Anti-patterns to Avoid
 
-### 7.1 Backend Anti-patterns
+#### Backend Anti-patterns
 
-#### ❌ DON'T Mock Value Objects
+##### ❌ DON'T Mock Value Objects
 
 ```java
 // ❌ WRONG: Mocking immutable value objects
@@ -1773,9 +1773,9 @@ void shouldThrowIllegalArgumentException_whenISRCFormatInvalid() {
 }
 ```
 
-### 7.2 Frontend Anti-patterns
+#### Frontend Anti-patterns
 
-#### ❌ DON'T Test Implementation Details
+##### ❌ DON'T Test Implementation Details
 
 ```typescript
 // ❌ WRONG: Testing internal state
@@ -1801,7 +1801,7 @@ test("should enable submit button when valid ISRC entered", () => {
 });
 ```
 
-#### ❌ DON'T Over-Mock in Component Tests
+##### ❌ DON'T Over-Mock in Component Tests
 
 ```typescript
 // ❌ WRONG: Mocking too much
@@ -1817,7 +1817,7 @@ vi.mock("~/lib/utils", () => ({
 }));
 ```
 
-#### ❌ DON'T Use findBy\* for Immediate Elements
+##### ❌ DON'T Use findBy\* for Immediate Elements
 
 ```typescript
 // ❌ WRONG: Using findBy for elements that should be immediately present
@@ -1844,9 +1844,9 @@ test("should show success message after submission", async () => {
 });
 ```
 
-### 7.3 General Testing Anti-patterns
+#### General Testing Anti-patterns
 
-#### ❌ DON'T Write Flaky Tests
+##### ❌ DON'T Write Flaky Tests
 
 ```java
 // ❌ WRONG: Time-dependent tests
@@ -1866,7 +1866,7 @@ void shouldCompleteProcessing() {
 }
 ```
 
-#### ❌ DON'T Create Test Dependencies
+##### ❌ DON'T Create Test Dependencies
 
 ```java
 // ❌ WRONG: Tests that depend on each other
@@ -1904,7 +1904,7 @@ void shouldAddTrackToProducer() {
 }
 ```
 
-#### ❌ DON'T Ignore Test Maintenance
+##### ❌ DON'T Ignore Test Maintenance
 
 ```java
 // ❌ WRONG: Commented out failing tests
@@ -1923,7 +1923,7 @@ void shouldAddTrackToProducer() {
 
 -----
 
-## Conclusion
+### Conclusion
 
 This document establishes the testing standards for the Music Hub project, ensuring consistent, high-quality tests across all layers of our Hexagonal Architecture. These practices support both human developers and AI agents in creating maintainable, reliable tests.
 
@@ -1948,11 +1948,11 @@ For specific examples and templates, refer to the relevant sections above. When 
 
 -----
 
-## 11\. Detailed Frontend Structure
+## Detailed Frontend Structure
 
 The frontend architecture is built on a modern stack using Remix as the framework, Vite for the build process, Tailwind CSS for styling, and Vitest with React Testing Library for testing.
 
-### 11.1. Directory Structure
+### Directory Structure
 
 The file structure follows Remix conventions, optimized for clarity and separation of concerns.
 
@@ -2012,9 +2012,9 @@ The testing strategy is robust and well-defined:
 
 -----
 
-## 12\. Database Migration with Flyway
+## Database Migration with Flyway
 
-## Table of Contents
+### Table of Contents
 
 - [1. Database Migration Strategy](https://www.google.com/search?q=%231-database-migration-strategy)
 - [2. Flyway Multi-Module Architecture](https://www.google.com/search?q=%232-flyway-multi-module-architecture)
@@ -2027,13 +2027,13 @@ The testing strategy is robust and well-defined:
 
 -----
 
-## 1\. Database Migration Strategy
+### Database Migration Strategy
 
-### Philosophy
+#### Philosophy
 
 Our database migration strategy follows **Database First** principles with strict version control and automated schema evolution. We use **Flyway** as the single source of truth for all database changes, with Hibernate in **validate-only** mode to ensure consistency.
 
-### Key Principles
+#### Key Principles
 
 1.  **Single Source of Truth**: Flyway migrations are the authoritative schema definition
 2.  **Version Controlled**: All schema changes tracked in Git with the application code
@@ -2042,7 +2042,7 @@ Our database migration strategy follows **Database First** principles with stric
 5.  **Rollback Strategy**: Forward-only migrations with compensating changes
 6.  **Bounded Context Isolation**: Each context manages its own schema subset
 
-### Integration with Hibernate
+#### Integration with Hibernate
 
 ```mermaid
 graph TD
@@ -2068,9 +2068,9 @@ quarkus.flyway.baseline-on-migrate=true
 
 -----
 
-## 2\. Flyway Multi-Module Architecture
+### Flyway Multi-Module Architecture
 
-### Project Structure
+#### Project Structure
 
 Our monorepo uses a distributed migration approach where each bounded context manages its own migrations while maintaining global coordination.
 
@@ -2097,7 +2097,7 @@ apps/
                         └── V101__add_artist_timestamps.sql
 ```
 
-### Flyway Configuration Architecture
+#### Flyway Configuration Architecture
 
 **Central Configuration (bootstrap/application.properties):**
 
@@ -2119,7 +2119,7 @@ quarkus.flyway.clean-disabled=true
 # Migrations are bundled in the JAR from all modules
 ```
 
-### Why This Architecture?
+#### Why This Architecture?
 
 1.  **Bounded Context Autonomy**: Each context controls its schema evolution
 2.  **Deployment Simplicity**: Single JAR contains all migrations
@@ -2129,9 +2129,9 @@ quarkus.flyway.clean-disabled=true
 
 -----
 
-## 3\. Versioning Conventions
+### Versioning Conventions
 
-### Global Version Space
+#### Global Version Space
 
 All migrations across all bounded contexts share a **global, monotonically increasing version space**. This prevents version conflicts when multiple contexts evolve simultaneously.
 
@@ -2170,7 +2170,7 @@ V1__init_artist.sql  ← CONFLICT!
 V150__producer_change.sql  ← Producer should use V1-V99
 ```
 
-### Migration Naming Convention
+#### Migration Naming Convention
 
 **Format:** `V{VERSION}__{DESCRIPTION}.sql`
 
@@ -2194,17 +2194,17 @@ V5__drop_producer_deprecated_table.sql  # Remove table
 
 -----
 
-## 4\. Migration Development Workflow
+### Migration Development Workflow
 
-### Current Challenge
+#### Current Challenge
 
 With `hibernate-orm.database.generation=validate`, Hibernate does not generate DDL statements. When you modify JPA entities, you must manually create corresponding Flyway migrations.
 
-### Recommended Development Setup
+#### Recommended Development Setup
 
 > **📝 Update Note (August 2025):** The original `hibernate-enhance-maven-plugin` referenced in earlier versions is no longer available with Hibernate 6+ and Quarkus 3.x. The setup below uses modern Quarkus-compatible approaches for schema generation and migration workflows.
 
-#### 1\. Schema Export Configuration
+#### Schema Export Configuration
 
 **Modern Approach with Quarkus 3.x / Hibernate 6+:**
 
@@ -2266,7 +2266,7 @@ quarkus.hibernate-orm.log.format-sql=true
 
 > **Note:** The original `hibernate-enhance-maven-plugin` is no longer available in Hibernate 6+ / Quarkus 3.x. This modern approach uses Quarkus dev services and configuration profiles for schema generation.
 
-#### 2\. Development Profiles for Schema Generation
+#### Development Profiles for Schema Generation
 
 The project provides two specialized profiles for schema generation during migration development:
 
@@ -2384,9 +2384,9 @@ The project includes a comprehensive migration generation script that handles ve
 -- [ ] Migration reviewed by team
 ```
 
-### Step-by-Step Development Workflow
+#### Step-by-Step Development Workflow
 
-#### Step 1: Modify Your JPA Entity
+##### Step 1: Modify Your JPA Entity
 
 ```java
 // Example: Adding email field to ProducerEntity
@@ -2496,7 +2496,7 @@ git commit -m "feat(producer): add email field to producer entity
 - Add unique constraint and index for email lookups"
 ```
 
-### Alternative: Quick Schema Generation
+#### Alternative: Quick Schema Generation
 
 For rapid prototyping or complex changes, you can use the schema generation profile:
 
@@ -2511,13 +2511,13 @@ mvn quarkus:dev
 
 -----
 
-## 5\. Bounded Context Integration
+### Bounded Context Integration
 
-### Schema Organization Strategy
+#### Schema Organization Strategy
 
 Each bounded context manages its own schema subset while maintaining referential integrity and avoiding direct cross-context foreign keys.
 
-#### Producer Context Schema
+##### Producer Context Schema
 
 ```sql
 -- V1__init_producer.sql
@@ -2552,7 +2552,7 @@ ALTER TABLE producer_tracks ADD CONSTRAINT chk_isrc_format
     CHECK (isrc ~ '^[A-Z]{2}[A-Z0-9]{3}[0-9]{7}$');
 ```
 
-#### Artist Context Schema
+##### Artist Context Schema
 
 ```sql
 -- V100__init_artist.sql  
@@ -2587,9 +2587,9 @@ ALTER TABLE artist_track_references ADD CONSTRAINT chk_artist_isrc_format
     CHECK (isrc ~ '^[A-Z]{2}[A-Z0-9]{3}[0-9]{7}$');
 ```
 
-### Cross-Context Data Integrity
+#### Cross-Context Data Integrity
 
-#### Shared Value Objects
+##### Shared Value Objects
 
 **ISRC Value Object** used across contexts:
 
@@ -2606,7 +2606,7 @@ ALTER TABLE artist_track_references ADD CONSTRAINT chk_artist_isrc_format
     CHECK (isrc ~ '^[A-Z]{2}[A-Z0-9]{3}[0-9]{7}$');
 ```
 
-#### Event-Driven Data Consistency
+##### Event-Driven Data Consistency
 
 Rather than foreign keys between contexts, use event-driven updates:
 
@@ -2618,9 +2618,9 @@ Rather than foreign keys between contexts, use event-driven updates:
 -- Instead: event-driven synchronization via application layer
 ```
 
-### Migration Coordination
+#### Migration Coordination
 
-#### Shared Schema Elements
+##### Shared Schema Elements
 
 For truly shared elements (like reference data), consider a separate migration range:
 
@@ -2639,7 +2639,7 @@ INSERT INTO countries (code, name) VALUES
     ('US', 'United States');
 ```
 
-#### Cross-Context Migration Dependencies
+##### Cross-Context Migration Dependencies
 
 Sometimes contexts depend on each other's schema changes:
 
@@ -2658,9 +2658,9 @@ ALTER TABLE artists ADD CONSTRAINT chk_artist_producer_code_format
 
 -----
 
-## 6\. Environment-Specific Configuration
+### Environment-Specific Configuration
 
-### Development Environment
+#### Development Environment
 
 **Configuration:**
 
@@ -2690,7 +2690,7 @@ ALTER TABLE artists ADD CONSTRAINT chk_artist_producer_code_format
 - ✅ Detailed SQL logging
 - ✅ All contexts loaded
 
-### Test Environment
+#### Test Environment
 
 **Configuration:**
 
@@ -2716,7 +2716,7 @@ ALTER TABLE artists ADD CONSTRAINT chk_artist_producer_code_format
 - ✅ Same migration path as production
 - ✅ Fast startup with Dev Services
 
-### Production Environment
+#### Production Environment
 
 **Configuration:**
 
@@ -2756,7 +2756,7 @@ java -jar app.jar
 # INFO [org.flywaydb.core.internal.command.DbMigrate] Migrating schema "public" to version "5 - ..."
 ```
 
-### Docker Compose for Development
+#### Docker Compose for Development
 
 ```yaml
 # docker-compose.yml
@@ -2788,7 +2788,7 @@ volumes:
   postgres_data:
 ```
 
-### Migration Validation Script
+#### Migration Validation Script
 
 Create `scripts/validate-migrations.sh`:
 
@@ -2870,11 +2870,11 @@ print_status "Artist migrations: $(echo "$ARTIST_VERSIONS" | wc -w)"
 
 -----
 
-## 7\. Best Practices & Anti-patterns
+### Best Practices & Anti-patterns
 
-### Migration Best Practices
+#### Migration Best Practices
 
-#### ✅ DO: Write Idempotent Migrations
+##### ✅ DO: Write Idempotent Migrations
 
 ```sql
 -- ✅ GOOD: Idempotent column addition
@@ -2896,7 +2896,7 @@ BEGIN
 END $$;
 ```
 
-#### ✅ DO: Include Rollback Information
+##### ✅ DO: Include Rollback Information
 
 ```sql
 -- V5__add_producer_social_links.sql
@@ -2914,7 +2914,7 @@ CREATE INDEX idx_producers_twitter_handle ON producers(twitter_handle)
 WHERE twitter_handle IS NOT NULL;
 ```
 
-#### ✅ DO: Use Transactions Appropriately
+##### ✅ DO: Use Transactions Appropriately
 
 ```sql
 -- ✅ GOOD: Complex migration in transaction
@@ -2935,7 +2935,7 @@ ALTER TABLE producers ADD CONSTRAINT chk_producer_status
 COMMIT;
 ```
 
-#### ✅ DO: Document Migration Purpose
+##### ✅ DO: Document Migration Purpose
 
 ```sql
 -- V3__normalize_producer_codes.sql
@@ -2959,7 +2959,7 @@ ALTER TABLE producers ADD CONSTRAINT chk_producer_code_uppercase
     CHECK (producer_code = UPPER(producer_code));
 ```
 
-#### ✅ DO: Handle Large Data Migrations Carefully
+##### ✅ DO: Handle Large Data Migrations Carefully
 
 ```sql
 -- V6__migrate_large_producer_dataset.sql
@@ -2999,9 +2999,9 @@ BEGIN
 END $$;
 ```
 
-### Anti-patterns to Avoid
+#### Anti-patterns to Avoid
 
-#### ❌ DON'T: Make Breaking Changes Without Migration Path
+##### ❌ DON'T: Make Breaking Changes Without Migration Path
 
 ```sql
 -- ❌ BAD: Dropping column without migration path
@@ -3012,7 +3012,7 @@ ALTER TABLE producers DROP COLUMN deprecated_field;
 -- Migration 2 (later): Drop old field after validation
 ```
 
-#### ❌ DON'T: Modify Existing Migrations
+##### ❌ DON'T: Modify Existing Migrations
 
 ```sql
 -- ❌ NEVER modify existing migrations after they've been applied
@@ -3021,7 +3021,7 @@ ALTER TABLE producers DROP COLUMN deprecated_field;
 -- Instead: Create new migration to make changes
 ```
 
-#### ❌ DON'T: Use Database-Specific Features Without Consideration
+##### ❌ DON'T: Use Database-Specific Features Without Consideration
 
 ```sql
 -- ❌ BAD: PostgreSQL-only syntax without documentation
@@ -3035,7 +3035,7 @@ CREATE TABLE producers (
 -- For other databases, use application-generated UUIDs
 ```
 
-#### ❌ DON'T: Mix DDL and DML Without Careful Planning
+##### ❌ DON'T: Mix DDL and DML Without Careful Planning
 
 ```sql
 -- ❌ BAD: Mixed DDL/DML without transaction control
@@ -3050,7 +3050,7 @@ COMMIT;
 -- Separate migration for complex data updates if needed
 ```
 
-#### ❌ DON'T: Ignore Migration Performance
+##### ❌ DON'T: Ignore Migration Performance
 
 ```sql
 -- ❌ BAD: Creating index on large table without considering downtime
@@ -3060,9 +3060,9 @@ CREATE INDEX idx_producers_complex ON producers(name, email, created_at);
 CREATE INDEX CONCURRENTLY idx_producers_complex ON producers(name, email, created_at);
 ```
 
-### Migration Templates
+#### Migration Templates
 
-#### Template: Add Column
+##### Template: Add Column
 
 ```sql
 -- V{N}__add_{column}_to_{table}.sql
@@ -3080,7 +3080,7 @@ ALTER TABLE {table} ADD CONSTRAINT chk_{table}_{column}_format
     CHECK ({validation_condition});
 ```
 
-#### Template: Create Table
+##### Template: Create Table
 
 ```sql
 -- V{N}__create_{table}.sql  
@@ -3108,7 +3108,7 @@ COMMENT ON TABLE {table} IS 'Table storing {business_description}';
 COMMENT ON COLUMN {table}.{important_column} IS 'Description of business meaning';
 ```
 
-#### Template: Data Migration
+##### Template: Data Migration
 
 ```sql
 -- V{N}__migrate_{description}.sql
@@ -3153,11 +3153,11 @@ COMMIT;
 
 -----
 
-## 8\. Troubleshooting & Recovery
+### Troubleshooting & Recovery
 
-### Common Issues and Solutions
+#### Common Issues and Solutions
 
-#### Issue: Migration Checksum Mismatch
+##### Issue: Migration Checksum Mismatch
 
 **Symptom:**
 
@@ -3212,7 +3212,7 @@ DELETE FROM flyway_schema_history WHERE version = '3' AND success = false;
 mvn flyway:repair
 ```
 
-#### Issue: Out-of-Order Migrations
+##### Issue: Out-of-Order Migrations
 
 **Symptom:**
 
@@ -3231,7 +3231,7 @@ To ignore this migration, set ignoreIgnoredMigrations to true
 # Rename migration file to use next available version number
 ```
 
-#### Issue: Version Range Conflicts
+##### Issue: Version Range Conflicts
 
 **Symptom:**
 
@@ -3255,9 +3255,9 @@ Two migrations with same version found:
 mv V150__artist_change.sql V101__artist_change.sql
 ```
 
-### Recovery Procedures
+#### Recovery Procedures
 
-#### Recovery: Corrupted Migration State
+##### Recovery: Corrupted Migration State
 
 ```bash
 #!/bin/bash
@@ -3285,7 +3285,7 @@ mvn quarkus:dev
 echo "✅ Recovery complete. Check application startup logs."
 ```
 
-#### Recovery: Production Migration Failure
+##### Recovery: Production Migration Failure
 
 ```bash
 #!/bin/bash
@@ -3326,9 +3326,9 @@ WHERE version = '3' AND success = false;"
 echo "✅ Production recovery complete. Monitor application health."
 ```
 
-### Monitoring and Alerting
+#### Monitoring and Alerting
 
-#### Health Check for Migration Status
+##### Health Check for Migration Status
 
 ```java
 // Add to apps/bootstrap/src/main/java/.../health/
@@ -3437,11 +3437,11 @@ jobs:
 
 -----
 
-## Conclusion
+### Conclusion
 
 This comprehensive Flyway guide establishes robust database migration practices for the Music Hub project. The combination of automated tooling, clear conventions, and thorough documentation ensures that database schema evolution remains controlled, predictable, and safe across all environments.
 
-### Key Takeaways:
+#### Key Takeaways:
 
 1.  **Structured Versioning**: Global version space with context-specific ranges prevents conflicts
 2.  **Automated Tooling**: Scripts and templates accelerate migration development
@@ -3506,11 +3506,11 @@ For specific examples and troubleshooting, refer to the relevant sections above.
 
 -----
 
-## 13\. Coding Standards
+## Coding Standards
 
 This section defines the minimal but critical rules that development agents (AI or human) must follow. The goal is to enforce consistency and adhere to the architectural decisions made.
 
-## Commit Message Format
+### Commit Message Format
 
 All git commits **must** follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification. This creates a clear and machine-readable commit history, which facilitates automated versioning and changelog generation.
 
@@ -3518,7 +3518,7 @@ All git commits **must** follow the [Conventional Commits](https://www.conventio
 * **Example `fix`:** `fix(api): correct artist name serialization`
 * **Example `docs`:** `docs(architecture): add db migration strategy`
 
-## Critical Full-stack Rules
+### Critical Full-stack Rules
 
 1.  **Shared Types via `shared-types`**: All interfaces or types used in API DTOs **must** be defined in the `packages/shared-types` package. Both the frontend and backend **must** use this package to ensure contract consistency.
 2.  **Domain Immutability**: Domain objects (`domain` layer) **must be** immutable. Any modification to an aggregate must result in a new instance of that aggregate.
@@ -3532,7 +3532,7 @@ All git commits **must** follow the [Conventional Commits](https://www.conventio
 
 -----
 
-## 14\. Maven Multi-Module Best Practices
+## Maven Multi-Module Best Practices
 
 For our multi-module Maven project, the following practices are critical to ensure consistency, maintainability, and efficient dependency management:
 
