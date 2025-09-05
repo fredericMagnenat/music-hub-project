@@ -1,0 +1,133 @@
+# User Story: 1-01b - External API Mock Services
+
+## Status
+Ready
+
+> **As a** Developer, **when** developing and testing music API integrations, **I want** reliable mock services for external APIs, **in order to** develop and test independently of external service availability and rate limits.
+
+### Pre-requisites
+* This story depends on story-1-01 (validate-create-producer) being completed
+* Requires story-0-11 (external API setup guide) for API contract understanding
+* WireMock dependency should be available in the project
+
+### Acceptance Criteria
+
+#### AC1: Tidal API Mock Implementation
+**Given** integration with Tidal API is required
+**When** mock service is implemented
+**Then** it should provide:
+- Mock endpoint for track search by ISRC (`GET /tracks?filter[isrc]=...`)
+- Realistic response payloads with track metadata
+- Configurable response scenarios (success, not found, rate limited, error)
+- Response delay simulation for realistic testing
+
+#### AC2: Spotify API Mock Implementation  
+**Given** integration with Spotify Web API is required
+**When** mock service is implemented
+**Then** it should provide:
+- Mock endpoint for track search (`GET /search?q=isrc:...`)
+- Authentic response structure matching Spotify API
+- Multiple test scenarios (track found, not found, multiple results)
+- Rate limiting simulation capabilities
+
+#### AC3: Mock Data Management
+**Given** tests require various data scenarios
+**When** mock services are configured
+**Then** they should include:
+- Predefined test data sets for common ISRCs
+- Configurable response mappings
+- Edge case data (special characters, long names, etc.)
+- Invalid data scenarios for error testing
+
+#### AC4: Test Environment Integration
+**Given** development and testing workflows
+**When** mock services are integrated
+**Then** they should:
+- Start automatically with test profile
+- Be isolated per test execution
+- Reset state between test runs
+- Integrate with existing test framework (JUnit)
+
+### Definition of Done
+- [ ] WireMock integration configured in test profile
+- [ ] Tidal API mock endpoints implemented with realistic responses
+- [ ] Spotify API mock endpoints implemented with authentic structure
+- [ ] Test data sets created for various scenarios
+- [ ] Mock service lifecycle management in tests
+- [ ] Documentation for mock service usage and configuration
+- [ ] Integration tests using mock services passing
+
+### Technical Implementation
+
+#### WireMock Configuration
+```java
+// Test configuration
+@QuarkusTest
+@TestProfile(MockApiTestProfile.class)
+class ProducerServiceIntegrationTest {
+    
+    @BeforeEach
+    void setupMocks() {
+        // Configure WireMock stubs
+    }
+}
+```
+
+#### Mock Response Examples
+
+**Tidal API Mock Response:**
+```json
+{
+  "data": [{
+    "id": "123456789",
+    "type": "track",
+    "attributes": {
+      "title": "Example Track",
+      "artist": "Example Artist",
+      "isrc": "USRC17607839",
+      "duration": 240,
+      "explicit": false
+    }
+  }]
+}
+```
+
+**Spotify API Mock Response:**
+```json
+{
+  "tracks": {
+    "items": [{
+      "name": "Example Track",
+      "artists": [{"name": "Example Artist"}],
+      "external_ids": {"isrc": "USRC17607839"},
+      "duration_ms": 240000,
+      "explicit": false
+    }]
+  }
+}
+```
+
+#### Mock Service Scenarios
+1. **Success Scenarios**: Valid ISRC returns track data
+2. **Not Found Scenarios**: Unknown ISRC returns empty results  
+3. **Error Scenarios**: API errors (500, 503) simulation
+4. **Rate Limit Scenarios**: 429 responses with retry headers
+5. **Timeout Scenarios**: Delayed responses for timeout testing
+
+### Dependencies
+- Requires story-1-01 (validate-create-producer) completion
+- Should be completed before story-1-02 (integrate-track-publish-event)
+- Depends on story-0-11 (external API setup guide) for API contracts
+
+### Estimated Effort
+**2-3 days**
+
+### Priority
+**High** - Enables independent development and reliable testing
+
+### Technical Notes
+- Use WireMock for HTTP service mocking
+- Store mock configurations in `src/test/resources/wiremock/`
+- Ensure mock responses match real API structure exactly
+- Include response headers for complete API simulation
+- Consider using WireMock's recording feature to capture real responses
