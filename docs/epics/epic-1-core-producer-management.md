@@ -26,13 +26,19 @@
    - API REST endpoint `/api/v1/producers` avec validation et gestion d'erreurs
    - Interface utilisateur avec formulaire ISRC et feedback
 
-2. **Story 1-02:** Integrate a Track and Publish an Event - Intégration des tracks avec publication d'événements
+2. **Story 1-01b:** External API Mock Services - Services mock pour développement et tests indépendants
+   - Implémentation WireMock pour APIs Tidal et Spotify
+   - Création de datasets de test réalistes avec différents scénarios
+   - Configuration environnements de test isolés
+   - Documentation des contrats d'API externe et stratégies de test
+
+3. **Story 1-02:** Integrate a Track and Publish an Event - Intégration des tracks avec publication d'événements
    - Client HTTP pour intégration API externe (MusicPlatformClient)
    - Entité Track et logique d'ajout dans l'agrégat Producer
    - Publication d'événements TrackWasRegistered sur le bus Vert.x
    - Gestion des erreurs d'API externe et feedback utilisateur
 
-3. **Story 1-03:** Recent Tracks API Endpoint - Endpoint pour dashboard tracks récentes
+4. **Story 1-03:** Recent Tracks API Endpoint - Endpoint pour dashboard tracks récentes
    - Implémentation de `GET /api/v1/tracks/recent`
    - Service de récupération des 10 tracks les plus récentes
    - Tri par date de soumission décroissante
@@ -56,7 +62,7 @@
 
 ## Definition of Done
 
-- ✅ All stories completed with acceptance criteria met (1-01, 1-02, 1-03)
+- ✅ All stories completed with acceptance criteria met (1-01, 1-01b, 1-02, 1-03)
 - ✅ Existing functionality verified through testing (regression tests)
 - ✅ Integration points working correctly (API REST, événements)
 - ✅ Documentation updated appropriately (architecture, API spec)
@@ -83,6 +89,6 @@
 
 ---
 
-**Status:** 🔄 **IN PROGRESS** - Stories 1-01 and 1-02 completed, 1-03 ready for development
+**Status:** 🔄 **IN PROGRESS** - Story 1-01 completed, stories 1-01b, 1-02, 1-03 ready for development
 **Created:** 2025-08-22 by Sarah (Product Owner)
 **Epic Type:** Brownfield Enhancement
