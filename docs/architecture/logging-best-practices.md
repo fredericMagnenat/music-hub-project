@@ -25,7 +25,7 @@ Centralized configuration using:
 ## Log Levels & Usage Guidelines
 
 | Level | Usage | Examples |
-|-------|--------|----------|
+| :---- | :---- | :------- |
 | ERROR | System failures, exceptions | Database connection lost, API timeouts |
 | WARN | Recoverable issues | Deprecated API usage, configuration warnings |
 | INFO | Business events | Track registered, Producer created |
@@ -63,7 +63,7 @@ Centralized configuration using:
 Our architecture follows strict exception handling patterns to prevent duplicate logging and ensure clean error flow:
 
 | Layer | Responsibility | Pattern |
-|-------|---------------|---------|
+| :---- | :------------- | :------ |
 | **Domain** | Business rules | Log business events + throw domain exceptions |
 | **Application** | Use case orchestration | Log + rethrow OR log + handle completely |
 | **Adapter** | Infrastructure context | Rethrow with technical context (NO logging) |

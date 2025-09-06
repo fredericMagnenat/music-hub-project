@@ -15,36 +15,33 @@ sequenceDiagram
     participant User
     participant FE as Frontend (Remix SPA)
     participant BE as Backend (Quarkus)
-    participant Tidal as External API (Tidal)
-    participant Spotify as External API (Spotify)
+    participant ExtServices as External APIs (Spotify, Tidal...)
     participant DB as Database (PostgreSQL)
-    participant EventBus
-    
+    participant EventBus as Internal Event Bus
+
     User->>+FE: 1. Enters ISRC and clicks "Validate"
     FE->>+BE: 2. POST /api/producers (isrc)
-    
+
     BE-->>-FE: 3. Immediate HTTP 202 Accepted response
-    Note right of FE: Displays "Processing..." notification
-    
-    par Parallel Calls
-        BE->>+Tidal: 4a. GET /tracks?filter[isrc]=...
-        Tidal-->>-BE: 5a. 200 OK response with metadata
-    and
-        BE->>+Spotify: 4b. GET /search?q=isrc:...
-        Spotify-->>-BE: 5b. 200 OK response
+
+    par Parallel Calls to External APIs
+        BE->>+ExtServices: 4. Fetch track metadata
+        ExtServices-->>-BE: 5. Response with metadata
     end
-    
-    BE->>+DB: 6. Saves (INSERT/UPDATE) the Producer aggregate and its Track
-    DB-->>-BE: 7. Save confirmation
-    
-    BE->>EventBus: 8. Publishes [TrackWasRegistered] event
-    
-    Note right of BE: Initial request processing is complete.
-    
-    EventBus-->>BE: 9. Notifies Artist Context (asynchronous)
-    
-    BE->>+DB: 10. Artist Context reads and/or writes the Artist entity
-    DB-->>-BE: 11. Save confirmation
-````
+
+    BE->>+DB: 6. Save Producer & Track aggregates
+    DB-->>-BE: 7. Confirmation
+
+    BE->>EventBus: 8. Publish [TrackWasRegistered] event
+
+    EventBus-->>BE: 9. Notify Artist Context (async)
+
+    Note over BE,ExtServices: Artist Context Reconciliation
+    BE->>+ExtServices: 10. (Optional) Fetch artist details to enrich profile
+    ExtServices-->>-BE: 11. Response with artist data
+
+    BE->>+DB: 12. Save/Update Artist aggregate
+    DB-->>-BE: 13. Confirmation
+```
 
 -----

@@ -4,7 +4,7 @@ The frontend architecture is built on a modern stack using Remix as the framewor
 
 ## Directory Structure
 
-The file structure follows Remix conventions, optimized for clarity and separation of concerns.
+The file structure follows Remix conventions and is organized for clarity and separation of concerns. A dedicated `types` directory is established to hold all data contract interfaces.
 
 ```plaintext
 webui/
@@ -23,6 +23,12 @@ webui/
 │   ├── routes/
 │   │   └── _index.tsx    # File for the main route ("/")
 │   │
+│   ├── types/            # DEDICATED DIRECTORY FOR TYPES
+│   │   ├── index.ts      # Exports all types from the directory
+│   │   ├── artist.ts     # Contains the "Artist" interface and its dependencies
+│   │   ├── track.ts      # Contains the "Track" interface and its dependencies
+│   │   └── producer.ts   # Contains the "Producer" interface
+│   │
 │   ├── root.tsx          # Global application layout, includes <head>, <body>
 │   └── tailwind.css      # Global styles and Tailwind configuration
 │
@@ -35,29 +41,28 @@ webui/
 └── package.json          # Frontend project dependencies and scripts
 ```
 
-## 11.2. Component Philosophy
+## Component Philosophy
 
-The component organization is two-tiered, which is a robust practice:
+The component organization is two-tiered:
 
-*   **Base Components (`app/components/ui/`)**: These are reusable, primitive components inspired by **shadcn/ui**, such as `Button`, `Input`, and `Toast`. They contain no business logic and are styled via `class-variance-authority`.
-*   **Business Components (`app/components/`)**: These are composite components that assemble the base components to build specific features. `RecentTracksList.tsx` is a perfect example: it manages its own state (loading, error, data) and makes the API call to display the list of recent tracks.
+* **Base Components (`app/components/ui/`)**: Reusable, primitive components inspired by **shadcn/ui**, such as `Button` and `Input`. They contain no business logic.
+* **Business Components (`app/components/`)**: Composite components that assemble base components to build specific features, like `RecentTracksList.tsx`.
 
-## 11.3. API Integration
+## API Integration
 
-Communication with the Quarkus backend is managed centrally and efficiently:
+Communication with the Quarkus backend is managed centrally:
 
-*   **Centralized API Calls**: All functions that communicate with the backend are located in `app/lib/utils.ts`. The `registerTrack` and `getRecentTracks` functions encapsulate the `fetch` logic, header management, and response handling.
-*   **Development Proxy**: The `vite.config.ts` file configures a proxy for all requests starting with `/api`, redirecting them to the backend running on `http://localhost:8080`. This simplifies `fetch` calls in the code, allowing the use of relative paths (e.g., `/api/producers`) without worrying about CORS or full URLs in a development environment.
+* **Centralized API Calls**: All functions that communicate with the backend are located in `app/lib/utils.ts`.
+* **Development Proxy**: The `vite.config.ts` file configures a proxy for all requests starting with `/api`, redirecting them to the backend running on `http://localhost:8080`.
 
-## 11.4. State Management
+## State Management
 
-For the current scope of the PoC, state management is **local to the components**. The project uses standard React hooks (`useState`, `useCallback`, `useMemo`) to manage the ISRC form state and the loading state of the tracks list. There is no global state management library (like Redux or Zustand), which is a pragmatic approach suited to the current application complexity.
+For the current scope of the PoC, state management is **local to the components**, using standard React hooks (`useState`, `useEffect`). No global state management library is used, which is a pragmatic approach suited to the current application complexity.
 
-## 11.5. Testing Strategy
+## Testing Strategy
 
-The testing strategy is robust and well-defined:
+* **Tooling**: **Vitest** is used as the test runner, with **React Testing Library** for rendering and interacting with components.
+* **API Mocking**: Component tests simulate API calls by mocking the `~/lib/utils` module, allowing UI behavior to be tested in isolation.
 
-*   **Tooling**: **Vitest** is used as the test runner, with **React Testing Library** for rendering and interacting with components.
-*   **API Mocking**: Component tests simulate API calls by mocking the `~/lib/utils` module. This allows testing the UI behavior in different scenarios (success, 4xx error, 5xx error) without dependency on a running backend.
 
 -----

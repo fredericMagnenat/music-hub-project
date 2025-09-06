@@ -31,7 +31,7 @@ graph TD
 
 1.  **Domain-First Testing**: Start with domain logic tests - they provide the highest ROI
 2.  **Test Behavior, Not Implementation**: Focus on business outcomes, not internal mechanisms
-3.  **Fast Feedback Loops**: Unit tests \< 100ms, Integration tests \< 5s
+3.  **Fast Feedback Loops**: Unit tests < 100ms, Integration tests < 5s
 4.  **Test Isolation**: Each test should be independent and repeatable
 5.  **Clear Test Intent**: Use descriptive names and Given/When/Then structure
 

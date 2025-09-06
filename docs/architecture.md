@@ -1,8 +1,8 @@
 # Music Hub Fullstack Architecture Document
 
-* **Version:** 1.0
-* **Date:** September 4, 2025
-* **Author:** Winston (Architect)
+  * **Version:** 2.0
+  * **Date:** September 6, 2025
+  * **Author:** Winston (Architect)
 
 ## Introduction
 
@@ -12,17 +12,18 @@ This document describes the complete full-stack architecture for the Music Hub p
 
 Project analysis reveals that it is not based on a predefined full-stack starter template. It is a custom structure that combines:
 
-* A **Quarkus backend** following a rigorous hexagonal architecture.
-* A **Remix frontend** integrated and served by the backend via the **Quarkus Quinoa** extension.
-* The entire project is assembled in a **Maven monorepo**, with the `bootstrap` module acting as the main entry point.
+  * A **Quarkus backend** following a rigorous hexagonal architecture.
+  * A **Remix frontend** integrated and served by the backend via the **Quarkus Quinoa** extension.
+  * The entire project is assembled in a **Maven monorepo**, with the `bootstrap` module acting as the main entry point.
 
 ### Change Log
 
 | Date | Version | Description | Author |
 | :--- | :--- | :--- | :--- |
+| 06/09/2025 | 2.0 | Aligned with the final version of the Domain Charter, added design patterns and business logic implementation details. | Winston (Architect) |
 | 04/09/2025 | 1.0 | Initial creation of the full-stack architecture document. | Winston (Architect) |
 
----
+-----
 
 ## High-Level Architecture
 
@@ -41,39 +42,50 @@ sequenceDiagram
     participant User
     participant FE as Frontend (Remix SPA)
     participant BE as Backend (Quarkus)
-    participant Tidal as External API (Tidal)
-    participant Spotify as External API (Spotify)
+    participant ExtServices as External APIs (Spotify, Tidal...)
     participant DB as Database (PostgreSQL)
-    participant EventBus
-    
+    participant EventBus as Internal Event Bus
+
     User->>+FE: 1. Enters ISRC and clicks "Validate"
     FE->>+BE: 2. POST /api/producers (isrc)
-    
+
     BE-->>-FE: 3. Immediate HTTP 202 Accepted response
-    Note right of FE: Displays "Processing..." notification
-    
-    par Parallel Calls
-        BE->>+Tidal: 4a. GET /tracks?filter[isrc]=...
-        Tidal-->>-BE: 5a. 200 OK response with metadata
-    and
-        BE->>+Spotify: 4b. GET /search?q=isrc:...
-        Spotify-->>-BE: 5b. 200 OK response
+
+    par Parallel Calls to External APIs
+        BE->>+ExtServices: 4. Fetch track metadata
+        ExtServices-->>-BE: 5. Response with metadata
     end
-    
-    BE->>+DB: 6. Saves (INSERT/UPDATE) the Producer aggregate and its Track
-    DB-->>-BE: 7. Save confirmation
-    
-    BE->>EventBus: 8. Publishes [TrackWasRegistered] event
-    
-    Note right of BE: Initial request processing is complete.
-    
-    EventBus-->>BE: 9. Notifies Artist Context (asynchronous)
-    
-    BE->>+DB: 10. Artist Context reads and/or writes the Artist entity
-    DB-->>-BE: 11. Save confirmation
-````
+
+    BE->>+DB: 6. Save Producer & Track aggregates
+    DB-->>-BE: 7. Confirmation
+
+    BE->>EventBus: 8. Publish [TrackWasRegistered] event
+
+    EventBus-->>BE: 9. Notify Artist Context (async)
+
+    Note over BE,ExtServices: Artist Context Reconciliation
+    BE->>+ExtServices: 10. (Optional) Fetch artist details to enrich profile
+    ExtServices-->>-BE: 11. Response with artist data
+
+    BE->>+DB: 12. Save/Update Artist aggregate
+    DB-->>-BE: 13. Confirmation
+```
 
 -----
+
+## Architectural and Design Patterns
+
+This project's design is guided by a set of well-established architectural and domain-driven patterns to ensure separation of concerns, maintainability, and scalability.
+
+  * **Hexagonal Architecture (Ports & Adapters)**: The core application logic (domain and application layers) is isolated from external concerns like databases, APIs, and UI. This is implemented through our Maven multi-module structure (`*-domain`, `*-application`, `*-adapters`).
+  * **Event-Driven Architecture**: Bounded Contexts communicate asynchronously via domain events, primarily `TrackWasRegistered`, to reduce coupling and improve resilience.
+  * **Domain-Driven Design (DDD) Patterns**:
+      * **Aggregate**: Used to enforce business rules and consistency within a transactional boundary (e.g., `Producer` aggregate owns `Track` entities).
+      * **Repository**: Provides an abstraction for data persistence, allowing the domain to remain independent of the database technology.
+      * **Value Object**: Represents concepts defined by their attributes, not their identity, ensuring validity and immutability (e.g., `ISRC` record).
+      * **Factory**: Used for the controlled creation of complex objects and aggregates.
+
+----- 
 
 ## Tech Stack
 
@@ -134,7 +146,7 @@ interface ArtistCredit {
 
 interface Source {
   sourceName: 'SPOTIFY' | 'TIDAL' | 'DEEZER' | 'APPLE_MUSIC' | 'MANUAL';
-  sourceId: string;
+  externalId: string; // Renamed for clarity
 }
 
 interface Track {
@@ -251,30 +263,38 @@ components:
 
 -----
 
+## Business Logic Implementation
+
+### Data Consistency and Source of Truth
+
+To resolve data conflicts from multiple sources, the application implements a "Source of Truth" hierarchy (`MANUAL > TIDAL > SPOTIFY...`) as defined in the Domain Charter. This logic is applied within the domain aggregates (`Track`, `Artist`) when new information is processed, ensuring that the entity's state always reflects the data from the most authoritative source available. The authoritative source is determined at the entity level, not the attribute level, meaning the system identifies the single highest-ranking source for a given entity and considers all of its data to be authoritative.
+
+----- 
+
 ## Testing Strategy
 
 The testing strategy combines multiple levels to ensure quality:
 
-* **Unit Tests (Backend & Frontend)**: Validate the atomic logic of domain classes and React components in isolation.
-* **Integration Tests (Backend)**: Validate complete flows, from the API to the database, using an in-memory database (H2) and mocks (WireMock) for external services.
-* **Code Quality**: Code coverage is measured by **Jacoco** (80% target), and architectural rules are validated by **ArchUnit**.
-* **Test Documentation**: JUnit 5's `@DisplayName` annotation is mandatory for all backend tests to ensure their readability.
+  * **Unit Tests (Backend & Frontend)**: Validate the atomic logic of domain classes and React components in isolation.
+  * **Integration Tests (Backend)**: Validate complete flows, from the API to the database, using an in-memory database (H2) and mocks (WireMock) for external services.
+  * **Code Quality**: Code coverage is measured by **Jacoco** (80% target), and architectural rules are validated by **ArchUnit**.
+  * **Test Documentation**: JUnit 5's ` @DisplayName` annotation is mandatory for all backend tests to ensure their readability.
 
------
+----- 
 
 ## Resilience and Observability
 
 ### Observability
 
-* **Metrics:** Application metrics (JVM, HTTP requests, etc.) will be exposed via Micrometer and the `quarkus-micrometer-registry-otlp` extension. This will allow them to be sent to any OpenTelemetry-compatible backend.
-* **Logging:** Logging will follow Quarkus standards, producing structured logs (JSON) in production for easier analysis.
+  * **Metrics:** Application metrics (JVM, HTTP requests, etc.) will be exposed via Micrometer and the `quarkus-micrometer-registry-otlp` extension. This will allow them to be sent to any OpenTelemetry-compatible backend.
+  * **Logging:** Logging will follow Quarkus standards, producing structured logs (JSON) in production for easier analysis.
 
 ### Resilience
 
-* **External Calls:** For the PoC, no retry or circuit breaker policies will be implemented for calls to the external music API. This will be a consideration for the post-PoC version. Basic error handling (timeouts, 5xx errors) will be implemented.
-* **Caching:** No caching strategy is defined for the PoC.
+  * **External Calls:** For the PoC, no retry or circuit breaker policies will be implemented for calls to the external music API. Basic error handling (timeouts, 5xx errors) will be implemented.
+  * **Caching:** No caching strategy is defined for the PoC.
 
------
+----- 
 
 ## Logging Best Practices
 
@@ -303,7 +323,7 @@ Centralized configuration using:
 ### Log Levels & Usage Guidelines
 
 | Level | Usage | Examples |
-|-------|--------|----------|
+| :---- | :---- | :------- |
 | ERROR | System failures, exceptions | Database connection lost, API timeouts |
 | WARN | Recoverable issues | Deprecated API usage, configuration warnings |
 | INFO | Business events | Track registered, Producer created |
@@ -341,7 +361,7 @@ Centralized configuration using:
 Our architecture follows strict exception handling patterns to prevent duplicate logging and ensure clean error flow:
 
 | Layer | Responsibility | Pattern |
-|-------|---------------|---------|
+| :---- | :------------- | :------ |
 | **Domain** | Business rules | Log business events + throw domain exceptions |
 | **Application** | Use case orchestration | Log + rethrow OR log + handle completely |
 | **Adapter** | Infrastructure context | Rethrow with technical context (NO logging) |
@@ -533,7 +553,7 @@ graph TD
 
 1.  **Domain-First Testing**: Start with domain logic tests - they provide the highest ROI
 2.  **Test Behavior, Not Implementation**: Focus on business outcomes, not internal mechanisms
-3.  **Fast Feedback Loops**: Unit tests \< 100ms, Integration tests \< 5s
+3.  **Fast Feedback Loops**: Unit tests < 100ms, Integration tests < 5s
 4.  **Test Isolation**: Each test should be independent and repeatable
 5.  **Clear Test Intent**: Use descriptive names and Given/When/Then structure
 
@@ -896,7 +916,7 @@ vi.mock("~/lib/utils", async (orig) => {
   const actual = await (orig as any)();
   return {
     ...actual,
-    registerTrack: vi.fn(async (_isrc: string) => ({ ok: true, status: 202 })),
+    registerTrack: vi.fn(async (_isrc: string) => ({ ok: true, status: 202 }))
   };
 });
 
@@ -930,7 +950,7 @@ describe("Index route (ISRC form)", () => {
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getByText(/Accepted \(202\)/i)).toBeInTheDocument();
+      expect(screen.getByText(/Accepted (202)/i)).toBeInTheDocument();
     });
   });
 });
@@ -1467,7 +1487,7 @@ function render[ComponentName]WithProviders(props = {}) {
   };
   
   return render(
-    <[RequiredProvider]>
+    <[RequiredProvider]> 
       <[ComponentName] {...defaultProps} {...props} />
     </[RequiredProvider]>
   );
@@ -1521,13 +1541,13 @@ describe("[ComponentName]", () => {
 ##### Time Limits by Test Type
 
 | Test Type | Target Time | Maximum Time | Rationale |
-|-----------|-------------|--------------|-----------|
-| Domain Unit Tests | \< 50ms | \< 100ms | Pure logic, no I/O |
-| Application Unit Tests | \< 100ms | \< 200ms | Mock interactions only |
-| Adapter Unit Tests | \< 100ms | \< 200ms | Mock external dependencies |
-| Integration Tests | \< 2s | \< 5s | Real database, HTTP calls |
-| Frontend Component Tests | \< 200ms | \< 500ms | DOM rendering, no API |
-| E2E Tests | \< 30s | \< 60s | Full browser automation |
+| :--- | :---------- | :----------- | :-------- |
+| Domain Unit Tests | < 50ms | < 100ms | Pure logic, no I/O |
+| Application Unit Tests | < 100ms | < 200ms | Mock interactions only |
+| Adapter Unit Tests | < 100ms | < 200ms | Mock external dependencies |
+| Integration Tests | < 2s | < 5s | Real database, HTTP calls |
+| Frontend Component Tests | < 200ms | < 500ms | DOM rendering, no API |
+| E2E Tests | < 30s | < 60s | Full browser automation |
 
 #### Performance Monitoring
 
@@ -1548,7 +1568,7 @@ describe("[ComponentName]", () => {
 ##### Coverage Targets by Layer
 
 | Layer | Line Coverage | Branch Coverage | Justification |
-|-------|---------------|-----------------|---------------|
+| :---- | :------------ | :-------------- | :------------ |
 | Domain | 95%+ | 90%+ | Critical business logic |
 | Application | 90%+ | 85%+ | Use case orchestration |
 | Adapters | 80%+ | 75%+ | Integration logic |
@@ -1817,7 +1837,7 @@ vi.mock("~/lib/utils", () => ({
 }));
 ```
 
-##### ❌ DON'T Use findBy\* for Immediate Elements
+##### ❌ DON'T Use findBy* for Immediate Elements
 
 ```typescript
 // ❌ WRONG: Using findBy for elements that should be immediately present
@@ -1893,7 +1913,7 @@ void shouldCreateProducer() {
 @Test
 void shouldAddTrackToProducer() {
     // Given - independent setup
-    Producer producer = service.createProducer();
+    Producer producer = service.createNew(ProducerCode.of("FRLA1"), "Test Label");
     Track track = createTestTrack();
     
     // When
@@ -1939,7 +1959,7 @@ This document establishes the testing standards for the Music Hub project, ensur
 
 - **Domain Tests**: Pure unit tests, no frameworks, test business logic
 - **Application Tests**: Mock ports, test orchestration
-- **Adapter Tests**: Unit tests with mocked dependencies
+- **Adapter Tests**: Unit tests with RTL, mock external dependencies
 - **Bootstrap Tests**: Integration tests with real infrastructure
 - **Frontend Tests**: Component tests with RTL, mock external dependencies
 - **Coverage Target**: 80% minimum, focus on critical paths
@@ -1954,7 +1974,7 @@ The frontend architecture is built on a modern stack using Remix as the framewor
 
 ### Directory Structure
 
-The file structure follows Remix conventions, optimized for clarity and separation of concerns.
+The file structure follows Remix conventions and is organized for clarity and separation of concerns. A dedicated `types` directory is established to hold all data contract interfaces.
 
 ```plaintext
 webui/
@@ -1973,6 +1993,12 @@ webui/
 │   ├── routes/
 │   │   └── _index.tsx    # File for the main route ("/")
 │   │
+│   ├── types/            # DEDICATED DIRECTORY FOR TYPES
+│   │   ├── index.ts      # Exports all types from the directory
+│   │   ├── artist.ts     # Contains the "Artist" interface and its dependencies
+│   │   ├── track.ts      # Contains the "Track" interface and its dependencies
+│   │   └── producer.ts   # Contains the "Producer" interface
+│   │
 │   ├── root.tsx          # Global application layout, includes <head>, <body>
 │   └── tailwind.css      # Global styles and Tailwind configuration
 │
@@ -1985,30 +2011,29 @@ webui/
 └── package.json          # Frontend project dependencies and scripts
 ```
 
-### 11.2. Component Philosophy
+### Component Philosophy
 
-The component organization is two-tiered, which is a robust practice:
+The component organization is two-tiered:
 
-*   **Base Components (`app/components/ui/`)**: These are reusable, primitive components inspired by **shadcn/ui**, such as `Button`, `Input`, and `Toast`. They contain no business logic and are styled via `class-variance-authority`.
-*   **Business Components (`app/components/`)**: These are composite components that assemble the base components to build specific features. `RecentTracksList.tsx` is a perfect example: it manages its own state (loading, error, data) and makes the API call to display the list of recent tracks.
+* **Base Components (`app/components/ui/`)**: Reusable, primitive components inspired by **shadcn/ui**, such as `Button` and `Input`. They contain no business logic.
+* **Business Components (`app/components/`)**: Composite components that assemble base components to build specific features, like `RecentTracksList.tsx`.
 
-### 11.3. API Integration
+### API Integration
 
-Communication with the Quarkus backend is managed centrally and efficiently:
+Communication with the Quarkus backend is managed centrally:
 
-*   **Centralized API Calls**: All functions that communicate with the backend are located in `app/lib/utils.ts`. The `registerTrack` and `getRecentTracks` functions encapsulate the `fetch` logic, header management, and response handling.
-*   **Development Proxy**: The `vite.config.ts` file configures a proxy for all requests starting with `/api`, redirecting them to the backend running on `http://localhost:8080`. This simplifies `fetch` calls in the code, allowing the use of relative paths (e.g., `/api/producers`) without worrying about CORS or full URLs in a development environment.
+* **Centralized API Calls**: All functions that communicate with the backend are located in `app/lib/utils.ts`.
+* **Development Proxy**: The `vite.config.ts` file configures a proxy for all requests starting with `/api`, redirecting them to the backend running on `http://localhost:8080`.
 
-### 11.4. State Management
+### State Management
 
-For the current scope of the PoC, state management is **local to the components**. The project uses standard React hooks (`useState`, `useCallback`, `useMemo`) to manage the ISRC form state and the loading state of the tracks list. There is no global state management library (like Redux or Zustand), which is a pragmatic approach suited to the current application complexity.
+For the current scope of the PoC, state management is **local to the components**, using standard React hooks (`useState`, `useEffect`). No global state management library is used, which is a pragmatic approach suited to the current application complexity.
 
-### 11.5. Testing Strategy
+### Testing Strategy
 
-The testing strategy is robust and well-defined:
+* **Tooling**: **Vitest** is used as the test runner, with **React Testing Library** for rendering and interacting with components.
+* **API Mocking**: Component tests simulate API calls by mocking the `~/lib/utils` module, allowing UI behavior to be tested in isolation.
 
-*   **Tooling**: **Vitest** is used as the test runner, with **React Testing Library** for rendering and interacting with components.
-*   **API Mocking**: Component tests simulate API calls by mocking the `~/lib/utils` module. This allows testing the UI behavior in different scenarios (success, 4xx error, 5xx error) without dependency on a running backend.
 
 -----
 
@@ -3520,15 +3545,14 @@ All git commits **must** follow the [Conventional Commits](https://www.conventio
 
 ### Critical Full-stack Rules
 
-1.  **Shared Types via `shared-types`**: All interfaces or types used in API DTOs **must** be defined in the `packages/shared-types` package. Both the frontend and backend **must** use this package to ensure contract consistency.
-2.  **Domain Immutability**: Domain objects (`domain` layer) **must be** immutable. Any modification to an aggregate must result in a new instance of that aggregate.
-3.  **Enforce Value Objects & Shared Kernel**:
+1.  **Domain Immutability**: Domain objects (`domain` layer) **must be** immutable. Any modification to an aggregate must result in a new instance of that aggregate.
+2.  **Enforce Value Objects & Shared Kernel**:
     * In the backend domain, **prefer creating Value Objects** (`ISRC`, `ProducerCode`, `ArtistName`, etc.) over using primitive types like `String` for any data that has intrinsic rules, format, or constraints.
     * If a Value Object or event contract is used by more than one bounded context, it **must** be placed in the `apps/shared-kernel` module.
     * This enforces domain invariants and creates a clear, reusable "Shared Kernel".
-4.  **No Logic in Adapters**: REST controllers and other adapters **must be** as "thin" as possible. They only convert requests/events into application service calls and map the results. All business logic **must reside** in the `application` and `domain` layers.
-5.  **Application Use Case Entry Points**: The frontend (via REST controllers) and other contexts (via events) **must never** interact directly with repositories or the domain. They **must always** go through the application layer's use case interfaces (e.g., `RegisterTrackUseCase.java`). The implementing classes are often called "Application Services".
-6.  **Configuration over Environment Variables**: **Never** access environment variables directly (`process.env` or `System.getenv`). Use the configuration mechanisms provided by the frameworks (Quarkus or Remix) for clean dependency injection of configuration.
+3.  **No Logic in Adapters**: REST controllers and other adapters **must be** as "thin" as possible. They only convert requests/events into application service calls and map the results. All business logic **must reside** in the `application` and `domain` layers.
+4.  **Application Use Case Entry Points**: The frontend (via REST controllers) and other contexts (via events) **must never** interact directly with repositories or the domain. They **must always** go through the application layer's use case interfaces (e.g., `RegisterTrackUseCase.java`). The implementing classes are often called "Application Services".
+5**Configuration over Environment Variables**: **Never** access environment variables directly (`process.env` or `System.getenv`). Use the configuration mechanisms provided by the frameworks (Quarkus or Remix) for clean dependency injection of configuration.
 
 -----
 

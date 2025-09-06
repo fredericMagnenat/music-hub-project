@@ -1,156 +1,66 @@
-### User Story: 1-03 - Adapt Producer Domain to Data Models
+### User Story: 1-03 - Refactor Producer Context to Align with Domain Charter
 
 ## Status
-Draft
+Ready for Development
 
-> **As a** System, **when** the Producer domain implementation needs to align with the official data models specification, **I want** the Producer entity and related components to strictly follow the TypeScript interface defined in `docs/architecture/data-models.md`, **so that** the backend and frontend maintain consistent type contracts and the API responses match the expected structure.
+> **As a** Developer, **when** implementing new features, **I want** the entire Producer bounded context (domain, persistence, SPI, and REST adapters) to be refactored, **so that** its implementation perfectly reflects the rich domain model, rules, and responsibilities defined in the `domain-charter.md`.
 
 ### Acceptance Criteria
 
-1. **Given** the Producer entity exists in the domain layer
-   **When** it is accessed through the API
-   **Then** the JSON response must exactly match the Producer TypeScript interface structure: `{ id: string, producerCode: string, name?: string | null, tracks: string[] }`
+1.  **Given** the `Producer` aggregate in the `producer-domain` module
+    **When** the code is reviewed
+    **Then** it **must** correctly model a `Producer` owning a collection of rich `Track` entities (not just ISRC strings) and enforce all related business rules as per the domain object model.
 
-2. **Given** a Producer is persisted to the database
-   **When** it is retrieved and mapped to domain objects
-   **Then** all fields must be correctly mapped according to the data model specification
+2.  **Given** the `producer-adapter-persistence` module
+    **When** a `Producer` aggregate is saved or retrieved
+    **Then** it **must** correctly manage the entire object graph (Producer and its Tracks) in the database.
 
-3. **Given** the shared-types package exists
-   **When** Producer-related types are needed in frontend or backend
-   **Then** they must use the exact TypeScript interface from the shared-types package, not duplicate definitions
+3.  **Given** the `producer-adapter-spi` module
+    **When** fetching data from external services (Tidal, Spotify)
+    **Then** it **must** correctly populate the `Track` entities with the retrieved metadata.
 
-4. **Given** existing functionality is working (Producer registration, track addition)
-   **When** domain adaptation is completed
-   **Then** all existing functionality must continue to work without regression
+4.  **Given** the `producer-adapter-rest` module
+    **When** a client calls the API
+    **Then** it **must** correctly map the rich internal `Producer` domain model to the simplified JSON contract required by the frontend.
+
+5.  **Given** the `TrackWasRegistered` event is published
+    **When** its payload is inspected
+    **Then** it **must** contain all the required data (`isrc`, `title`, `producerId`, `artistCredits`, `sources`) as specified in the `domain-charter.md`.
+
+6.  **Given** all existing Producer-related functionality
+    **When** the refactoring is complete
+    **Then** all existing integration tests **must** pass, ensuring no regressions.
 
 ### Tasks / Subtasks
 
-- [ ] **Task 1: Review Current Producer Domain Implementation (AC: 1, 2, 4)**
-  - [ ] Examine current `Producer` aggregate in `apps/producer/producer-domain/`
-  - [ ] Identify discrepancies with the data model specification
-  - [ ] Document current vs expected structure
+- [ ] **Task 1: Refactor `producer-domain` (AC: 1)**
+  - [ ] Update the `Producer` aggregate to hold a list of `Track` entities.
+  - [ ] Ensure the `Track` entity within this context contains all necessary fields (title, credits, sources, etc.).
+  - [ ] Implement the business logic for applying the "Source of Truth Hierarchy" when updating track data.
 
-- [ ] **Task 2: Update Shared-Types Package (AC: 3)**
-  - [ ] Ensure `Producer` interface in `packages/shared-types/src/` matches exactly `docs/architecture/data-models.md`
-  - [ ] Add related interfaces if missing: `Track`, `Source`, `ArtistCredit`
-  - [ ] Export all interfaces properly for consumption
+- [ ] **Task 2: Refactor `producer-adapter-persistence` (AC: 2)**
+  - [ ] Update the `ProducerEntity` (JPA) to correctly map the relationship with `TrackEntity`.
+  - [ ] Modify the `ProducerRepository` implementation to handle saving and loading the full aggregate.
 
-- [ ] **Task 3: Adapt Domain Model (AC: 1, 2)**
-  - [ ] Update `Producer` aggregate to align with TypeScript interface structure
-  - [ ] Ensure `tracks` field contains array of ISRC strings (not Track objects)
-  - [ ] Verify `name` field is optional and can be null
-  - [ ] Ensure `id` is string UUID format
+- [ ] **Task 3: Refactor `producer-adapter-spi` (AC: 3)**
+  - [ ] Adjust the external API clients to map incoming data to the rich `Track` domain entity.
 
-- [ ] **Task 4: Update Persistence Layer (AC: 2)**
-  - [ ] Review `ProducerEntity` JPA entity mapping
-  - [ ] Ensure database schema aligns with domain model
-  - [ ] Update `ProducerMapper` if needed for proper domain/entity conversion
-  - [ ] Verify JSON serialization produces correct API response format
+- [ ] **Task 4: Refactor `producer-adapter-rest` (AC: 4, 5)**
+  - [ ] Create a `ProducerResponse` DTO for the API contract.
+  - [ ] Implement mapping from the `Producer` domain aggregate to the `ProducerResponse` DTO.
+  - [ ] Ensure the `TrackWasRegistered` event is built with the complete, correct payload after a track is registered.
 
-- [ ] **Task 5: Update Application Layer (AC: 4)**
-  - [ ] Review `RegisterTrackService` and other application services
-  - [ ] Ensure they work with updated domain model
-  - [ ] Verify business logic remains intact
-
-- [ ] **Task 6: Update REST Adapter (AC: 1)**
-  - [ ] Review `ProducerResource` controller
-  - [ ] Ensure API responses use correct data structure
-  - [ ] Import Producer interface from shared-types package
-  - [ ] Verify JSON serialization matches TypeScript interface
-
-- [ ] **Task 7: Comprehensive Testing (AC: 4)**
-  - [ ] Run existing tests to ensure no regression
-  - [ ] Update tests that may be affected by structure changes
-  - [ ] Add integration tests verifying JSON response structure
-  - [ ] Verify frontend can consume API responses correctly
-
-### Dev Notes
-
-#### Data Model Requirements
-[Source: docs/architecture/data-models.md]
-
-The Producer interface must strictly follow:
-```typescript
-interface Producer {
-  id: string; // UUID
-  producerCode: string;
-  name?: string | null;
-  tracks: string[]; // List of track ISRC codes
-}
-```
-
-**Key Requirements:**
-- `id`: Must be a UUID string format
-- `producerCode`: String representing the 5-character producer code (e.g., "FRLA1")
-- `name`: Optional field, can be string or null
-- `tracks`: Array of ISRC strings, NOT Track objects
-
-#### Architecture Context
-[Source: docs/architecture/source-tree.md]
-
-**Relevant Modules:**
-- `packages/shared-types/`: TypeScript interfaces shared between frontend/backend
-- `apps/producer/producer-domain/`: Core domain model
-- `apps/producer/producer-application/`: Application services
-- `apps/producer/producer-adapter-persistence/`: JPA entities and repository implementation
-- `apps/producer/producer-adapter-rest/`: REST controllers
-
-#### Previous Story Context
-From Stories P1 and P2 (both Done):
-- Producer aggregate already exists with basic functionality
-- Track registration workflow is implemented
-- ISRC normalization and ProducerCode extraction working
-- Repository and REST endpoints operational
-
-**Critical Implementation Detail:** The current implementation may be storing Track objects or references rather than simple ISRC strings in the tracks collection, which needs correction.
-
-#### Coding Standards
-[Source: docs/architecture/coding-standards.md]
-
-- **Shared Types Rule**: All API DTOs must use `packages/shared-types` interfaces
-- **Domain Immutability**: Domain objects must remain immutable
-- **Value Objects**: Continue using `ISRC`, `ProducerCode` from shared-kernel
-- **No Logic in Adapters**: Keep controllers thin, logic in application layer
-
-#### Testing Requirements
-[Source: docs/architecture/testing-best-practices.md]
-
-**Domain Layer Testing:**
-- Location: `apps/producer/producer-domain/src/test/java/`
-- Use pure unit tests with no framework dependencies
-- Test business logic in isolation
-- Use `@DisplayName` and nested test classes
-
-**Application Layer Testing:**
-- Location: `apps/producer/producer-application/src/test/java/`
-- Mock repository ports
-- Focus on orchestration logic
-- Use `@ExtendWith(MockitoExtension.class)`
-
-**Integration Testing:**
-- Location: `apps/bootstrap/src/test/java/`
-- Use `@QuarkusTest` with real infrastructure
-- Test complete HTTP-to-database flows
-- Verify JSON response structure matches TypeScript interface
-
-**Test Data Setup:**
-- Clean database state with `@Transactional` in `@BeforeEach`
-- Use `@TestTransaction` for test data isolation
-
-#### Technical Constraints
-[Source: docs/architecture/tech-stack.md]
-
-- Java 21 with Quarkus 3.25.3
-- Hibernate ORM + Panache for persistence
-- Jackson for JSON serialization
-- REST API style for frontend communication
-- PostgreSQL database
+- [ ] **Task 5: Verify and Test (AC: 6)**
+  - [ ] Update unit tests for all modified layers.
+  - [ ] Run all integration tests in the `bootstrap` module to guarantee no regressions.
+  - [ ] Add tests if necessary to cover the new rich object mapping.
 
 ### Change Log
 
 | Date | Version | Description | Author |
 |------|---------|-------------|---------|
 | 2025-09-05 | v1.0 | Initial story creation for Producer domain data model adaptation | Bob (Scrum Master) |
+| 2025-09-06 | v2.0 | Complete refactor scope - Updated per Winston's architectural guidance to cover full Producer context refactoring | Bob (Scrum Master) |
 
 ### Dev Agent Record
 

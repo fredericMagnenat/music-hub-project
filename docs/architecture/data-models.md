@@ -23,7 +23,7 @@ interface ArtistCredit {
 
 interface Source {
   sourceName: 'SPOTIFY' | 'TIDAL' | 'DEEZER' | 'APPLE_MUSIC' | 'MANUAL';
-  sourceId: string;
+  externalId: string; // Renamed for clarity
 }
 
 interface Track {
