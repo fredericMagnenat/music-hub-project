@@ -40,7 +40,7 @@ public class ProducerResource {
 
         public String name;
 
-        public Set<String> tracks;
+        public Set<TrackResponse> tracks;
 
         public ProducerResponse() {
         }
@@ -51,8 +51,63 @@ public class ProducerResource {
             response.producerCode = producer.producerCode().value();
             response.name = producer.name();
             response.tracks = producer.tracks().stream()
-                    .map(track -> track.isrc().value())
+                    .map(TrackResponse::from)
                     .collect(java.util.LinkedHashSet::new, Set::add, Set::addAll);
+            return response;
+        }
+    }
+
+    public static final class TrackResponse {
+        public String isrc;
+        public String title;
+        public java.util.List<ArtistCreditResponse> credits;
+        public java.util.List<SourceResponse> sources;
+        public String status;
+
+        public TrackResponse() {
+        }
+
+        public static TrackResponse from(com.musichub.producer.domain.model.Track track) {
+            TrackResponse response = new TrackResponse();
+            response.isrc = track.isrc().value();
+            response.title = track.title();
+            response.credits = track.credits().stream()
+                    .map(ArtistCreditResponse::from)
+                    .collect(java.util.ArrayList::new, java.util.List::add, java.util.List::addAll);
+            response.sources = track.sources().stream()
+                    .map(SourceResponse::from)
+                    .collect(java.util.ArrayList::new, java.util.List::add, java.util.List::addAll);
+            response.status = track.status().name();
+            return response;
+        }
+    }
+
+    public static final class ArtistCreditResponse {
+        public String artistName;
+        public String artistId; // UUID as string, may be null
+
+        public ArtistCreditResponse() {
+        }
+
+        public static ArtistCreditResponse from(com.musichub.producer.domain.values.ArtistCredit credit) {
+            ArtistCreditResponse response = new ArtistCreditResponse();
+            response.artistName = credit.artistName();
+            response.artistId = credit.artistId() != null ? credit.artistId().value().toString() : null;
+            return response;
+        }
+    }
+
+    public static final class SourceResponse {
+        public String name;
+        public String id;
+
+        public SourceResponse() {
+        }
+
+        public static SourceResponse from(com.musichub.producer.domain.values.Source source) {
+            SourceResponse response = new SourceResponse();
+            response.name = source.sourceName();
+            response.id = source.sourceId();
             return response;
         }
     }

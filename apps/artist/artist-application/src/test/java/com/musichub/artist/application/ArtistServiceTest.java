@@ -10,9 +10,12 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import com.musichub.artist.application.ports.out.ArtistRepository;
 import com.musichub.artist.application.service.ArtistService;
+import com.musichub.shared.events.ArtistCreditInfo;
+import com.musichub.shared.events.SourceInfo;
 import com.musichub.shared.events.TrackWasRegistered;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -48,7 +51,14 @@ class ArtistServiceTest {
         // Given
         String artistName = "The Testers";
         ISRC isrc = new ISRC("DEU630901306");
-        TrackWasRegistered event = new TrackWasRegistered(isrc, "Test Track", List.of(artistName));
+        UUID producerId = UUID.randomUUID();
+        TrackWasRegistered event = new TrackWasRegistered(
+            isrc, 
+            "Test Track", 
+            producerId, 
+            List.of(ArtistCreditInfo.withName(artistName)),
+            List.of(new SourceInfo("SPOTIFY", "spotify123"))
+        );
 
         when(artistRepository.findByName(artistName)).thenReturn(Optional.empty());
 
@@ -71,7 +81,14 @@ class ArtistServiceTest {
         String artistName = "The Veterans";
         ISRC existingIsrc = new ISRC("DEU630901307");
         ISRC newIsrc = new ISRC("DEU630901308");
-        TrackWasRegistered event = new TrackWasRegistered(newIsrc, "Another Track", List.of(artistName));
+        UUID producerId = UUID.randomUUID();
+        TrackWasRegistered event = new TrackWasRegistered(
+            newIsrc, 
+            "Another Track", 
+            producerId, 
+            List.of(ArtistCreditInfo.withName(artistName)),
+            List.of(new SourceInfo("TIDAL", "tidal456"))
+        );
 
         // Create an artist that already has one track reference
         Artist existingArtist = Artist.createProvisional(artistName);
@@ -98,7 +115,14 @@ class ArtistServiceTest {
     void emptyArtistNames_shouldHandleGracefully() {
         // Given
         ISRC isrc = new ISRC("DEU630901309");
-        TrackWasRegistered event = new TrackWasRegistered(isrc, "Track Without Artists", List.of());
+        UUID producerId = UUID.randomUUID();
+        TrackWasRegistered event = new TrackWasRegistered(
+            isrc, 
+            "Track Without Artists", 
+            producerId, 
+            List.of(),
+            List.of(new SourceInfo("MANUAL", "manual789"))
+        );
 
         // When
         artistService.handleTrackRegistration(event);
@@ -113,7 +137,14 @@ class ArtistServiceTest {
     void nullArtistNames_shouldHandleGracefully() {
         // Given
         ISRC isrc = new ISRC("DEU630901310");
-        TrackWasRegistered event = new TrackWasRegistered(isrc, "Track With Null Artists", null);
+        UUID producerId = UUID.randomUUID();
+        TrackWasRegistered event = new TrackWasRegistered(
+            isrc, 
+            "Track With Null Artists", 
+            producerId, 
+            null,
+            List.of(new SourceInfo("DEEZER", "deezer101"))
+        );
 
         // When
         artistService.handleTrackRegistration(event);
@@ -131,8 +162,18 @@ class ArtistServiceTest {
         String artist2Name = "Second Artist";
         String artist3Name = "Third Artist";
         ISRC isrc = new ISRC("DEU630901311");
-        TrackWasRegistered event = new TrackWasRegistered(isrc, "Collaboration Track", 
-            List.of(artist1Name, artist2Name, artist3Name));
+        UUID producerId = UUID.randomUUID();
+        TrackWasRegistered event = new TrackWasRegistered(
+            isrc, 
+            "Collaboration Track",
+            producerId,
+            List.of(
+                ArtistCreditInfo.withName(artist1Name),
+                ArtistCreditInfo.withName(artist2Name),
+                ArtistCreditInfo.withName(artist3Name)
+            ),
+            List.of(new SourceInfo("APPLE_MUSIC", "apple202"))
+        );
 
         // Mock existing artist for artist2
         Artist existingArtist = Artist.createProvisional(artist2Name);
@@ -190,7 +231,14 @@ class ArtistServiceTest {
         // Given
         String artistNameWithSpaces = "  Artist With Spaces  ";
         ISRC isrc = new ISRC("DEU630901313");
-        TrackWasRegistered event = new TrackWasRegistered(isrc, "Spaced Track", List.of(artistNameWithSpaces));
+        UUID producerId = UUID.randomUUID();
+        TrackWasRegistered event = new TrackWasRegistered(
+            isrc, 
+            "Spaced Track", 
+            producerId,
+            List.of(ArtistCreditInfo.withName(artistNameWithSpaces)),
+            List.of(new SourceInfo("SPOTIFY", "spotify303"))
+        );
 
         when(artistRepository.findByName(artistNameWithSpaces)).thenReturn(Optional.empty());
 
@@ -214,7 +262,14 @@ class ArtistServiceTest {
         // Given
         String artistName = "Duplicate Track Artist";
         ISRC duplicateIsrc = new ISRC("DEU630901314");
-        TrackWasRegistered event = new TrackWasRegistered(duplicateIsrc, "Duplicate Track", List.of(artistName));
+        UUID producerId = UUID.randomUUID();
+        TrackWasRegistered event = new TrackWasRegistered(
+            duplicateIsrc, 
+            "Duplicate Track", 
+            producerId,
+            List.of(ArtistCreditInfo.withName(artistName)),
+            List.of(new SourceInfo("TIDAL", "tidal404"))
+        );
 
         // Artist already has this track reference
         Artist existingArtist = Artist.createProvisional(artistName);

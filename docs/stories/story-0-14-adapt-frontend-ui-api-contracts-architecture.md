@@ -1,9 +1,11 @@
 ### User Story: 0-14 - Adapt Frontend UI to API Contracts and Architecture
 
 ## Status
-Draft
+**BLOCKED** - Dependencies Incomplete
 
-> **As a** Developer, **when** implementing frontend features, **I want** the entire frontend codebase (`webui`) to be aligned with the final API contracts and frontend architecture, **so that** the UI can correctly consume backend data and is structured for maintainable future development.
+**DEPENDENCY BLOCKER**: Stories 1-03 and 2-02 must be completed (currently "Ready for Development"). Frontend cannot adapt to API contracts that don't exist yet.
+
+> **As a** Developer, **I want** the entire frontend codebase (`webui`) to be aligned with the final API contracts and frontend architecture, **so that** the UI can correctly consume backend data and is structured for maintainable future development.
 
 ### Acceptance Criteria
 
@@ -64,22 +66,118 @@ This story follows the backend refactoring completed in:
 The frontend must now be adapted to work with the updated backend APIs and follow the established frontend architecture.
 
 #### Frontend Architecture Requirements
-*[To be populated with specific architecture details from docs/architecture/frontend-architecture.md]*
+
+**Directory Structure**: Frontend follows Remix conventions with dedicated `types` directory:
+```
+webui/app/
+├── components/ui/          # Base components (shadcn/ui style)
+├── components/             # Business components  
+├── lib/utils.ts           # Centralized API calls
+├── routes/                # Remix routes
+├── types/                 # DEDICATED DIRECTORY FOR TYPES
+│   ├── index.ts          # Exports all types
+│   ├── artist.ts         # Artist interface
+│   ├── track.ts          # Track interface  
+│   └── producer.ts       # Producer interface
+└── root.tsx
+```
+
+**Component Philosophy**: Two-tiered approach:
+- **Base Components** (`app/components/ui/`): Reusable primitives with no business logic
+- **Business Components** (`app/components/`): Composite components for specific features
+
+**API Integration**: Centralized in `app/lib/utils.ts` with development proxy configured in `vite.config.ts`
+
+**State Management**: Local to components using React hooks (`useState`, `useEffect`) - no global state management
 
 #### API Contract Updates
-*[To be populated with specific API changes from the backend refactoring stories]*
+
+**CRITICAL DEPENDENCY STATUS**: Stories 1-03 and 2-02 are **Ready for Development** - NOT completed. Frontend adaptation cannot proceed until backend refactoring is complete.
+
+**Expected API Changes** (based on backend stories):
+- **Producer API** (`/api/producers`): Rich Track entities instead of ISRC strings
+- **Artist API** (`/api/artists`): Rich Artist model with status, sources, contributions
+- **Track API** (`/api/tracks/recent`): Enhanced metadata from external services
+
+**API Endpoints**:
+- `POST /api/producers` - Register track via ISRC 
+- `GET /api/tracks/recent` - Recent tracks with full metadata
+- `GET /api/artists` - Artists with rich domain data
+
+**Response Structure Changes**: Backend refactoring will provide detailed DTOs mapping from rich domain models to simplified JSON contracts.
 
 #### File Structure Requirements
-*[To be populated with specific frontend structure details from docs/architecture/unified-project-structure.md]*
+
+**Monorepo Structure**:
+```
+music-hub-project/
+├── apps/webui/            # Remix UI application
+│   ├── app/
+│   │   ├── components/ui/ # Base components
+│   │   ├── components/    # Business components
+│   │   ├── lib/utils.ts   # API calls
+│   │   ├── routes/        # Remix routes
+│   │   ├── types/         # TypeScript interfaces
+│   │   └── root.tsx
+│   ├── tests/             # Frontend tests
+│   ├── vite.config.ts     # Vite config with API proxy
+│   └── package.json
+└── apps/bootstrap/        # Backend Quarkus runtime
+```
+
+**Key Files to Update**:
+- `app/types/*.ts` - TypeScript interfaces for API contracts
+- `app/lib/utils.ts` - API service functions 
+- `app/components/RecentTracksList.tsx` - UI components consuming data
+- `app/routes/_index.tsx` - Main route using updated APIs
 
 #### Testing Requirements
-*[To be populated with specific testing standards from docs/architecture/testing-strategy.md]*
+
+**Frontend Testing Strategy**:
+- **Tooling**: Vitest + React Testing Library
+- **Location**: Co-located with Remix code in `apps/webui/app/`
+- **API Mocking**: Mock `~/lib/utils` module for component tests
+- **Global Setup**: `apps/webui/vitest.setup.ts`
+- **Configuration**: `apps/webui/vite.config.ts` (Vite/Vitest config)
+
+**Testing Standards**:
+- Unit tests for React components in isolation
+- Integration tests for new API consumption patterns
+- Mock external API calls during testing
+- Ensure no regressions in existing functionality
+- Test data mapping and rendering of new API responses
+
+**Required Tests**:
+- Update existing tests for new data structures
+- Add tests for TypeScript interface compliance
+- Test error handling for new API responses
+- Verify proper data mapping from rich backend models
+
+### Testing
+
+**Testing Approach**:
+- **Unit Tests**: Component-level testing with mocked API calls
+- **Integration Tests**: End-to-end API consumption testing
+- **Regression Tests**: Ensure existing features continue working
+
+**Test Files to Update**:
+- `tests/_index.test.tsx` - Main route tests
+- `tests/api.test.tsx` - API layer tests
+- Component-specific test files for updated components
+
+**Testing Requirements**:
+- Mock `~/lib/utils` module for API calls
+- Test new TypeScript interfaces
+- Verify data mapping from backend APIs
+- Ensure error handling for new API contracts
 
 ### Change Log
 
 | Date | Version | Description | Author |
 |------|---------|-------------|---------|
 | 2025-09-06 | v1.0 | Initial story creation for frontend adaptation per Winston's request | Bob (Scrum Master) |
+| 2025-09-06 | v1.1 | Populated Dev Notes with architecture details, added Testing section, fixed story format | Sarah (PO) |
+| 2025-09-06 | v1.2 | Updated status to BLOCKED - Dependencies 1-03 and 2-02 must complete first | Sarah (PO) |
 
 ### Dev Agent Record
 

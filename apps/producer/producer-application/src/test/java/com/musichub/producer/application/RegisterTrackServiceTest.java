@@ -10,6 +10,7 @@ import com.musichub.producer.application.ports.out.ProducerRepository;
 import com.musichub.producer.domain.values.Source;
 import com.musichub.shared.domain.values.ISRC;
 import com.musichub.shared.domain.values.ProducerCode;
+import com.musichub.shared.events.ArtistCreditInfo;
 import com.musichub.shared.events.TrackWasRegistered;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -91,7 +92,7 @@ class RegisterTrackServiceTest {
             TrackWasRegistered capturedEvent = eventCaptor.getValue();
             assertEquals(ISRC.of(NORMALIZED_ISRC), capturedEvent.isrc());
             assertEquals("Bohemian Rhapsody", capturedEvent.title());
-            assertEquals(List.of("Queen"), capturedEvent.artistNames());
+            assertEquals(List.of(ArtistCreditInfo.withName("Queen")), capturedEvent.artistCredits());
 
             // Then: Should return saved producer
             assertNotNull(result);
@@ -151,7 +152,7 @@ class RegisterTrackServiceTest {
             ArgumentCaptor<TrackWasRegistered> eventCaptor = ArgumentCaptor.forClass(TrackWasRegistered.class);
             verify(eventPublisherPort).publishTrackRegistered(eventCaptor.capture());
             TrackWasRegistered capturedEvent = eventCaptor.getValue();
-            assertEquals(List.of("Queen", "David Bowie"), capturedEvent.artistNames());
+            assertEquals(List.of(ArtistCreditInfo.withName("Queen"), ArtistCreditInfo.withName("David Bowie")), capturedEvent.artistCredits());
         }
     }
 
@@ -344,7 +345,7 @@ class RegisterTrackServiceTest {
             assertNotNull(event.isrc());
             assertEquals(NORMALIZED_ISRC, event.isrc().value());
             assertEquals("Bohemian Rhapsody", event.title());
-            assertEquals(List.of("Queen"), event.artistNames());
+            assertEquals(List.of(ArtistCreditInfo.withName("Queen")), event.artistCredits());
         }
     }
 

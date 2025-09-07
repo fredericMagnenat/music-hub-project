@@ -12,6 +12,8 @@ import com.musichub.producer.domain.values.Source;
 import com.musichub.shared.domain.values.ISRC;
 import com.musichub.shared.domain.values.ProducerCode;
 import com.musichub.shared.events.TrackWasRegistered;
+import com.musichub.shared.events.SourceInfo;
+import com.musichub.shared.events.ArtistCreditInfo;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -120,6 +122,8 @@ public class RegisterTrackService implements RegisterTrackUseCase {
 
     /**
      * Publishes TrackWasRegistered event to the Vert.x event bus.
+     * Event contains all required data as specified in domain charter:
+     * isrc, title, producerId, artistCredits, sources.
      *
      * @param track    The track that was registered
      * @param producer The producer that owns the track
@@ -127,16 +131,33 @@ public class RegisterTrackService implements RegisterTrackUseCase {
     private void publishTrackWasRegisteredEvent(Track track, Producer producer) {
         logger.debug("Publishing TrackWasRegistered event for track: {}", track.isrc().value());
 
+        // Convert domain sources to event source info
+        List<SourceInfo> sources = track.sources().stream()
+                .map(source -> new SourceInfo(source.sourceName(), source.sourceId()))
+                .toList();
+
+        // Convert domain artist credits to event artist credit info
+        List<ArtistCreditInfo> artistCredits = track.credits().stream()
+                .map(credit -> new ArtistCreditInfo(
+                    credit.artistName(), 
+                    credit.artistId() != null ? credit.artistId().value().toString() : null
+                ))
+                .toList();
+
         TrackWasRegistered event = new TrackWasRegistered(
                 track.isrc(),
                 track.title(),
-                track.artistNames()
+                producer.id().value(),
+                artistCredits,
+                sources
         );
 
         this.eventPublisherPort.publishTrackRegistered(event);
 
-        logger.info("Successfully published TrackWasRegistered event for ISRC: {} - Title: '{}' by {}",
-                track.isrc().value(), track.title(), track.artistNames());
+        logger.info("Successfully published TrackWasRegistered event for ISRC: {} - Title: '{}' by {} - ProducerId: {} - Sources: {}",
+                track.isrc().value(), track.title(), 
+                artistCredits.stream().map(ArtistCreditInfo::artistName).toList(), 
+                producer.id().value(), sources.size() + " sources");
     }
 
     private static String normalizeIsrc(String input) {

@@ -57,7 +57,7 @@ public final class TrackMapper {
         TrackStatus status = TrackStatus.valueOf(entity.getStatus());
         List<Source> sources = entity.getSources(); // JsonB handles deserialization automatically
 
-        return Track.of(isrc, entity.getTitle(), entity.getArtistNames(), sources, status);
+        return Track.withArtistNames(isrc, entity.getTitle(), entity.getArtistNames(), sources, status);
     }
 
     // Note: JSON serialization/deserialization is handled automatically by Hibernate + JsonB

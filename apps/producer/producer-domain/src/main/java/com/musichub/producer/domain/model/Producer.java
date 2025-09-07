@@ -106,7 +106,7 @@ public final class Producer {
             throw new IllegalArgumentException("Track producer code does not match aggregate producer code");
         }
         
-        Track track = Track.of(normalize(isrc), title, artistNames, sources, TrackStatus.PROVISIONAL);
+        Track track = Track.withArtistNames(normalize(isrc), title, artistNames, sources, TrackStatus.PROVISIONAL);
         return tracks.add(track);
     }
 

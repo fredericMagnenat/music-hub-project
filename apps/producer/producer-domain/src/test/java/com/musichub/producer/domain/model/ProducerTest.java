@@ -1,5 +1,6 @@
 package com.musichub.producer.domain.model;
 
+import com.musichub.producer.domain.values.ArtistCredit;
 import com.musichub.producer.domain.values.Source;
 import com.musichub.producer.domain.values.TrackStatus;
 import com.musichub.shared.domain.values.ISRC;
@@ -94,8 +95,8 @@ class ProducerTest {
             ISRC isrc2 = ISRC.of("FRLA12400001"); // Same ISRC
             Source source = Source.of("SPOTIFY", "FRLA12400001");
             
-            Track track1 = Track.of(isrc1, "Title", List.of("Artist"), List.of(source), TrackStatus.PROVISIONAL);
-            Track track2 = Track.of(isrc2, "Title Different", List.of("Artist Different"), List.of(source), TrackStatus.PROVISIONAL);
+            Track track1 = Track.of(isrc1, "Title", List.of(ArtistCredit.withName("Artist")), List.of(source), TrackStatus.PROVISIONAL);
+            Track track2 = Track.of(isrc2, "Title Different", List.of(ArtistCredit.withName("Artist Different")), List.of(source), TrackStatus.PROVISIONAL);
 
             // When
             boolean first = producer.addTrack(track1);
@@ -116,7 +117,7 @@ class ProducerTest {
             producer.registerTrack(isrc, "Title", List.of("Artist"), List.of(source));
 
             // When / Then
-            Track newTrack = Track.of(ISRC.of("FRLA12400002"), "Title", List.of("Artist"), List.of(source), TrackStatus.PROVISIONAL);
+            Track newTrack = Track.of(ISRC.of("FRLA12400002"), "Title", List.of(ArtistCredit.withName("Artist")), List.of(source), TrackStatus.PROVISIONAL);
             assertThrows(UnsupportedOperationException.class, () -> producer.tracks().add(newTrack));
         }
 
@@ -125,7 +126,7 @@ class ProducerTest {
         void from_makesDefensiveCopyOfTracks() {
             // Given
             Source source = Source.of("SPOTIFY", "FRLA12400001");
-            Track track1 = Track.of(ISRC.of("FRLA12400001"), "Title", List.of("Artist"), List.of(source), TrackStatus.PROVISIONAL);
+            Track track1 = Track.of(ISRC.of("FRLA12400001"), "Title", List.of(ArtistCredit.withName("Artist")), List.of(source), TrackStatus.PROVISIONAL);
             var externalSet = new java.util.LinkedHashSet<Track>();
             externalSet.add(track1);
 
@@ -137,7 +138,7 @@ class ProducerTest {
             );
 
             // When: mutate the external set after creation
-            Track track2 = Track.of(ISRC.of("FRLA12400002"), "Title2", List.of("Artist2"), List.of(source), TrackStatus.PROVISIONAL);
+            Track track2 = Track.of(ISRC.of("FRLA12400002"), "Title2", List.of(ArtistCredit.withName("Artist2")), List.of(source), TrackStatus.PROVISIONAL);
             externalSet.add(track2);
 
             // Then: aggregate should remain unchanged
@@ -234,7 +235,7 @@ class ProducerTest {
             // Vérifier que la collection tracks() retourne toujours une vue unmodifiable
             var tracksAfter = producer.tracks();
             assertEquals(3, tracksAfter.size(), "tracks() should reflect new state");
-            Track newTrack = Track.of(ISRC.of("FRLA12400004"), "Test", List.of("Test"), List.of(source), TrackStatus.PROVISIONAL);
+            Track newTrack = Track.of(ISRC.of("FRLA12400004"), "Test", List.of(ArtistCredit.withName("Test")), List.of(source), TrackStatus.PROVISIONAL);
             assertThrows(UnsupportedOperationException.class, () -> tracksAfter.add(newTrack), 
                 "tracks() should still return unmodifiable collection");
         }

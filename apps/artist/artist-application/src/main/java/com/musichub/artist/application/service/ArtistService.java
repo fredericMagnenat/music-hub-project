@@ -19,13 +19,13 @@ public class ArtistService implements ArtistTrackRegistrationUseCase {
 
     @Override
     public void handleTrackRegistration(TrackWasRegistered event) {
-        if (event.artistNames() == null || event.artistNames().isEmpty()) {
+        if (event.artistCredits() == null || event.artistCredits().isEmpty()) {
             return; // Or log a warning
         }
 
-        for (String artistName : event.artistNames()) {
-            Artist artist = artistRepository.findByName(artistName)
-                    .orElseGet(() -> Artist.createProvisional(artistName));
+        for (var artistCredit : event.artistCredits()) {
+            Artist artist = artistRepository.findByName(artistCredit.artistName())
+                    .orElseGet(() -> Artist.createProvisional(artistCredit.artistName()));
 
             artist.addTrackReference(event.isrc());
             artistRepository.save(artist);

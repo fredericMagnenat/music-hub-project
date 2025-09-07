@@ -1,5 +1,6 @@
 package com.musichub.bootstrap.producer;
 
+import com.musichub.shared.events.ArtistCreditInfo;
 import com.musichub.shared.events.TrackWasRegistered;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
@@ -112,7 +113,7 @@ class ProducerRegistrationWithExternalApiIntegrationTest {
         TrackWasRegistered event = events.get(0);
         assertThat(event.isrc().value()).isEqualTo(TEST_ISRC);
         assertThat(event.title()).isEqualTo("Bohemian Rhapsody");
-        assertThat(event.artistNames()).containsExactly("Queen");
+        assertThat(event.artistCredits()).containsExactly(ArtistCreditInfo.withName("Queen"));
     }
 
     @Test
