@@ -10,12 +10,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
-import com.musichub.producer.adapter.rest.dto.RecentTrackResponse;
+import com.musichub.producer.adapter.rest.dto.response.RecentTrackResponse;
 import com.musichub.producer.application.dto.TrackInfo;
 import com.musichub.producer.domain.values.TrackStatus;
 import com.musichub.shared.domain.values.ISRC;
 import com.musichub.shared.domain.values.Source;
-import com.musichub.shared.domain.values.SourceType;
 
 @DisplayName("TrackMapper Unit Tests")
 class TrackMapperTest {
@@ -170,10 +169,10 @@ class TrackMapperTest {
     void mapToRecentResponse_shouldHandleDifferentSourceTypes() {
         // Test with different source types to ensure proper mapping
         Source[] sources = {
-            Source.of("TIDAL", "tidal_id"),
-            Source.of("DEEZER", "deezer_id"),
-            Source.of("APPLE_MUSIC", "apple_id"),
-            Source.of("MANUAL", "manual_id")
+                Source.of("TIDAL", "tidal_id"),
+                Source.of("DEEZER", "deezer_id"),
+                Source.of("APPLE_MUSIC", "apple_id"),
+                Source.of("MANUAL", "manual_id")
         };
 
         for (Source source : sources) {

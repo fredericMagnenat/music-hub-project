@@ -1,11 +1,12 @@
 package com.musichub.producer.adapter.rest.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
+
+import jakarta.validation.constraints.NotBlank;
 
 public class RegisterTrackRequest {
 
-    @Schema(required = true, example = "FRLA12400001")
+    @Schema(required = true, examples = {"FRLA12400001"})
     @NotBlank(message = "ISRC is required")
     public String isrc;
 }

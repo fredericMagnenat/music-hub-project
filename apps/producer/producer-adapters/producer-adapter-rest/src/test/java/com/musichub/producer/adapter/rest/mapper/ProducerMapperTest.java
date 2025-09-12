@@ -2,11 +2,9 @@ package com.musichub.producer.adapter.rest.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,13 +18,12 @@ import com.musichub.producer.adapter.rest.dto.response.TrackResponse;
 import com.musichub.producer.domain.model.Producer;
 import com.musichub.producer.domain.model.Track;
 import com.musichub.producer.domain.values.ArtistCredit;
-import com.musichub.shared.domain.values.ProducerCode;
 import com.musichub.producer.domain.values.ProducerId;
 import com.musichub.producer.domain.values.TrackStatus;
 import com.musichub.shared.domain.id.ArtistId;
 import com.musichub.shared.domain.values.ISRC;
+import com.musichub.shared.domain.values.ProducerCode;
 import com.musichub.shared.domain.values.Source;
-import com.musichub.shared.domain.values.SourceType;
 
 @DisplayName("ProducerMapper Unit Tests")
 class ProducerMapperTest {
@@ -220,9 +217,9 @@ class ProducerMapperTest {
         ISRC isrc1 = ISRC.of("FRLA12400001");
         ISRC isrc2 = ISRC.of("FRLA12400002");
         Track track1 = Track.of(isrc1, "Track One", List.of(ArtistCredit.withName("Artist")),
-                               List.of(Source.of("SPOTIFY", "id1")), TrackStatus.PROVISIONAL);
+                List.of(Source.of("SPOTIFY", "id1")), TrackStatus.PROVISIONAL);
         Track track2 = Track.of(isrc2, "Track Two", List.of(ArtistCredit.withName("Artist")),
-                               List.of(Source.of("TIDAL", "id2")), TrackStatus.VERIFIED);
+                List.of(Source.of("TIDAL", "id2")), TrackStatus.VERIFIED);
         Set<Track> tracks = Set.of(track1, track2);
 
         // When

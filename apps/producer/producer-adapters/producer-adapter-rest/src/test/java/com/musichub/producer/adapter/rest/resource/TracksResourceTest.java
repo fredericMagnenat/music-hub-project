@@ -17,7 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.musichub.producer.adapter.rest.dto.RecentTrackResponse;
+import com.musichub.producer.adapter.rest.dto.response.RecentTrackResponse;
 import com.musichub.producer.adapter.rest.mapper.TrackMapper;
 import com.musichub.producer.adapter.rest.resource.track.TracksResource;
 import com.musichub.producer.application.dto.TrackInfo;

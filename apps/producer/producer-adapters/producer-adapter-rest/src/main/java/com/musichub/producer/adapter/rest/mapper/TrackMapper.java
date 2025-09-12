@@ -6,7 +6,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
-import com.musichub.producer.adapter.rest.dto.RecentTrackResponse;
+import com.musichub.producer.adapter.rest.dto.response.RecentTrackResponse;
 import com.musichub.producer.application.dto.TrackInfo;
 import com.musichub.shared.domain.values.Source;
 
