@@ -1,27 +1,32 @@
 package com.musichub.producer.application.service;
 
-import com.musichub.producer.application.dto.ExternalTrackMetadata;
-import com.musichub.producer.application.exception.ExternalServiceException;
-import com.musichub.producer.application.ports.out.EventPublisherPort;
-import com.musichub.producer.application.ports.out.MusicPlatformPort;
-import com.musichub.producer.domain.model.Producer;
-import com.musichub.producer.domain.model.Track;
-import com.musichub.producer.application.ports.in.RegisterTrackUseCase;
-import com.musichub.producer.application.ports.out.ProducerRepository;
-import com.musichub.producer.domain.values.Source;
-import com.musichub.shared.domain.values.ISRC;
-import com.musichub.shared.domain.values.ProducerCode;
-import com.musichub.shared.events.TrackWasRegistered;
-import com.musichub.shared.events.SourceInfo;
-import com.musichub.shared.events.ArtistCreditInfo;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Objects;
+import com.musichub.producer.application.dto.ExternalTrackMetadata;
+import com.musichub.producer.application.exception.ExternalServiceException;
+import com.musichub.producer.application.ports.in.RegisterTrackUseCase;
+import com.musichub.producer.application.ports.out.EventPublisherPort;
+import com.musichub.producer.application.ports.out.MusicPlatformPort;
+import com.musichub.producer.application.ports.out.ProducerRepository;
+import com.musichub.producer.domain.model.Producer;
+import com.musichub.producer.domain.model.Track;
+import com.musichub.producer.domain.values.ArtistCredit;
+import com.musichub.shared.domain.values.Source;
+import com.musichub.shared.domain.id.ArtistId;
+import com.musichub.shared.domain.values.ISRC;
+import com.musichub.shared.domain.values.ProducerCode;
+import com.musichub.shared.events.ArtistCreditInfo;
+import com.musichub.shared.events.SourceInfo;
+import com.musichub.shared.events.TrackWasRegistered;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 
 @ApplicationScoped
 public class RegisterTrackService implements RegisterTrackUseCase {
@@ -48,7 +53,8 @@ public class RegisterTrackService implements RegisterTrackUseCase {
         logger.debug("Registering track with ISRC: {}", isrcValue);
 
         // 1. NEW: Fetch track metadata from external API FIRST
-        // This will throw ExternalServiceException if it fails, preventing further processing
+        // This will throw ExternalServiceException if it fails, preventing further
+        // processing
         ExternalTrackMetadata metadata = fetchTrackMetadata(isrcValue);
 
         // 2. Existing logic: normalize ISRC, find/create Producer
@@ -59,9 +65,15 @@ public class RegisterTrackService implements RegisterTrackUseCase {
         Producer producer = producerRepository.findByProducerCode(code)
                 .orElseGet(() -> Producer.createNew(code, null));
 
-        // 3. NEW: Register track with complete metadata in Producer aggregate (DDD best practice)
+        // 3. NEW: Register track with complete metadata in Producer aggregate (DDD best
+        // practice)
         Source source = Source.of(metadata.getPlatform().toUpperCase(), metadata.getIsrc());
-        boolean wasAdded = producer.registerTrack(normalizedIsrc, metadata.getTitle(), metadata.getArtistNames(), List.of(source));
+        List<ArtistCredit> artistCredits = metadata.getArtistCredits().stream()
+                .map(dto -> ArtistCredit.with(dto.getArtistName(),
+                        dto.getArtistId() != null ? new ArtistId(dto.getArtistId()) : null))
+                .collect(Collectors.toList());
+
+        boolean wasAdded = producer.registerTrack(normalizedIsrc, metadata.getTitle(), artistCredits, List.of(source));
 
         // 5. Save producer to database
         Producer savedProducer = producerRepository.save(producer);
@@ -73,7 +85,7 @@ public class RegisterTrackService implements RegisterTrackUseCase {
             logger.info("Track was added to producer, publishing TrackWasRegistered event for ISRC: {}", isrcValue);
             // Get the registered track from producer for event publishing
             Track registeredTrack = savedProducer.getTrack(normalizedIsrc)
-                .orElseThrow(() -> new IllegalStateException("Track should exist after registration"));
+                    .orElseThrow(() -> new IllegalStateException("Track should exist after registration"));
             publishTrackWasRegisteredEvent(registeredTrack, savedProducer);
         } else {
             logger.debug("Track already exists in producer, no event will be published for ISRC: {}", isrcValue);
@@ -98,11 +110,10 @@ public class RegisterTrackService implements RegisterTrackUseCase {
                 throw new ExternalServiceException(
                         "No track metadata returned for ISRC: " + isrcValue,
                         isrcValue,
-                        "external-api"
-                );
+                        "external-api");
             }
             logger.debug("Successfully fetched metadata for ISRC: {} - Title: '{}' by {}",
-                    isrcValue, metadata.getTitle(), metadata.getArtistNames());
+                    isrcValue, metadata.getTitle(), metadata.getArtistCredits());
             return metadata;
         } catch (ExternalServiceException e) {
             logger.error("Failed to fetch track metadata from external API for ISRC: {} - {}",
@@ -114,11 +125,9 @@ public class RegisterTrackService implements RegisterTrackUseCase {
                     "Unexpected error fetching track metadata for ISRC: " + isrcValue,
                     isrcValue,
                     "external-api",
-                    e
-            );
+                    e);
         }
     }
-
 
     /**
      * Publishes TrackWasRegistered event to the Vert.x event bus.
@@ -133,15 +142,14 @@ public class RegisterTrackService implements RegisterTrackUseCase {
 
         // Convert domain sources to event source info
         List<SourceInfo> sources = track.sources().stream()
-                .map(source -> new SourceInfo(source.sourceName(), source.sourceId()))
+                .map(source -> new SourceInfo(source.getSourceName(), source.sourceId()))
                 .toList();
 
         // Convert domain artist credits to event artist credit info
         List<ArtistCreditInfo> artistCredits = track.credits().stream()
                 .map(credit -> new ArtistCreditInfo(
-                    credit.artistName(), 
-                    credit.artistId() != null ? credit.artistId().value().toString() : null
-                ))
+                        credit.artistName(),
+                        credit.artistId() != null ? credit.artistId().value().toString() : null))
                 .toList();
 
         TrackWasRegistered event = new TrackWasRegistered(
@@ -149,14 +157,14 @@ public class RegisterTrackService implements RegisterTrackUseCase {
                 track.title(),
                 producer.id().value(),
                 artistCredits,
-                sources
-        );
+                sources);
 
         this.eventPublisherPort.publishTrackRegistered(event);
 
-        logger.info("Successfully published TrackWasRegistered event for ISRC: {} - Title: '{}' by {} - ProducerId: {} - Sources: {}",
-                track.isrc().value(), track.title(), 
-                artistCredits.stream().map(ArtistCreditInfo::artistName).toList(), 
+        logger.info(
+                "Successfully published TrackWasRegistered event for ISRC: {} - Title: '{}' by {} - ProducerId: {} - Sources: {}",
+                track.isrc().value(), track.title(),
+                artistCredits.stream().map(ArtistCreditInfo::artistName).toList(),
                 producer.id().value(), sources.size() + " sources");
     }
 

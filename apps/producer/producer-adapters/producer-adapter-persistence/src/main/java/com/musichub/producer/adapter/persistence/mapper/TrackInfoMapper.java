@@ -1,15 +1,18 @@
 
 package com.musichub.producer.adapter.persistence.mapper;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.musichub.producer.adapter.persistence.entity.ArtistCreditEmbeddable;
 import com.musichub.producer.adapter.persistence.entity.TrackEntity;
 import com.musichub.producer.adapter.persistence.exception.ProducerPersistenceException;
 import com.musichub.producer.application.dto.TrackInfo;
 import com.musichub.producer.domain.values.TrackStatus;
 import com.musichub.shared.domain.values.ISRC;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 /**
  * Mapper between TrackEntity persistence model and TrackInfo DTO.
@@ -38,11 +41,16 @@ public final class TrackInfoMapper {
         }
         
         try {
+            List<String> artistNames = trackEntity.getCredits() != null ?
+                    trackEntity.getCredits().stream()
+                        .map(ArtistCreditEmbeddable::getArtistName)
+                        .collect(Collectors.toList()) :
+                    List.of();
+
             return new TrackInfo(
                 ISRC.of(trackEntity.getIsrc()),
                 trackEntity.getTitle(),
-                List.copyOf(trackEntity.getArtistNames() != null ? 
-                    trackEntity.getArtistNames() : List.of()),
+                artistNames,
                 List.copyOf(trackEntity.getSources() != null ? 
                     trackEntity.getSources() : List.of()),
                 TrackStatus.valueOf(trackEntity.getStatus()),

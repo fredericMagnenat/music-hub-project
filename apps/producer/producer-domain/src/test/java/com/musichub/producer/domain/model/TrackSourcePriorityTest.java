@@ -1,7 +1,7 @@
 package com.musichub.producer.domain.model;
 
 import com.musichub.producer.domain.values.ArtistCredit;
-import com.musichub.producer.domain.values.Source;
+import com.musichub.shared.domain.values.Source;
 import com.musichub.producer.domain.values.TrackStatus;
 import com.musichub.shared.domain.values.ISRC;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +33,7 @@ class TrackSourcePriorityTest {
             );
 
             Source highestPriority = track.getHighestPrioritySource();
-            assertEquals("SPOTIFY", highestPriority.sourceName());
+            assertEquals("SPOTIFY", highestPriority.getSourceName());
         }
 
         @Test
@@ -52,7 +52,7 @@ class TrackSourcePriorityTest {
             );
 
             Source highestPriority = track.getHighestPrioritySource();
-            assertEquals("TIDAL", highestPriority.sourceName());
+            assertEquals("TIDAL", highestPriority.getSourceName());
         }
 
         @Test
@@ -71,7 +71,7 @@ class TrackSourcePriorityTest {
             );
 
             Source highestPriority = track.getHighestPrioritySource();
-            assertEquals("MANUAL", highestPriority.sourceName());
+            assertEquals("MANUAL", highestPriority.getSourceName());
         }
     }
 
@@ -243,7 +243,7 @@ class TrackSourcePriorityTest {
             assertEquals(List.of("Manual Artist"), updatedTrack.artistNames());
             assertEquals(TrackStatus.VERIFIED, updatedTrack.status());
             assertEquals(3, updatedTrack.sources().size());
-            assertEquals("MANUAL", updatedTrack.getHighestPrioritySource().sourceName());
+            assertEquals("MANUAL", updatedTrack.getHighestPrioritySource().getSourceName());
         }
     }
 }

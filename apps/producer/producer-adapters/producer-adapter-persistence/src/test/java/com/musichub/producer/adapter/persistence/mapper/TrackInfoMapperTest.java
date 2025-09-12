@@ -1,9 +1,10 @@
 package com.musichub.producer.adapter.persistence.mapper;
 
+import com.musichub.producer.adapter.persistence.entity.ArtistCreditEmbeddable;
 import com.musichub.producer.adapter.persistence.entity.TrackEntity;
 import com.musichub.producer.adapter.persistence.exception.ProducerPersistenceException;
 import com.musichub.producer.application.dto.TrackInfo;
-import com.musichub.producer.domain.values.Source;
+import com.musichub.shared.domain.values.Source;
 import com.musichub.producer.domain.values.TrackStatus;
 import com.musichub.shared.domain.values.ISRC;
 import org.junit.jupiter.api.DisplayName;
@@ -48,11 +49,11 @@ class TrackInfoMapperTest {
         }
 
         @Test
-        @DisplayName("Should handle null artistNames gracefully")
-        void shouldHandleNullArtistNamesGracefully() {
+        @DisplayName("Should handle null credits gracefully")
+        void shouldHandleNullCreditsGracefully() {
             // Given
             TrackEntity trackEntity = createValidTrackEntity();
-            trackEntity.setArtistNames(null);
+            trackEntity.setCredits(null);
 
             // When
             TrackInfo result = TrackInfoMapper.toDto(trackEntity);
@@ -76,11 +77,11 @@ class TrackInfoMapperTest {
         }
 
         @Test
-        @DisplayName("Should handle empty artistNames and sources")
-        void shouldHandleEmptyArtistNamesAndSources() {
+        @DisplayName("Should handle empty credits and sources")
+        void shouldHandleEmptyCreditsAndSources() {
             // Given
             TrackEntity trackEntity = createValidTrackEntity();
-            trackEntity.setArtistNames(List.of());
+            trackEntity.setCredits(List.of());
             trackEntity.setSources(List.of());
 
             // When
@@ -140,7 +141,7 @@ class TrackInfoMapperTest {
             // Then - AssertJ source validation with extracting
             assertThat(result.sources())
                 .hasSize(2)
-                .extracting(Source::sourceName)
+                .extracting(Source::getSourceName)
                 .containsExactlyInAnyOrder("SPOTIFY", "TIDAL");
 
             assertThat(result.sources())
@@ -238,11 +239,15 @@ class TrackInfoMapperTest {
         void shouldHandleMixedTrackTypesInList() {
             // Given - Different track configurations
             TrackEntity minimalTrack = createTrackEntity("FRXYZ1111111", "Minimal", TrackStatus.PROVISIONAL);
-            minimalTrack.setArtistNames(List.of("Single Artist"));
+            minimalTrack.setCredits(List.of(ArtistCreditEmbeddable.withName("Single Artist")));
             minimalTrack.setSources(List.of(Source.of("MANUAL", "manual-001")));
 
             TrackEntity complexTrack = createTrackEntity("FRXYZ2222222", "Complex", TrackStatus.VERIFIED);
-            complexTrack.setArtistNames(List.of("Artist A", "Artist B", "Artist C"));
+            complexTrack.setCredits(List.of(
+                ArtistCreditEmbeddable.withName("Artist A"),
+                ArtistCreditEmbeddable.withName("Artist B"), 
+                ArtistCreditEmbeddable.withName("Artist C")
+            ));
             complexTrack.setSources(List.of(
                 Source.of("SPOTIFY", "spot-123"),
                 Source.of("APPLE_MUSIC", "apple-456"),
@@ -310,7 +315,10 @@ class TrackInfoMapperTest {
             // Given
             TrackEntity trackEntity = createValidTrackEntity();
             trackEntity.setTitle("Café Müller & Sons™");
-            trackEntity.setArtistNames(List.of("Björk", "François & 中文艺术家"));
+            trackEntity.setCredits(List.of(
+                ArtistCreditEmbeddable.withName("Björk"),
+                ArtistCreditEmbeddable.withName("François & 中文艺术家")
+            ));
 
             // When
             TrackInfo result = TrackInfoMapper.toDto(trackEntity);
@@ -378,7 +386,10 @@ class TrackInfoMapperTest {
         track.setIsrc(isrc);
         track.setTitle(title);
         track.setStatus(status.name());
-        track.setArtistNames(List.of("Artist 1", "Artist 2"));
+        track.setCredits(List.of(
+            ArtistCreditEmbeddable.withName("Artist 1"),
+            ArtistCreditEmbeddable.withName("Artist 2")
+        ));
         track.setSources(List.of(
                 Source.of("SPOTIFY", "spotify-track-123"),
                 Source.of("TIDAL", "tidal-track-456")

@@ -44,7 +44,7 @@ public class TidalTrackAttributes {
      * Copyright information
      */
     @JsonProperty("copyright")
-    public String copyright;
+    public TidalCopyright copyright;
 
     /**
      * Creation timestamp (ISO 8601)

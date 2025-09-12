@@ -1,6 +1,5 @@
 package com.musichub.producer.adapter.spi.auth;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.json.bind.annotation.JsonbProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,7 +18,7 @@ public class TidalTokenResponse {
     private String accessToken;
 
     @JsonbProperty("expires_in")
-    private Long expiresIn;  // Changé de long à Long pour permettre null
+    private Long expiresIn; // Changé de long à Long pour permettre null
 
     public TidalTokenResponse(String accessToken, Long expiresIn) {
         this.accessToken = accessToken;

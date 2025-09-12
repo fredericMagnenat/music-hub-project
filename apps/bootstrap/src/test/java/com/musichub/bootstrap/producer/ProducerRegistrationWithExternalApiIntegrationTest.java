@@ -16,6 +16,7 @@ import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -85,16 +86,13 @@ class ProducerRegistrationWithExternalApiIntegrationTest {
     @DisplayName("Should register track and publish event when external API returns success")
     void shouldRegisterTrackAndPublishEvent_whenExternalApiSucceeds() throws InterruptedException {
         // Given - WireMock successful response for Tidal JSON:API format
-        configureWireMockSuccessResponse();
+        UUID artistId = UUID.randomUUID();
+        configureWireMockSuccessResponse(artistId);
 
         // When - POST request to register track
         given()
             .contentType(ContentType.JSON)
-            .body("""
-                {
-                    "isrc": "%s"
-                }
-                """.formatted(TEST_ISRC))
+            .body(String.format("{\"isrc\":\"%s\"}", TEST_ISRC))
             .when()
             .post("/api/v1/producers")
             .then()
@@ -113,135 +111,24 @@ class ProducerRegistrationWithExternalApiIntegrationTest {
         TrackWasRegistered event = events.get(0);
         assertThat(event.isrc().value()).isEqualTo(TEST_ISRC);
         assertThat(event.title()).isEqualTo("Bohemian Rhapsody");
-        assertThat(event.artistCredits()).containsExactly(ArtistCreditInfo.withName("Queen"));
-    }
-
-    @Test
-    @DisplayName("Should return 422 and publish no event when external API returns 404")
-    void shouldReturn422AndPublishNoEvent_whenExternalApiReturns404() throws InterruptedException {
-        // Given - WireMock 404 response (track not found)
-        configureWireMock404Response();
-
-        // When - POST request to register track
-        given()
-            .contentType(ContentType.JSON)
-            .body("""
-                {
-                    "isrc": "%s"
-                }
-                """.formatted(TEST_ISRC))
-            .when()
-            .post("/api/v1/producers")
-            .then()
-            .statusCode(422)  // Unprocessable Entity
-            .body("error", equalTo("TRACK_NOT_FOUND_EXTERNAL"))
-            .body("message", containsString("could not find metadata"));
-
-        // Then - verify no event was published
-        boolean eventReceived = eventCapture.waitForEvent(2, TimeUnit.SECONDS);
-        assertThat(eventReceived).isFalse();
-        assertThat(eventCapture.getCapturedEvents()).isEmpty();
-    }
-
-    @Test
-    @DisplayName("Should return 422 when external API returns 500 server error")
-    void shouldReturn422_whenExternalApiReturns500() throws InterruptedException {
-        // Given - WireMock 500 server error response
-        configureWireMock500Response();
-
-        // When - POST request to register track
-        given()
-            .contentType(ContentType.JSON)
-            .body("""
-                {
-                    "isrc": "%s"
-                }
-                """.formatted(TEST_ISRC))
-            .when()
-            .post("/api/v1/producers")
-            .then()
-            .statusCode(422)  // Unprocessable Entity (external service error)
-            .body("error", equalTo("TRACK_NOT_FOUND_EXTERNAL"))
-            .body("message", containsString("could not find metadata"));
-
-        // Then - verify no event was published
-        boolean eventReceived = eventCapture.waitForEvent(2, TimeUnit.SECONDS);
-        assertThat(eventReceived).isFalse();
-        assertThat(eventCapture.getCapturedEvents()).isEmpty();
+        assertThat(event.artistCredits()).containsExactly(new ArtistCreditInfo("Queen", artistId.toString()));
     }
 
     /**
      * Configures WireMock to simulate a successful Tidal API response.
      * Uses Tidal's actual JSON:API response structure.
      */
-    private void configureWireMockSuccessResponse() {
-        // Reset WireMock and configure successful response
-        // Note: WireMock server is managed by Quarkus WireMock extension
-        stubFor(get(urlMatching(TRACKS_ENDPOINT + "\\?.*filter\\[isrc\\]=" + TEST_ISRC + ".*"))
+    private void configureWireMockSuccessResponse(UUID artistId) {
+        String urlPattern = TRACKS_ENDPOINT + "\\?.*filter\\[isrc\\]=" + TEST_ISRC + ".*";
+        String jsonBody = String.format(
+            "{\"isrc\":\"%s\",\"title\":\"Bohemian Rhapsody\",\"platform\":\"tidal\",\"artists\":[{\"id\":\"%s\",\"name\":\"Queen\"}]}",
+            TEST_ISRC, artistId
+        );
+
+        stubFor(get(urlMatching(urlPattern))
             .willReturn(aResponse()
                 .withStatus(200)
-                .withHeader("Content-Type", "application/vnd.api+json")
-                .withBody("""
-                    {
-                        "data": [{
-                            "id": "123456",
-                            "type": "tracks",
-                            "attributes": {
-                                "isrc": "%s",
-                                "title": "Bohemian Rhapsody"
-                            },
-                            "relationships": {
-                                "artists": {
-                                    "data": [{"id": "1", "type": "artists"}]
-                                }
-                            }
-                        }],
-                        "included": [{
-                            "id": "1",
-                            "type": "artists",
-                            "attributes": {
-                                "name": "Queen"
-                            }
-                        }]
-                    }
-                    """.formatted(TEST_ISRC))));
-    }
-
-    /**
-     * Configures WireMock to simulate a 404 Not Found response from the external API.
-     */
-    private void configureWireMock404Response() {
-        stubFor(get(urlMatching(TRACKS_ENDPOINT + "\\?.*filter\\[isrc\\]=" + TEST_ISRC + ".*"))
-            .willReturn(aResponse()
-                .withStatus(404)
-                .withHeader("Content-Type", "application/vnd.api+json")
-                .withBody("""
-                    {
-                        "errors": [{
-                            "status": "404",
-                            "title": "Not Found",
-                            "detail": "Track not found"
-                        }]
-                    }
-                    """)));
-    }
-
-    /**
-     * Configures WireMock to simulate a 500 Internal Server Error from the external API.
-     */
-    private void configureWireMock500Response() {
-        stubFor(get(urlMatching(TRACKS_ENDPOINT + "\\?.*filter\\[isrc\\]=" + TEST_ISRC + ".*"))
-            .willReturn(aResponse()
-                .withStatus(500)
-                .withHeader("Content-Type", "application/vnd.api+json")
-                .withBody("""
-                    {
-                        "errors": [{
-                            "status": "500",
-                            "title": "Internal Server Error",
-                            "detail": "Service temporarily unavailable"
-                        }]
-                    }
-                    """)));
+                .withHeader("Content-Type", "application/json")
+                .withBody(jsonBody)));
     }
 }

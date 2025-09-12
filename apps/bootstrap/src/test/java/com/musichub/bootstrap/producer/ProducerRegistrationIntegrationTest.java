@@ -42,7 +42,7 @@ class ProducerRegistrationIntegrationTest {
                 .body("id", notNullValue())
                 .body("name", nullValue())
                 .body("tracks", hasSize(1))
-                .body("tracks[0]", equalTo("FRLA12400001"));
+                .body("tracks[0].isrc", equalTo("FRLA12400001"));
     }
 
     @Test

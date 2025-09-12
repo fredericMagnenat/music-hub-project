@@ -1,5 +1,8 @@
 package com.musichub.producer.adapter.spi.auth;
 
+import java.time.Instant;
+import java.util.Optional;
+
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.slf4j.Logger;
@@ -7,11 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.Base64;
-import java.util.Optional;
 
 /**
  * Service for managing Tidal OAuth2 authentication tokens.
@@ -85,8 +83,7 @@ public class TidalAuthService {
             TidalTokenResponse response = authClient.getAccessToken(
                     grantType,
                     clientId.get(),
-                    clientSecret.get()
-            );
+                    clientSecret.get());
 
             if (response != null && response.isValid()) {
                 cachedToken = response;

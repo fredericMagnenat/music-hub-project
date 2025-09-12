@@ -13,8 +13,8 @@ ADD COLUMN producer_id UUID REFERENCES producers(id) ON DELETE CASCADE;
 -- Step 2: Migrate existing data from producer_tracks to tracks table (if any exists)
 -- This handles any existing ISRC references by creating minimal Track records
 INSERT INTO tracks (id, isrc, producer_id, created_at, updated_at, status)
-SELECT 
-    gen_random_uuid(),  -- Generate new UUID for track
+SELECT
+    RANDOM_UUID(),  -- Generate new UUID for track (H2 compatible)
     pt.isrc,
     pt.producer_id,
     CURRENT_TIMESTAMP,

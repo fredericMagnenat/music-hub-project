@@ -24,7 +24,7 @@ class TrackMetadataDtoTest {
         assertNotNull(dto);
         assertNull(dto.isrc);
         assertNull(dto.title);
-        assertNull(dto.artistNames);
+        assertNull(dto.artists);
         assertNull(dto.platform);
     }
 
@@ -33,16 +33,19 @@ class TrackMetadataDtoTest {
         // Given
         String isrc = "GBUM71507409";
         String title = "Bohemian Rhapsody";
-        List<String> artistNames = List.of("Queen");
+        ArtistDto queen = new ArtistDto();
+        queen.name = "Queen";
+        queen.id = java.util.UUID.randomUUID();
+        List<ArtistDto> artists = List.of(queen);
         String platform = "tidal";
 
         // When
-        TrackMetadataDto dto = new TrackMetadataDto(isrc, title, artistNames, platform);
+        TrackMetadataDto dto = new TrackMetadataDto(isrc, title, artists, platform);
 
         // Then
         assertEquals(isrc, dto.isrc);
         assertEquals(title, dto.title);
-        assertEquals(artistNames, dto.artistNames);
+        assertEquals(artists, dto.artists);
         assertEquals(platform, dto.platform);
     }
 
@@ -53,7 +56,7 @@ class TrackMetadataDtoTest {
             {
                 "isrc": "GBUM71507409",
                 "title": "Bohemian Rhapsody",
-                "artists": ["Queen"],
+                "artists": [{"name": "Queen", "id": "12345678-1234-1234-1234-123456789abc"}],
                 "platform": "tidal"
             }
             """;
@@ -64,17 +67,21 @@ class TrackMetadataDtoTest {
         // Then
         assertEquals("GBUM71507409", dto.isrc);
         assertEquals("Bohemian Rhapsody", dto.title);
-        assertEquals(List.of("Queen"), dto.artistNames);
+        assertEquals(1, dto.artists.size());
+        assertEquals("Queen", dto.artists.get(0).name);
         assertEquals("tidal", dto.platform);
     }
 
     @Test
     void jsonSerialization_ShouldProduceCorrectJson() throws JsonProcessingException {
         // Given
+        ArtistDto queen = new ArtistDto();
+        queen.name = "Queen";
+        queen.id = java.util.UUID.fromString("12345678-1234-1234-1234-123456789abc");
         TrackMetadataDto dto = new TrackMetadataDto(
-            "GBUM71507409", 
-            "Bohemian Rhapsody", 
-            List.of("Queen"), 
+            "GBUM71507409",
+            "Bohemian Rhapsody",
+            List.of(queen),
             "tidal"
         );
 
@@ -84,7 +91,7 @@ class TrackMetadataDtoTest {
         // Then
         assertTrue(json.contains("\"isrc\":\"GBUM71507409\""));
         assertTrue(json.contains("\"title\":\"Bohemian Rhapsody\""));
-        assertTrue(json.contains("\"artists\":[\"Queen\"]"));
+        assertTrue(json.contains("\"name\":\"Queen\""));
         assertTrue(json.contains("\"platform\":\"tidal\""));
     }
 
@@ -95,7 +102,7 @@ class TrackMetadataDtoTest {
             {
                 "isrc": "GBUM71507410",
                 "title": "Under Pressure",
-                "artists": ["Queen", "David Bowie"],
+                "artists": [{"name": "Queen", "id": "12345678-1234-1234-1234-123456789abc"}, {"name": "David Bowie", "id": "87654321-4321-4321-4321-cba987654321"}],
                 "platform": "tidal"
             }
             """;
@@ -106,8 +113,9 @@ class TrackMetadataDtoTest {
         // Then
         assertEquals("GBUM71507410", dto.isrc);
         assertEquals("Under Pressure", dto.title);
-        assertEquals(List.of("Queen", "David Bowie"), dto.artistNames);
-        assertEquals(2, dto.artistNames.size());
+        assertEquals(2, dto.artists.size());
+        assertEquals("Queen", dto.artists.get(0).name);
+        assertEquals("David Bowie", dto.artists.get(1).name);
         assertEquals("tidal", dto.platform);
     }
 
@@ -127,17 +135,20 @@ class TrackMetadataDtoTest {
         // Then
         assertEquals("GBUM71507409", dto.isrc);
         assertEquals("Bohemian Rhapsody", dto.title);
-        assertNull(dto.artistNames);
+        assertNull(dto.artists);
         assertNull(dto.platform);
     }
 
     @Test
     void toString_ShouldIncludeAllFields() {
         // Given
+        ArtistDto queen = new ArtistDto();
+        queen.name = "Queen";
+        queen.id = java.util.UUID.fromString("12345678-1234-1234-1234-123456789abc");
         TrackMetadataDto dto = new TrackMetadataDto(
-            "GBUM71507409", 
-            "Bohemian Rhapsody", 
-            List.of("Queen"), 
+            "GBUM71507409",
+            "Bohemian Rhapsody",
+            List.of(queen),
             "tidal"
         );
 

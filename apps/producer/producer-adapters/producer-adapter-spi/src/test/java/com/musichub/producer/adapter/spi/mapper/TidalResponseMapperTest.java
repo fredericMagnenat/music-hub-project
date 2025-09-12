@@ -35,7 +35,7 @@ class TidalResponseMapperTest {
         assertNotNull(result);
         assertEquals(testIsrc, result.isrc);
         assertEquals("Bohemian Rhapsody", result.title);
-        assertEquals(List.of("Queen"), result.artistNames);
+        assertEquals(List.of("Queen"), result.artists.stream().map(a -> a.name).toList());
         assertEquals("tidal", result.platform);
     }
 
@@ -51,8 +51,8 @@ class TidalResponseMapperTest {
         // Then: Should map all artists
         assertNotNull(result);
         assertEquals("Under Pressure", result.title);
-        assertEquals(List.of("Queen", "David Bowie"), result.artistNames);
-        assertEquals(2, result.artistNames.size());
+        assertEquals(List.of("Queen", "David Bowie"), result.artists.stream().map(a -> a.name).toList());
+        assertEquals(2, result.artists.size());
     }
 
     @Test
@@ -68,7 +68,7 @@ class TidalResponseMapperTest {
         assertNotNull(result);
         assertEquals(testIsrc, result.isrc);
         assertEquals("Bohemian Rhapsody", result.title);
-        assertTrue(result.artistNames.isEmpty());
+        assertTrue(result.artists.isEmpty());
         assertEquals("tidal", result.platform);
     }
 

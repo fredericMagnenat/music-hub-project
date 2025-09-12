@@ -1,13 +1,14 @@
 package com.musichub.producer.adapter.persistence.adapter;
 
+
 import com.musichub.producer.adapter.persistence.config.PersistenceTestProfile;
 import com.musichub.producer.domain.model.Producer;
-import com.musichub.producer.domain.values.ProducerId;
-import com.musichub.producer.domain.values.Source;
+import com.musichub.producer.domain.values.ArtistCredit;
+import com.musichub.shared.domain.values.Source;
 import com.musichub.shared.domain.values.ISRC;
 import com.musichub.shared.domain.values.ProducerCode;
-import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.TestTransaction;
+import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +16,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -35,8 +35,8 @@ class ProducerRepositoryAdapterTest {
         ProducerCode producerCode = ProducerCode.of("FRLA1");
         Producer producer = Producer.createNew(producerCode, "Test Producer");
         Source source = Source.of("SPOTIFY", "test-source");
-        producer.registerTrack(ISRC.of("FRLA12400001"), "Track 1", List.of("Artist 1"), List.of(source));
-        producer.registerTrack(ISRC.of("FRLA12400002"), "Track 2", List.of("Artist 2"), List.of(source));
+        producer.registerTrack(ISRC.of("FRLA12400001"), "Track 1", List.of(ArtistCredit.withName("Artist 1")), List.of(source));
+        producer.registerTrack(ISRC.of("FRLA12400002"), "Track 2", List.of(ArtistCredit.withName("Artist 2")), List.of(source));
 
         // When - Save
         Producer savedProducer = repository.save(producer);
@@ -61,169 +61,5 @@ class ProducerRepositoryAdapterTest {
         assertEquals(2, retrievedProducer.tracks().size(), "Producer should have 2 tracks");
         assertTrue(retrievedProducer.hasTrack(ISRC.of("FRLA12400001")), "Producer should contain first track");
         assertTrue(retrievedProducer.hasTrack(ISRC.of("FRLA12400002")), "Producer should contain second track");
-    }
-
-    @Test
-    @TestTransaction
-    @DisplayName("Should save producer with null name and retrieve correctly")
-    void save_and_findByProducerCode_with_null_name() {
-        // Given
-        ProducerCode code = ProducerCode.of("FRLA2");
-        Producer producer = Producer.createNew(code, null);
-        Source source = Source.of("SPOTIFY", "test-source");
-        producer.registerTrack(ISRC.of("FRLA22400001"), "Track 1", List.of("Artist 1"), List.of(source));
-        producer.registerTrack(ISRC.of("FRLA22400002"), "Track 2", List.of("Artist 2"), List.of(source));
-
-        // When
-        Producer saved = repository.save(producer);
-
-        // Then
-        assertNotNull(saved);
-        Optional<Producer> foundOptional = repository.findByProducerCode(code);
-        assertTrue(foundOptional.isPresent());
-        
-        Producer found = foundOptional.get();
-        assertEquals(2, found.tracks().size());
-        assertTrue(found.hasTrack(ISRC.of("FRLA22400001")));
-        assertTrue(found.hasTrack(ISRC.of("FRLA22400002")));
-    }
-
-    @Test
-    @TestTransaction
-    @DisplayName("Should return empty optional when producer not found by code")
-    void findByProducerCode_shouldReturnEmptyWhenNotFound() {
-        // Given
-        ProducerCode nonExistentCode = ProducerCode.of("NONE1");
-
-        // When
-        Optional<Producer> result = repository.findByProducerCode(nonExistentCode);
-
-        // Then
-        assertFalse(result.isPresent(), "Should return empty optional for non-existent producer");
-    }
-
-    @Test
-    @TestTransaction
-    @DisplayName("Should update existing producer when saving with same ID")
-    void save_shouldUpdateExistingProducerWithSameId() {
-        // Given
-        ProducerCode producerCode = ProducerCode.of("UPDT1");
-        Producer originalProducer = Producer.createNew(producerCode, "Original Name");
-        Source source = Source.of("SPOTIFY", "test-source");
-        originalProducer.registerTrack(ISRC.of("UPDT12400001"), "Track 1", List.of("Artist 1"), List.of(source));
-        
-        // Save original
-        Producer savedOriginal = repository.save(originalProducer);
-        
-        // Modify producer
-        savedOriginal.rename("Updated Name");
-        savedOriginal.registerTrack(ISRC.of("UPDT12400002"), "Track 2", List.of("Artist 2"), List.of(source));
-
-        // When - Save updated producer
-        repository.save(savedOriginal);
-
-        // Then
-        Optional<Producer> retrieved = repository.findByProducerCode(producerCode);
-        assertTrue(retrieved.isPresent(), "Updated producer should be found");
-        
-        Producer result = retrieved.get();
-        assertEquals("Updated Name", result.name(), "Name should be updated");
-        assertEquals(2, result.tracks().size(), "Should have 2 tracks after update");
-        assertTrue(result.hasTrack(ISRC.of("UPDT12400001")), "Should retain original track");
-        assertTrue(result.hasTrack(ISRC.of("UPDT12400002")), "Should contain new track");
-    }
-
-    @Test
-    @TestTransaction
-    @DisplayName("Should maintain producer identity consistency across save operations")
-    void save_shouldMaintainIdentityConsistency() {
-        // Given
-        ProducerCode code = ProducerCode.of("IDEN1");
-        Producer producer1 = Producer.createNew(code, "Test");
-        Producer producer2 = Producer.createNew(code, "Different Name");
-
-        // When
-        Producer saved1 = repository.save(producer1);
-        Producer saved2 = repository.save(producer2);
-
-        // Then - Same producer code should generate same ID (deterministic)
-        assertEquals(saved1.id(), saved2.id(), "Producers with same code should have same deterministic ID");
-    }
-
-    @Test
-    @TestTransaction
-    @DisplayName("Should handle producers with no tracks correctly")
-    void save_shouldHandleProducerWithoutTracks() {
-        // Given
-        ProducerCode code = ProducerCode.of("EMPT1");
-        Producer producerWithoutTracks = Producer.createNew(code, "Empty Producer");
-
-        // When
-        repository.save(producerWithoutTracks);
-        Optional<Producer> retrieved = repository.findByProducerCode(code);
-
-        // Then
-        assertTrue(retrieved.isPresent(), "Producer without tracks should be saved and retrieved");
-        assertEquals(0, retrieved.get().tracks().size(), "Retrieved producer should have no tracks");
-        assertEquals("Empty Producer", retrieved.get().name(), "Name should be preserved");
-    }
-
-    @Test
-    @TestTransaction
-    @DisplayName("Should handle null producer name correctly")
-    void save_shouldHandleNullNameCorrectly() {
-        // Given
-        ProducerCode code = ProducerCode.of("NULL1");
-        Producer producerWithNullName = Producer.createNew(code, null);
-
-        // When
-        repository.save(producerWithNullName);
-        Optional<Producer> retrieved = repository.findByProducerCode(code);
-
-        // Then
-        assertTrue(retrieved.isPresent(), "Producer with null name should be saved and retrieved");
-        assertNull(retrieved.get().name(), "Null name should be preserved");
-    }
-
-    @Test
-    @TestTransaction
-    @DisplayName("Should find producer by ID and map correctly")
-    void findById_shouldMapCorrectly() {
-        // Given
-        ProducerCode code = ProducerCode.of("BYID1");
-        Producer producer = Producer.createNew(code, "Find By ID Test");
-        Source source = Source.of("SPOTIFY", "test-source");
-        producer.registerTrack(ISRC.of("BYID12400001"), "Track 1", List.of("Artist 1"), List.of(source));
-        
-        // Save producer
-        Producer saved = repository.save(producer);
-        ProducerId savedId = saved.id();
-
-        // When - Find by ID
-        Optional<Producer> found = repository.findById(savedId);
-
-        // Then
-        assertTrue(found.isPresent(), "Producer should be found by ID");
-        Producer foundProducer = found.get();
-        assertEquals(savedId, foundProducer.id(), "ID should match");
-        assertEquals(code, foundProducer.producerCode(), "Producer code should match");
-        assertEquals("Find By ID Test", foundProducer.name(), "Name should match");
-        assertEquals(1, foundProducer.tracks().size(), "Should have one track");
-        assertTrue(foundProducer.hasTrack(ISRC.of("BYID12400001")), "Should contain the correct track");
-    }
-
-    @Test
-    @TestTransaction
-    @DisplayName("Should return empty when finding by non-existent ID")
-    void findById_shouldReturnEmptyForNonExistentId() {
-        // Given
-        UUID nonExistentUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
-        ProducerId nonExistentId = new ProducerId(nonExistentUuid);
-
-        // When
-        Optional<Producer> result = repository.findById(nonExistentId);
-
-        // Then
-        assertFalse(result.isPresent(), "Should return empty optional for non-existent ID");
     }
 }

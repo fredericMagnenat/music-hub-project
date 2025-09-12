@@ -23,10 +23,10 @@ public class TrackMetadataDto {
     public String title;
 
     /**
-     * List of artist names associated with the track
+     * List of artists associated with the track
      */
     @JsonProperty("artists")
-    public List<String> artistNames;
+    public List<ArtistDto> artists;
 
     /**
      * Platform identifier (e.g., "tidal", "spotify")
@@ -43,20 +43,20 @@ public class TrackMetadataDto {
     /**
      * Constructor for creating instances in tests or other scenarios
      */
-    public TrackMetadataDto(String isrc, String title, List<String> artistNames, String platform) {
+    public TrackMetadataDto(String isrc, String title, List<ArtistDto> artists, String platform) {
         this.isrc = isrc;
         this.title = title;
-        this.artistNames = artistNames;
+        this.artists = artists;
         this.platform = platform;
     }
 
     @Override
     public String toString() {
-        return "TrackMetadataDto{" +
-                "isrc='" + isrc + '\'' +
-                ", title='" + title + '\'' +
-                ", artistNames=" + artistNames +
-                ", platform='" + platform + '\'' +
+        return "TrackMetadataDto{"
+                + "isrc='" + isrc + "'\n" +
+                ", title='" + title + "'\n" +
+                ", artists=" + artists + "\n" +
+                ", platform='" + platform + "'" +
                 '}';
     }
 }

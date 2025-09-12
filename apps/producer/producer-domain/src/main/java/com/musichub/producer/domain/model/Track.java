@@ -1,7 +1,8 @@
 package com.musichub.producer.domain.model;
 
 import com.musichub.producer.domain.values.ArtistCredit;
-import com.musichub.producer.domain.values.Source;
+import com.musichub.shared.domain.values.Source;
+import com.musichub.producer.domain.values.ProducerSourcePriority;
 import com.musichub.producer.domain.values.TrackStatus;
 import com.musichub.shared.domain.values.ISRC;
 
@@ -105,12 +106,16 @@ public final class Track {
     /**
      * Gets the highest priority source according to the Source of Truth Hierarchy.
      * Returns the source with the highest priority (lowest numerical priority value).
-     * 
+     *
      * @return the highest priority source, or first source if only one exists
      */
     public Source getHighestPrioritySource() {
         return sources.stream()
-            .min((s1, s2) -> Integer.compare(s1.priority().getPriority(), s2.priority().getPriority()))
+            .min((s1, s2) -> {
+                ProducerSourcePriority p1 = ProducerSourcePriority.fromSource(s1);
+                ProducerSourcePriority p2 = ProducerSourcePriority.fromSource(s2);
+                return Integer.compare(p1.getPriorityValue(), p2.getPriorityValue());
+            })
             .orElseThrow(() -> new IllegalStateException("Track must have at least one source"));
     }
     
@@ -152,8 +157,9 @@ public final class Track {
         Source currentHighestPrioritySource = getHighestPrioritySource();
         
         // Only update metadata if new source has higher or equal priority
-        if (newSource.priority().hasHigherPriorityThan(currentHighestPrioritySource.priority()) 
-            || newSource.priority().equals(currentHighestPrioritySource.priority())) {
+        ProducerSourcePriority newPriority = ProducerSourcePriority.fromSource(newSource);
+        ProducerSourcePriority currentPriority = ProducerSourcePriority.fromSource(currentHighestPrioritySource);
+        if (newPriority.hasHigherPriorityThan(currentPriority) || newPriority.equals(currentPriority)) {
             
             String finalTitle = newTitle != null ? validateNonBlank(newTitle, "title") : this.title;
             List<ArtistCredit> finalCredits = newCredits != null ? validateCredits(newCredits) : this.credits;

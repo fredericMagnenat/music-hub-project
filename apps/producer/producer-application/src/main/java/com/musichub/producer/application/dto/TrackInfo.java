@@ -1,14 +1,12 @@
 package com.musichub.producer.application.dto;
 
-import com.musichub.producer.domain.values.ProducerId;
-import com.musichub.producer.domain.values.Source;
-import com.musichub.producer.domain.values.TrackStatus;
-import com.musichub.shared.domain.values.ISRC;
-import com.musichub.shared.domain.values.ProducerCode;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+
+import com.musichub.shared.domain.values.Source;
+import com.musichub.producer.domain.values.TrackStatus;
+import com.musichub.shared.domain.values.ISRC;
 
 /**
  * Domain DTO representing track information with producer context.
@@ -20,8 +18,7 @@ public record TrackInfo(
         List<String> artistNames,
         List<Source> sources,
         TrackStatus status,
-        LocalDateTime submissionDate
- ) {
+        LocalDateTime submissionDate) {
     public TrackInfo {
         Objects.requireNonNull(isrc, "isrc must not be null");
         Objects.requireNonNull(title, "title must not be null");

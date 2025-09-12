@@ -1,24 +1,31 @@
 package com.musichub.producer.adapter.persistence.mapper;
 
-import com.musichub.producer.adapter.persistence.entity.ProducerEntity;
-import com.musichub.producer.adapter.persistence.entity.TrackEntity;
-import com.musichub.producer.domain.model.Producer;
-import com.musichub.producer.domain.model.Track;
-import com.musichub.producer.domain.values.ProducerId;
-import com.musichub.producer.domain.values.Source;
-import com.musichub.producer.domain.values.TrackStatus;
-import com.musichub.shared.domain.values.ISRC;
-import com.musichub.shared.domain.values.ProducerCode;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
+import com.musichub.producer.adapter.persistence.entity.ArtistCreditEmbeddable;
+import com.musichub.producer.adapter.persistence.entity.ProducerEntity;
+import com.musichub.producer.adapter.persistence.entity.TrackEntity;
+import com.musichub.producer.domain.model.Producer;
+import com.musichub.producer.domain.model.Track;
+import com.musichub.producer.domain.values.ArtistCredit;
+import com.musichub.producer.domain.values.ProducerId;
+import com.musichub.shared.domain.values.Source;
+import com.musichub.producer.domain.values.TrackStatus;
+import com.musichub.shared.domain.values.ISRC;
+import com.musichub.shared.domain.values.ProducerCode;
 
 @DisplayName("ProducerMapper Unit Tests - OneToMany Relationship")
 class ProducerMapperTest {
@@ -38,14 +45,14 @@ class ProducerMapperTest {
             Track track1 = Track.of(
                     ISRC.of("FRLA12400001"), 
                     "Track 1", 
-                    List.of("Artist 1"),
+                    List.of(ArtistCredit.withName("Artist 1")),
                     List.of(Source.of("SPOTIFY", "spot-123")),
                     TrackStatus.PROVISIONAL
             );
             Track track2 = Track.of(
                     ISRC.of("FRLA12400002"), 
                     "Track 2", 
-                    List.of("Artist 2"),
+                    List.of(ArtistCredit.withName("Artist 2")),
                     List.of(Source.of("APPLE_MUSIC", "apple-456")),
                     TrackStatus.VERIFIED
             );
@@ -74,14 +81,14 @@ class ProducerMapperTest {
             TrackEntity trackEntity1 = trackArray[0];
             assertEquals("FRLA12400001", trackEntity1.getIsrc(), "First track ISRC should match");
             assertEquals("Track 1", trackEntity1.getTitle(), "First track title should match");
-            assertEquals(List.of("Artist 1"), trackEntity1.getArtistNames(), "First track artists should match");
+            assertEquals(List.of(ArtistCreditEmbeddable.with("Artist 1", null)), trackEntity1.getCredits(), "First track artists should match");
             assertEquals("PROVISIONAL", trackEntity1.getStatus(), "First track status should match");
             assertSame(entity, trackEntity1.getProducer(), "Track should reference its producer");
             
             TrackEntity trackEntity2 = trackArray[1];
             assertEquals("FRLA12400002", trackEntity2.getIsrc(), "Second track ISRC should match");
             assertEquals("Track 2", trackEntity2.getTitle(), "Second track title should match");
-            assertEquals(List.of("Artist 2"), trackEntity2.getArtistNames(), "Second track artists should match");
+            assertEquals(List.of(ArtistCreditEmbeddable.with("Artist 2", null)), trackEntity2.getCredits(), "Second track artists should match");
             assertEquals("VERIFIED", trackEntity2.getStatus(), "Second track status should match");
             assertSame(entity, trackEntity2.getProducer(), "Track should reference its producer");
         }
@@ -130,7 +137,7 @@ class ProducerMapperTest {
             Track singleTrack = Track.of(
                     ISRC.of("FRLA32400001"), 
                     "Only Track", 
-                    List.of("Solo Artist"),
+                    List.of(ArtistCredit.withName("Solo Artist")),
                     List.of(Source.of("MANUAL", "manual-001")),
                     TrackStatus.PROVISIONAL
             );
@@ -157,11 +164,11 @@ class ProducerMapperTest {
             ProducerId producerId = new ProducerId(UUID.randomUUID());
             ProducerCode producerCode = ProducerCode.of("FRLA4");
             
-            Track track1 = Track.of(ISRC.of("FRLA42400001"), "Track 1", List.of("Artist"), 
+            Track track1 = Track.of(ISRC.of("FRLA42400001"), "Track 1", List.of(ArtistCredit.withName("Artist")), 
                                   List.of(Source.of("SPOTIFY", "1")), TrackStatus.PROVISIONAL);
-            Track track2 = Track.of(ISRC.of("FRLA42400002"), "Track 2", List.of("Artist"), 
+            Track track2 = Track.of(ISRC.of("FRLA42400002"), "Track 2", List.of(ArtistCredit.withName("Artist")), 
                                   List.of(Source.of("SPOTIFY", "2")), TrackStatus.PROVISIONAL);
-            Track track3 = Track.of(ISRC.of("FRLA42400003"), "Track 3", List.of("Artist"), 
+            Track track3 = Track.of(ISRC.of("FRLA42400003"), "Track 3", List.of(ArtistCredit.withName("Artist")), 
                                   List.of(Source.of("SPOTIFY", "3")), TrackStatus.PROVISIONAL);
             
             Set<Track> orderedTracks = new LinkedHashSet<>();
@@ -206,7 +213,10 @@ class ProducerMapperTest {
             trackEntity1.setId(UUID.randomUUID());
             trackEntity1.setIsrc("FRLA12400001");
             trackEntity1.setTitle("Complete Track 1");
-            trackEntity1.setArtistNames(List.of("Real Artist 1", "Featuring Artist"));
+            trackEntity1.setCredits(List.of(
+                ArtistCreditEmbeddable.with("Real Artist 1", null),
+                ArtistCreditEmbeddable.with("Featuring Artist", null)
+            ));
             trackEntity1.setSources(List.of(
                     Source.of("SPOTIFY", "spotify-123"),
                     Source.of("APPLE_MUSIC", "apple-456")
@@ -218,7 +228,7 @@ class ProducerMapperTest {
             trackEntity2.setId(UUID.randomUUID());
             trackEntity2.setIsrc("FRLA12400002");
             trackEntity2.setTitle("Complete Track 2");
-            trackEntity2.setArtistNames(List.of("Real Artist 2"));
+            trackEntity2.setCredits(List.of(ArtistCreditEmbeddable.with("Real Artist 2", null)));
             trackEntity2.setSources(List.of(Source.of("TIDAL", "tidal-789")));
             trackEntity2.setStatus("PROVISIONAL");
             trackEntity2.setProducer(entity);
@@ -318,10 +328,14 @@ class ProducerMapperTest {
             ProducerCode originalCode = ProducerCode.of("FRLA1");
             String originalName = "Round Trip Label";
             
-            Track track1 = Track.of(ISRC.of("FRLA12400001"), "Original Track 1", List.of("Artist 1", "Artist 2"),
-                                  List.of(Source.of("SPOTIFY", "spot-123"), Source.of("TIDAL", "tidal-456")), TrackStatus.VERIFIED);
-            Track track2 = Track.of(ISRC.of("FRLA12400002"), "Original Track 2", List.of("Solo Artist"),
-                                  List.of(Source.of("APPLE_MUSIC", "apple-789")), TrackStatus.PROVISIONAL);
+            Track track1 = Track.of(ISRC.of("FRLA12400001"), "Original Track 1", 
+                                  List.of(ArtistCredit.withName("Artist 1"), ArtistCredit.withName("Artist 2")),
+                                  List.of(Source.of("SPOTIFY", "spot-123"), Source.of("TIDAL", "tidal-456")), 
+                                  TrackStatus.VERIFIED);
+            Track track2 = Track.of(ISRC.of("FRLA12400002"), "Original Track 2", 
+                                  List.of(ArtistCredit.withName("Solo Artist")),
+                                  List.of(Source.of("APPLE_MUSIC", "apple-789")), 
+                                  TrackStatus.PROVISIONAL);
             
             Set<Track> originalTracks = new LinkedHashSet<>();
             originalTracks.add(track1);
@@ -357,7 +371,7 @@ class ProducerMapperTest {
                 for (int j = 0; j < original.sources().size(); j++) {
                     Source originalSource = original.sources().get(j);
                     Source reconstructedSource = reconstructed.sources().get(j);
-                    assertEquals(originalSource.sourceName(), reconstructedSource.sourceName(), "Source name should be preserved");
+                    assertEquals(originalSource.getSourceName(), reconstructedSource.getSourceName(), "Source name should be preserved");
                     assertEquals(originalSource.sourceId(), reconstructedSource.sourceId(), "Source ID should be preserved");
                 }
             }
@@ -396,9 +410,9 @@ class ProducerMapperTest {
             ProducerId producerId = new ProducerId(UUID.randomUUID());
             ProducerCode producerCode = ProducerCode.of("FRLA1");
             
-            Track track1 = Track.of(ISRC.of("FRLA12400001"), "Track 1", List.of("Artist"),
+            Track track1 = Track.of(ISRC.of("FRLA12400001"), "Track 1", List.of(ArtistCredit.withName("Artist")),
                                   List.of(Source.of("SPOTIFY", "1")), TrackStatus.PROVISIONAL);
-            Track track2 = Track.of(ISRC.of("FRLA12400002"), "Track 2", List.of("Artist"),
+            Track track2 = Track.of(ISRC.of("FRLA12400002"), "Track 2", List.of(ArtistCredit.withName("Artist")),
                                   List.of(Source.of("SPOTIFY", "2")), TrackStatus.PROVISIONAL);
             
             Set<Track> tracks = Set.of(track1, track2);
@@ -427,12 +441,16 @@ class ProducerMapperTest {
             ProducerId producerId = new ProducerId(UUID.randomUUID());
             ProducerCode producerCode = ProducerCode.of("FRLAA");
             
-            Track simpleTrack = Track.of(ISRC.of("FRLAA2400001"), "Simple", List.of("Artist"),
+            Track simpleTrack = Track.of(ISRC.of("FRLAA2400001"), "Simple", List.of(ArtistCredit.withName("Artist")),
                                        List.of(Source.of("MANUAL", "manual-001")), TrackStatus.PROVISIONAL);
             
             Track complexTrack = Track.of(ISRC.of("FRLAA2400002"), "Complex Track Title", 
-                                        List.of("Main Artist", "Featured Artist", "Producer Credit"),
-                                        List.of(Source.of("SPOTIFY", "spot-123"), Source.of("APPLE_MUSIC", "apple-456"), Source.of("TIDAL", "tidal-789")), 
+                                        List.of(ArtistCredit.withName("Main Artist"), 
+                                               ArtistCredit.withName("Featured Artist"), 
+                                               ArtistCredit.withName("Producer Credit")),
+                                        List.of(Source.of("SPOTIFY", "spot-123"), 
+                                               Source.of("APPLE_MUSIC", "apple-456"), 
+                                               Source.of("TIDAL", "tidal-789")), 
                                         TrackStatus.VERIFIED);
             
             Set<Track> tracks = new LinkedHashSet<>();

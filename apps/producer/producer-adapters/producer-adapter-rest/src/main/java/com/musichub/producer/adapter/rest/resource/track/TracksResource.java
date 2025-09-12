@@ -1,19 +1,24 @@
 package com.musichub.producer.adapter.rest.resource.track;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
 import com.musichub.producer.adapter.rest.dto.RecentTrackResponse;
+import com.musichub.producer.adapter.rest.mapper.TrackMapper;
 import com.musichub.producer.application.dto.TrackInfo;
 import com.musichub.producer.application.ports.in.GetRecentTracksUseCase;
-import com.musichub.producer.domain.values.Source;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 @Path("/tracks")
 @ApplicationScoped
@@ -22,66 +27,73 @@ public class TracksResource {
 
     private static final Logger log = LoggerFactory.getLogger(TracksResource.class);
 
-    private final GetRecentTracksUseCase getRecentTracksUseCase;
+    private GetRecentTracksUseCase getRecentTracksUseCase;
 
-    public TracksResource(GetRecentTracksUseCase getRecentTracksUseCase) {
-        this.getRecentTracksUseCase = getRecentTracksUseCase;
+    private TrackMapper trackMapper;
+
+    public TracksResource(GetRecentTracksUseCase getRecentTracksUseCase, TrackMapper trackMapper){
+        this.getRecentTracksUseCase=getRecentTracksUseCase;
+        this.trackMapper=trackMapper;
     }
 
     @GET
     @Path("/recent")
     public Response getRecentTracks() {
+        // Generate correlation ID for request tracing
+        String correlationId = UUID.randomUUID().toString();
+        MDC.put("correlationId", correlationId);
+
+        Instant startTime = Instant.now();
+        int tracksCount = 0;
+
         try {
-            log.info("GET /api/v1/tracks/recent - retrieving recent tracks");
+            log.info("GET /tracks/recent - Starting recent tracks retrieval (correlationId: {})", correlationId);
 
             List<TrackInfo> recentTracks = getRecentTracksUseCase.getRecentTracks();
+            tracksCount = recentTracks.size();
+
+            log.debug("Retrieved {} track entities from application layer (correlationId: {})", tracksCount, correlationId);
 
             List<RecentTrackResponse> response = recentTracks.stream()
-                    .map(this::mapToResponse)
+                    .map(trackMapper::mapToRecentResponse)
                     .toList();
 
-            log.info("GET /api/v1/tracks/recent - returning {} tracks", response.size());
+            long processingTime = Instant.now().toEpochMilli() - startTime.toEpochMilli();
+
+            // Defensive check for response list
+            int responseSize = (response != null) ? response.size() : 0;
+
+            log.info("GET /tracks/recent - Successfully processed {} tracks in {}ms (correlationId: {})",
+                responseSize, processingTime, correlationId);
+
+            // Log business context for monitoring
+            if (tracksCount > 0 && response != null && !response.isEmpty() && response.get(0) != null) {
+                RecentTrackResponse firstTrack = response.get(0);
+                log.debug("Recent tracks summary - Total: {}, First ISRC: {} (correlationId: {})",
+                    tracksCount,
+                    firstTrack.isrc,
+                    correlationId);
+            } else {
+                log.info("No recent tracks found (correlationId: {})", correlationId);
+            }
 
             return Response.ok(response).build();
+
         } catch (Exception e) {
-            log.error("GET /api/v1/tracks/recent - unexpected error occurred", e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new ErrorResponse("InternalError", "An unexpected error occurred"))
-                    .build();
-        }
-    }
+            long processingTime = Instant.now().toEpochMilli() - startTime.toEpochMilli();
 
+            log.error("GET /tracks/recent - Failed to retrieve recent tracks after {}ms - {} (correlationId: {})",
+                processingTime,
+                e.getMessage(),
+                correlationId,
+                e);
 
-    private RecentTrackResponse mapToResponse(TrackInfo trackInfo) {
-        RecentTrackResponse response = new RecentTrackResponse();
-        response.isrc = trackInfo.isrc().value();
-        response.title = trackInfo.title();
-        response.artistNames = List.copyOf(trackInfo.artistNames());
-        response.status = trackInfo.status().name();
-        response.submissionDate = trackInfo.submissionDate();
+            // Rethrow with contextual information for GlobalExceptionMapper to handle HTTP response
+            throw new IllegalStateException("Failed to retrieve recent tracks after " + processingTime + "ms (correlationId: " + correlationId + ")", e);
 
-        if (!trackInfo.sources().isEmpty()) {
-            Source firstSource = trackInfo.sources().get(0);
-            RecentTrackResponse.SourceInfo sourceInfo = new RecentTrackResponse.SourceInfo();
-            sourceInfo.name = firstSource.sourceName();
-            sourceInfo.externalId = firstSource.sourceId();
-            response.source = sourceInfo;
-        }
-
-        return response;
-    }
-
-    public static class ErrorResponse {
-        public String error;
-
-        public String message;
-
-        public ErrorResponse() {
-        }
-
-        public ErrorResponse(String error, String message) {
-            this.error = error;
-            this.message = message;
+        } finally {
+            // Clean up MDC context
+            MDC.remove("correlationId");
         }
     }
 }

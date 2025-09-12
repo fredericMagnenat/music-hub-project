@@ -1,17 +1,20 @@
 package com.musichub.producer.application;
 
-import com.musichub.producer.application.dto.ExternalTrackMetadata;
-import com.musichub.producer.application.exception.ExternalServiceException;
-import com.musichub.producer.application.ports.out.EventPublisherPort;
-import com.musichub.producer.application.ports.out.MusicPlatformPort;
-import com.musichub.producer.application.service.RegisterTrackService;
-import com.musichub.producer.domain.model.Producer;
-import com.musichub.producer.application.ports.out.ProducerRepository;
-import com.musichub.producer.domain.values.Source;
-import com.musichub.shared.domain.values.ISRC;
-import com.musichub.shared.domain.values.ProducerCode;
-import com.musichub.shared.events.ArtistCreditInfo;
-import com.musichub.shared.events.TrackWasRegistered;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,16 +24,24 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import com.musichub.producer.application.dto.ArtistCreditDto;
+import com.musichub.producer.application.dto.ExternalTrackMetadata;
+import com.musichub.producer.application.exception.ExternalServiceException;
+import com.musichub.producer.application.ports.out.EventPublisherPort;
+import com.musichub.producer.application.ports.out.MusicPlatformPort;
+import com.musichub.producer.application.ports.out.ProducerRepository;
+import com.musichub.producer.application.service.RegisterTrackService;
+import com.musichub.producer.domain.model.Producer;
+import com.musichub.shared.domain.values.Source;
+import com.musichub.shared.domain.values.ISRC;
+import com.musichub.shared.domain.values.ProducerCode;
+import com.musichub.shared.events.ArtistCreditInfo;
+import com.musichub.shared.events.TrackWasRegistered;
 
 /**
  * Comprehensive unit tests for RegisterTrackService.
- * Tests the enhanced service logic with external API integration and event publishing.
+ * Tests the enhanced service logic with external API integration and event
+ * publishing.
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RegisterTrackService")
@@ -59,12 +70,12 @@ class RegisterTrackServiceTest {
         @DisplayName("Should register new track with API call and publish event")
         void shouldRegisterNewTrackWithApiCallAndPublishEvent() {
             // Given: External API returns track metadata
+            UUID artistId = UUID.randomUUID();
             ExternalTrackMetadata mockMetadata = new ExternalTrackMetadata(
-                TEST_ISRC,
-                "Bohemian Rhapsody", 
-                List.of("Queen"), 
-                "tidal"
-            );
+                    TEST_ISRC,
+                    "Bohemian Rhapsody",
+                    List.of(new ArtistCreditDto("Queen", artistId)),
+                    "tidal");
             when(musicPlatformPort.getTrackByIsrc(TEST_ISRC)).thenReturn(mockMetadata);
 
             // Given: No existing producer (code derived from ISRC by service)
@@ -92,7 +103,7 @@ class RegisterTrackServiceTest {
             TrackWasRegistered capturedEvent = eventCaptor.getValue();
             assertEquals(ISRC.of(NORMALIZED_ISRC), capturedEvent.isrc());
             assertEquals("Bohemian Rhapsody", capturedEvent.title());
-            assertEquals(List.of(ArtistCreditInfo.withName("Queen")), capturedEvent.artistCredits());
+            assertEquals(List.of(new ArtistCreditInfo("Queen", artistId.toString())), capturedEvent.artistCredits());
 
             // Then: Should return saved producer
             assertNotNull(result);
@@ -103,11 +114,10 @@ class RegisterTrackServiceTest {
         void shouldWorkWithExistingProducer() {
             // Given: External API returns track metadata
             ExternalTrackMetadata mockMetadata = new ExternalTrackMetadata(
-                TEST_ISRC,
-                "Another One Bites the Dust", 
-                List.of("Queen"), 
-                "tidal"
-            );
+                    TEST_ISRC,
+                    "Another One Bites the Dust",
+                    List.of(new ArtistCreditDto("Queen", null)),
+                    "tidal");
             when(musicPlatformPort.getTrackByIsrc(TEST_ISRC)).thenReturn(mockMetadata);
 
             // Given: Existing producer
@@ -133,12 +143,13 @@ class RegisterTrackServiceTest {
         @DisplayName("Should handle multiple artists correctly")
         void shouldHandleMultipleArtistsCorrectly() {
             // Given: External API returns track with multiple artists
+            UUID artistId1 = UUID.randomUUID();
+            UUID artistId2 = UUID.randomUUID();
             ExternalTrackMetadata mockMetadata = new ExternalTrackMetadata(
-                TEST_ISRC,
-                "Under Pressure", 
-                List.of("Queen", "David Bowie"), 
-                "tidal"
-            );
+                    TEST_ISRC,
+                    "Under Pressure",
+                    List.of(new ArtistCreditDto("Queen", artistId1), new ArtistCreditDto("David Bowie", artistId2)),
+                    "tidal");
             when(musicPlatformPort.getTrackByIsrc(TEST_ISRC)).thenReturn(mockMetadata);
 
             ProducerCode code = ProducerCode.with(ISRC.of(NORMALIZED_ISRC));
@@ -152,7 +163,8 @@ class RegisterTrackServiceTest {
             ArgumentCaptor<TrackWasRegistered> eventCaptor = ArgumentCaptor.forClass(TrackWasRegistered.class);
             verify(eventPublisherPort).publishTrackRegistered(eventCaptor.capture());
             TrackWasRegistered capturedEvent = eventCaptor.getValue();
-            assertEquals(List.of(ArtistCreditInfo.withName("Queen"), ArtistCreditInfo.withName("David Bowie")), capturedEvent.artistCredits());
+            assertEquals(List.of(new ArtistCreditInfo("Queen", artistId1.toString()),
+                    new ArtistCreditInfo("David Bowie", artistId2.toString())), capturedEvent.artistCredits());
         }
     }
 
@@ -165,23 +177,21 @@ class RegisterTrackServiceTest {
         void shouldNotPublishEventForDuplicateTrack() {
             // Given: External API returns track metadata
             ExternalTrackMetadata mockMetadata = new ExternalTrackMetadata(
-                TEST_ISRC,
-                "Bohemian Rhapsody", 
-                List.of("Queen"), 
-                "tidal"
-            );
+                    TEST_ISRC,
+                    "Bohemian Rhapsody",
+                    List.of(new ArtistCreditDto("Queen", null)),
+                    "tidal");
             when(musicPlatformPort.getTrackByIsrc(TEST_ISRC)).thenReturn(mockMetadata);
 
             // Given: Producer already has this track
             ProducerCode code = ProducerCode.with(ISRC.of(NORMALIZED_ISRC));
             Producer existingProducer = Producer.createNew(code, null);
             // Use registerTrack method (which creates complete Track internally)
-            existingProducer.registerTrack(
-                ISRC.of(NORMALIZED_ISRC),
-                "Bohemian Rhapsody",
-                List.of("Queen"),
-                List.of(Source.of("MANUAL", "existing-track"))
-            );
+            existingProducer.registerTrackWithArtistNames(
+                    ISRC.of(NORMALIZED_ISRC),
+                    "Bohemian Rhapsody",
+                    List.of("Queen"),
+                    List.of(Source.of("MANUAL", "existing-track")));
             when(producerRepository.findByProducerCode(code)).thenReturn(Optional.of(existingProducer));
             when(producerRepository.save(any(Producer.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -203,11 +213,10 @@ class RegisterTrackServiceTest {
         void shouldHandleIsrcNormalizationConsistently() {
             // Given: External API returns normalized metadata
             ExternalTrackMetadata mockMetadata = new ExternalTrackMetadata(
-                NORMALIZED_ISRC,
-                "Bohemian Rhapsody", 
-                List.of("Queen"), 
-                "tidal"
-            );
+                    NORMALIZED_ISRC,
+                    "Bohemian Rhapsody",
+                    List.of(new ArtistCreditDto("Queen", null)),
+                    "tidal");
             when(musicPlatformPort.getTrackByIsrc(anyString())).thenReturn(mockMetadata);
 
             ProducerCode code = ProducerCode.with(ISRC.of(NORMALIZED_ISRC));
@@ -236,15 +245,13 @@ class RegisterTrackServiceTest {
         void shouldPropagateExternalServiceExceptionFromApi() {
             // Given: External API throws exception
             ExternalServiceException apiException = new ExternalServiceException(
-                "Track not found", TEST_ISRC, "tidal"
-            );
+                    "Track not found", TEST_ISRC, "tidal");
             when(musicPlatformPort.getTrackByIsrc(TEST_ISRC)).thenThrow(apiException);
 
             // When & Then: Should propagate the exception
             ExternalServiceException thrown = assertThrows(
-                ExternalServiceException.class,
-                () -> registerTrackService.registerTrack(TEST_ISRC)
-            );
+                    ExternalServiceException.class,
+                    () -> registerTrackService.registerTrack(TEST_ISRC));
 
             assertEquals("Track not found", thrown.getMessage());
             assertEquals(TEST_ISRC, thrown.getIsrc());
@@ -264,9 +271,8 @@ class RegisterTrackServiceTest {
 
             // When & Then: Should wrap in ExternalServiceException
             ExternalServiceException thrown = assertThrows(
-                ExternalServiceException.class,
-                () -> registerTrackService.registerTrack(TEST_ISRC)
-            );
+                    ExternalServiceException.class,
+                    () -> registerTrackService.registerTrack(TEST_ISRC));
 
             assertTrue(thrown.getMessage().contains("Unexpected error"));
             assertEquals(TEST_ISRC, thrown.getIsrc());
@@ -283,11 +289,11 @@ class RegisterTrackServiceTest {
         void shouldNotPublishEventWhenApiFails() {
             // Given: External API fails
             when(musicPlatformPort.getTrackByIsrc(TEST_ISRC))
-                .thenThrow(new ExternalServiceException("Service unavailable", TEST_ISRC, "tidal"));
+                    .thenThrow(new ExternalServiceException("Service unavailable", TEST_ISRC, "tidal"));
 
             // When: Attempting to register track
             assertThrows(ExternalServiceException.class,
-                () -> registerTrackService.registerTrack(TEST_ISRC));
+                    () -> registerTrackService.registerTrack(TEST_ISRC));
 
             // Then: Should not publish any event
             verifyNoInteractions(eventPublisherPort);
@@ -304,8 +310,7 @@ class RegisterTrackServiceTest {
         void shouldPublishEventOnlyAfterSuccessfulDatabaseSave() {
             // Given: External API succeeds
             ExternalTrackMetadata mockMetadata = new ExternalTrackMetadata(
-                TEST_ISRC, "Test Track", List.of("Test Artist"), "tidal"
-            );
+                    TEST_ISRC, "Test Track", List.of(new ArtistCreditDto("Test Artist", null)), "tidal");
             when(musicPlatformPort.getTrackByIsrc(TEST_ISRC)).thenReturn(mockMetadata);
 
             // Given: Producer setup
@@ -325,9 +330,9 @@ class RegisterTrackServiceTest {
         @DisplayName("Should create correct event structure")
         void shouldCreateCorrectEventStructure() {
             // Given: Successful setup
+            UUID artistId = UUID.randomUUID();
             ExternalTrackMetadata mockMetadata = new ExternalTrackMetadata(
-                TEST_ISRC, "Bohemian Rhapsody", List.of("Queen"), "tidal"
-            );
+                    TEST_ISRC, "Bohemian Rhapsody", List.of(new ArtistCreditDto("Queen", artistId)), "tidal");
             when(musicPlatformPort.getTrackByIsrc(TEST_ISRC)).thenReturn(mockMetadata);
 
             ProducerCode code = ProducerCode.with(ISRC.of(NORMALIZED_ISRC));
@@ -345,7 +350,7 @@ class RegisterTrackServiceTest {
             assertNotNull(event.isrc());
             assertEquals(NORMALIZED_ISRC, event.isrc().value());
             assertEquals("Bohemian Rhapsody", event.title());
-            assertEquals(List.of(ArtistCreditInfo.withName("Queen")), event.artistCredits());
+            assertEquals(List.of(new ArtistCreditInfo("Queen", artistId.toString())), event.artistCredits());
         }
     }
 
@@ -358,16 +363,16 @@ class RegisterTrackServiceTest {
         void shouldHandleNullIsrcGracefully() {
             // Given: Mock returns null for null ISRC (default behavior)
             // This simulates the external service not finding any data for invalid input
-            
+
             // When & Then: Should throw ExternalServiceException due to null metadata
             ExternalServiceException thrown = assertThrows(ExternalServiceException.class,
-                () -> registerTrackService.registerTrack(null));
+                    () -> registerTrackService.registerTrack(null));
 
             // Then: Should mention no track metadata returned
             assertTrue(thrown.getMessage().contains("No track metadata returned"));
             assertNull(thrown.getIsrc());
             assertEquals("external-api", thrown.getService());
-            
+
             // Then: Should call external API but fail before repository
             verify(musicPlatformPort).getTrackByIsrc(null);
             verifyNoInteractions(producerRepository);
@@ -375,20 +380,20 @@ class RegisterTrackServiceTest {
         }
 
         @Test
-        @DisplayName("Should handle empty ISRC gracefully")  
+        @DisplayName("Should handle empty ISRC gracefully")
         void shouldHandleEmptyIsrcGracefully() {
             // Given: Mock platform port returns null for empty ISRC
             when(musicPlatformPort.getTrackByIsrc("")).thenReturn(null);
-            
+
             // When & Then: Should fail due to null metadata
             ExternalServiceException thrown = assertThrows(ExternalServiceException.class,
-                () -> registerTrackService.registerTrack(""));
+                    () -> registerTrackService.registerTrack(""));
 
             // Then: Should mention no track metadata returned
             assertTrue(thrown.getMessage().contains("No track metadata returned"));
             assertEquals("", thrown.getIsrc());
             assertEquals("external-api", thrown.getService());
-            
+
             // Then: Should call external API but fail before repository
             verify(musicPlatformPort).getTrackByIsrc("");
             verifyNoInteractions(producerRepository);

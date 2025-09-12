@@ -1,5 +1,6 @@
 package com.musichub.producer.adapter.spi;
 
+import com.musichub.producer.adapter.spi.dto.ArtistDto;
 import com.musichub.producer.adapter.spi.dto.TrackMetadataDto;
 import com.musichub.producer.adapter.spi.exception.TrackNotFoundInExternalServiceException;
 import com.musichub.producer.application.dto.ExternalTrackMetadata;
@@ -13,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -32,6 +34,14 @@ class TidalMusicPlatformAdapterTest {
     private TidalMusicPlatformAdapter adapter;
 
     private static final String TEST_ISRC = "GBUM71507409";
+    private static final UUID TEST_ARTIST_ID = UUID.fromString("12345678-1234-1234-1234-123456789abc");
+
+    private ArtistDto createArtist(String name) {
+        ArtistDto artist = new ArtistDto();
+        artist.name = name;
+        artist.id = TEST_ARTIST_ID;
+        return artist;
+    }
 
     @Nested
     @DisplayName("Successful Mapping")
@@ -44,7 +54,7 @@ class TidalMusicPlatformAdapterTest {
             TrackMetadataDto tidalDto = new TrackMetadataDto(
                 TEST_ISRC,
                 "Bohemian Rhapsody",
-                List.of("Queen"),
+                List.of(createArtist("Queen")),
                 "TIDAL"
             );
             when(tidalService.getTrackByIsrc(TEST_ISRC)).thenReturn(tidalDto);
@@ -70,7 +80,7 @@ class TidalMusicPlatformAdapterTest {
             TrackMetadataDto tidalDto = new TrackMetadataDto(
                 TEST_ISRC,
                 "Under Pressure",
-                List.of("Queen", "David Bowie"),
+                List.of(createArtist("Queen"), createArtist("David Bowie")),
                 "TIDAL"
             );
             when(tidalService.getTrackByIsrc(TEST_ISRC)).thenReturn(tidalDto);
@@ -89,7 +99,7 @@ class TidalMusicPlatformAdapterTest {
             TrackMetadataDto tidalDto = new TrackMetadataDto(
                 TEST_ISRC,
                 "Imagine",
-                List.of("John Lennon"),
+                List.of(createArtist("John Lennon")),
                 "TIDAL"
             );
             when(tidalService.getTrackByIsrc(TEST_ISRC)).thenReturn(tidalDto);
@@ -189,7 +199,7 @@ class TidalMusicPlatformAdapterTest {
             TrackMetadataDto tidalDto = new TrackMetadataDto(
                 formattedIsrc,
                 "Test Track",
-                List.of("Test Artist"),
+                List.of(createArtist("Test Artist")),
                 "TIDAL"
             );
             when(tidalService.getTrackByIsrc(TEST_ISRC)).thenReturn(tidalDto);
@@ -209,7 +219,7 @@ class TidalMusicPlatformAdapterTest {
             TrackMetadataDto tidalDto = new TrackMetadataDto(
                 TEST_ISRC,
                 complexTitle,
-                List.of("Queen"),
+                List.of(createArtist("Queen")),
                 "TIDAL"
             );
             when(tidalService.getTrackByIsrc(TEST_ISRC)).thenReturn(tidalDto);
@@ -228,7 +238,7 @@ class TidalMusicPlatformAdapterTest {
             TrackMetadataDto tidalDto = new TrackMetadataDto(
                 TEST_ISRC,
                 "Test Track",
-                List.of("Test Artist"),
+                List.of(createArtist("Test Artist")),
                 "TIDAL_PREMIUM"
             );
             when(tidalService.getTrackByIsrc(TEST_ISRC)).thenReturn(tidalDto);
@@ -269,7 +279,7 @@ class TidalMusicPlatformAdapterTest {
         void shouldPassIsrcParameterCorrectlyToTidalService() {
             // Given: Tidal service setup
             TrackMetadataDto tidalDto = new TrackMetadataDto(
-                TEST_ISRC, "Test", List.of("Artist"), "TIDAL"
+                TEST_ISRC, "Test", List.of(createArtist("Artist")), "TIDAL"
             );
             when(tidalService.getTrackByIsrc(TEST_ISRC)).thenReturn(tidalDto);
 
@@ -285,7 +295,7 @@ class TidalMusicPlatformAdapterTest {
         void shouldCallTidalServiceExactlyOncePerRequest() {
             // Given: Tidal service setup
             TrackMetadataDto tidalDto = new TrackMetadataDto(
-                TEST_ISRC, "Test", List.of("Artist"), "TIDAL"
+                TEST_ISRC, "Test", List.of(createArtist("Artist")), "TIDAL"
             );
             when(tidalService.getTrackByIsrc(TEST_ISRC)).thenReturn(tidalDto);
 

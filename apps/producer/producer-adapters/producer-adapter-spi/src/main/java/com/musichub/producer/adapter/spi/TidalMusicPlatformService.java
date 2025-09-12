@@ -65,8 +65,8 @@ public class TidalMusicPlatformService {
             // Map Tidal's complex response to our simple DTO
             TrackMetadataDto result = responseMapper.mapToTrackMetadata(tidalResponse, isrc);
             
-            logger.info("Successfully retrieved track metadata for ISRC: {} - Title: '{}' by {}", 
-                       isrc, result.title, result.artistNames);
+            logger.info("Successfully retrieved track metadata for ISRC: {} - Title: '{}' by {}",
+                        isrc, result.title, result.artists.stream().map(a -> a.name).toList());
             
             return result;
 

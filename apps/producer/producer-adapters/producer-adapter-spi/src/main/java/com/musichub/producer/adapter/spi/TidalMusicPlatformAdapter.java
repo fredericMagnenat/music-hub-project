@@ -2,6 +2,7 @@ package com.musichub.producer.adapter.spi;
 
 import com.musichub.producer.adapter.spi.dto.TrackMetadataDto;
 import com.musichub.producer.adapter.spi.exception.TrackNotFoundInExternalServiceException;
+import com.musichub.producer.application.dto.ArtistCreditDto;
 import com.musichub.producer.application.dto.ExternalTrackMetadata;
 import com.musichub.producer.application.exception.ExternalServiceException;
 import com.musichub.producer.application.ports.out.MusicPlatformPort;
@@ -9,6 +10,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Adapter implementation that bridges the application layer port (MusicPlatformPort) 
@@ -72,10 +76,14 @@ public class TidalMusicPlatformAdapter implements MusicPlatformPort {
      * This isolates the application layer from the specific external API structure.
      */
     private ExternalTrackMetadata mapToExternalTrackMetadata(TrackMetadataDto tidalDto) {
+        List<ArtistCreditDto> artistCredits = tidalDto.artists.stream()
+                .map(artist -> new ArtistCreditDto(artist.name, artist.id))
+                .collect(Collectors.toList());
+
         return new ExternalTrackMetadata(
             tidalDto.isrc,
             tidalDto.title,
-            tidalDto.artistNames,
+            artistCredits,
             tidalDto.platform
         );
     }

@@ -130,7 +130,7 @@ class TidalDtoTest {
                 "keyScale": "MAJOR",
                 "genreTags": ["Rock", "Progressive Rock"],
                 "mediaTags": ["HIRES_LOSSLESS"],
-                "copyright": "(c) 1975 Queen Productions Ltd"
+                "copyright": {"text": "(c) 1975 Queen Productions Ltd"}
             }
             """;
 
@@ -149,7 +149,28 @@ class TidalDtoTest {
         assertEquals("MAJOR", attributes.keyScale);
         assertEquals(List.of("Rock", "Progressive Rock"), attributes.genreTags);
         assertEquals(List.of("HIRES_LOSSLESS"), attributes.mediaTags);
-        assertEquals("(c) 1975 Queen Productions Ltd", attributes.copyright);
+        assertNotNull(attributes.copyright);
+        assertEquals("(c) 1975 Queen Productions Ltd", attributes.copyright.text);
+    }
+
+    @Test
+    void tidalTrackAttributes_ShouldHandleCopyrightAsObject() throws JsonProcessingException {
+        // Given: JSON with copyright as object (new Tidal API format)
+        String json = """
+            {
+                "title": "Bohemian Rhapsody",
+                "isrc": "GBUM71507409",
+                "copyright": {"text": "(c) 1975 Queen Productions Ltd"}
+            }
+            """;
+
+        // When: Deserializing JSON
+        TidalTrackAttributes attributes = objectMapper.readValue(json, TidalTrackAttributes.class);
+
+        // Then: Should map copyright object correctly
+        assertNotNull(attributes);
+        assertNotNull(attributes.copyright);
+        assertEquals("(c) 1975 Queen Productions Ltd", attributes.copyright.text);
     }
 
     @Test

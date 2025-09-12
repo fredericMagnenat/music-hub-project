@@ -1,14 +1,16 @@
 package com.musichub.producer.application;
 
-import com.musichub.producer.application.ports.out.TrackRepository;
-import com.musichub.producer.application.service.GetRecentTracksService;
-import com.musichub.producer.application.dto.TrackInfo;
-import com.musichub.producer.application.ports.out.ProducerRepository;
-import com.musichub.producer.domain.values.ProducerId;
-import com.musichub.producer.domain.values.Source;
-import com.musichub.producer.domain.values.TrackStatus;
-import com.musichub.shared.domain.values.ISRC;
-import com.musichub.shared.domain.values.ProducerCode;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,14 +18,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import com.musichub.producer.application.dto.TrackInfo;
+import com.musichub.producer.application.ports.out.TrackRepository;
+import com.musichub.producer.application.service.GetRecentTracksService;
+import com.musichub.shared.domain.values.Source;
+import com.musichub.producer.domain.values.TrackStatus;
+import com.musichub.shared.domain.values.ISRC;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("GetRecentTracksService Application Layer Tests")
@@ -46,7 +46,7 @@ class GetRecentTracksServiceTest {
         TrackInfo track1 = createTrackInfo("FRLA12400001", "Track 1");
         TrackInfo track2 = createTrackInfo("FRLA12400002", "Track 2");
         List<TrackInfo> expectedTracks = Arrays.asList(track1, track2);
-        
+
         when(repository.findRecentTracks(10)).thenReturn(expectedTracks);
 
         // When
@@ -63,7 +63,7 @@ class GetRecentTracksServiceTest {
         // Given
         TrackInfo track1 = createTrackInfo("FRLA12400001", "Track 1");
         List<TrackInfo> expectedTracks = List.of(track1);
-        
+
         when(repository.findRecentTracks(5)).thenReturn(expectedTracks);
 
         // When
@@ -93,8 +93,8 @@ class GetRecentTracksServiceTest {
     void getRecentTracks_shouldThrowException_whenLimitIsNegative() {
         // When & Then
         assertThatThrownBy(() -> service.getRecentTracks(-1))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("Limit must be positive, got: -1");
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Limit must be positive, got: -1");
 
         verifyNoInteractions(repository);
     }
@@ -104,8 +104,8 @@ class GetRecentTracksServiceTest {
     void getRecentTracks_shouldThrowException_whenLimitIsZero() {
         // When & Then
         assertThatThrownBy(() -> service.getRecentTracks(0))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("Limit must be positive, got: 0");
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Limit must be positive, got: 0");
 
         verifyNoInteractions(repository);
     }
@@ -115,20 +115,19 @@ class GetRecentTracksServiceTest {
     void getRecentTracks_shouldThrowException_whenLimitExceedsMaximum() {
         // When & Then
         assertThatThrownBy(() -> service.getRecentTracks(101))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("Limit cannot exceed 100, got: 101");
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Limit cannot exceed 100, got: 101");
 
         verifyNoInteractions(repository);
     }
 
     private TrackInfo createTrackInfo(String isrcValue, String title) {
         return new TrackInfo(
-            ISRC.of(isrcValue),
-            title,
-            List.of("Artist Name"),
-            List.of(Source.of("TIDAL", isrcValue)),
-            TrackStatus.PROVISIONAL,
-            LocalDateTime.now()
-        );
+                ISRC.of(isrcValue),
+                title,
+                List.of("Artist Name"),
+                List.of(Source.of("TIDAL", isrcValue)),
+                TrackStatus.PROVISIONAL,
+                LocalDateTime.now());
     }
 }

@@ -1,7 +1,7 @@
 package com.musichub.producer.domain.model;
 
 import com.musichub.producer.domain.values.ArtistCredit;
-import com.musichub.producer.domain.values.Source;
+import com.musichub.shared.domain.values.Source;
 import com.musichub.producer.domain.values.TrackStatus;
 import com.musichub.shared.domain.values.ISRC;
 import com.musichub.shared.domain.values.ProducerCode;

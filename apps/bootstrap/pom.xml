@@ -166,10 +166,11 @@
             <artifactId>quarkus-jdbc-h2</artifactId>
         </dependency>
 
-        <!-- To use the "attached test JAR" from the "adapter" module-->
+        <!-- Note: artist-adapters is a POM module and cannot be depended on directly.
+             Individual adapter modules are already included above. -->
         <dependency>
             <groupId>com.musichub</groupId>
-            <artifactId>artist-adapters</artifactId>
+            <artifactId>producer-adapters</artifactId>
             <version>${project.version}</version>
             <classifier>tests</classifier>
             <type>test-jar</type>
@@ -177,7 +178,7 @@
         </dependency>
         <dependency>
             <groupId>com.musichub</groupId>
-            <artifactId>producer-adapters</artifactId>
+            <artifactId>artist-adapters</artifactId>
             <version>${project.version}</version>
             <classifier>tests</classifier>
             <type>test-jar</type>

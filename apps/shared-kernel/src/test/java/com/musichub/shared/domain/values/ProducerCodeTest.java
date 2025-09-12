@@ -1,14 +1,13 @@
 package com.musichub.shared.domain.values;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
-
-import java.util.regex.Pattern;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class ProducerCodeTest {
 
@@ -40,7 +39,7 @@ class ProducerCodeTest {
 
     @ParameterizedTest
     @DisplayName("Should reject codes with invalid length")
-    @ValueSource(strings = {"A", "AB", "ABC", "ABCD", "ABCDEF"})
+    @ValueSource(strings = { "A", "AB", "ABC", "ABCD", "ABCDEF" })
     void invalidLength_shouldThrowException(String invalidCode) {
         // When / Then
         assertThrows(IllegalArgumentException.class, () -> ProducerCode.of(invalidCode));
@@ -48,7 +47,7 @@ class ProducerCodeTest {
 
     @ParameterizedTest
     @DisplayName("Should reject codes with invalid format")
-    @ValueSource(strings = {"12345", "ab123", "A1B2C", "AB12#", "AB 23"})
+    @ValueSource(strings = { "12345", "ab123", "A1B2C", "AB12#", "AB 23" })
     void invalidFormat_shouldThrowException(String invalidCode) {
         // When / Then
         assertThrows(IllegalArgumentException.class, () -> ProducerCode.of(invalidCode));

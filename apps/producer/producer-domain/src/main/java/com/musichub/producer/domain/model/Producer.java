@@ -1,7 +1,8 @@
 package com.musichub.producer.domain.model;
 
+import com.musichub.producer.domain.values.ArtistCredit;
 import com.musichub.producer.domain.values.ProducerId;
-import com.musichub.producer.domain.values.Source;
+import com.musichub.shared.domain.values.Source;
 import com.musichub.producer.domain.values.TrackStatus;
 import com.musichub.shared.domain.values.ISRC;
 import com.musichub.shared.domain.values.ProducerCode;
@@ -94,20 +95,29 @@ public final class Producer {
      * Factory method to register a track with complete metadata in the Producer aggregate.
      * This enforces DDD principles by keeping track creation within the aggregate boundary.
      */
-    public boolean registerTrack(ISRC isrc, String title, List<String> artistNames, List<Source> sources) {
+    public boolean registerTrack(ISRC isrc, String title, List<ArtistCredit> credits, List<Source> sources) {
         Objects.requireNonNull(isrc, ISRC_MUST_NOT_BE_NULL);
         Objects.requireNonNull(title, "title must not be null");
-        Objects.requireNonNull(artistNames, "artistNames must not be null");
+        Objects.requireNonNull(credits, "credits must not be null");
         Objects.requireNonNull(sources, "sources must not be null");
-        
+
         // Validate producer code consistency using ISRC-derived ProducerCode
         ProducerCode trackProducerCode = ProducerCode.with(isrc);
         if (!this.producerCode.equals(trackProducerCode)) {
             throw new IllegalArgumentException("Track producer code does not match aggregate producer code");
         }
-        
-        Track track = Track.withArtistNames(normalize(isrc), title, artistNames, sources, TrackStatus.PROVISIONAL);
+
+        Track track = Track.of(normalize(isrc), title, credits, sources, TrackStatus.PROVISIONAL);
         return tracks.add(track);
+    }
+
+    /**
+     * Convenience factory method to register a track with artist names only.
+     */
+    public boolean registerTrackWithArtistNames(ISRC isrc, String title, List<String> artistNames, List<Source> sources) {
+        Objects.requireNonNull(artistNames, "artistNames must not be null");
+        List<ArtistCredit> credits = artistNames.stream().map(ArtistCredit::withName).toList();
+        return registerTrack(isrc, title, credits, sources);
     }
 
     private static ISRC normalize(ISRC isrc) {
