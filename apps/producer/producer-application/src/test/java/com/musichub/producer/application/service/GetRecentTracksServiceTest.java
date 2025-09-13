@@ -1,4 +1,4 @@
-package com.musichub.producer.application;
+package com.musichub.producer.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -20,10 +20,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.musichub.producer.application.dto.TrackInfo;
 import com.musichub.producer.application.ports.out.TrackRepository;
-import com.musichub.producer.application.service.GetRecentTracksService;
-import com.musichub.shared.domain.values.Source;
 import com.musichub.producer.domain.values.TrackStatus;
 import com.musichub.shared.domain.values.ISRC;
+import com.musichub.shared.domain.values.Source;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("GetRecentTracksService Application Layer Tests")

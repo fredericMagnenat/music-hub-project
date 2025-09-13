@@ -22,7 +22,7 @@ class ProducerResourceIntegrationErrorHandlingTest {
     @DisplayName("Should map RuntimeException from use case to 422 with error payload")
     void shouldMapRuntimeExceptionTo422() {
         // Given
-        when(registerTrackUseCase.registerTrack("FRLA12409999"))
+        when(registerTrackUseCase.registerTrack("FRLA12409999", "test-correlation-id"))
             .thenThrow(new RuntimeException("ISRC not found upstream"));
 
         // When / Then

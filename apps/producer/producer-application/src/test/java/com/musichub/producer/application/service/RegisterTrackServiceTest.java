@@ -1,4 +1,4 @@
-package com.musichub.producer.application;
+package com.musichub.producer.application.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -30,11 +30,10 @@ import com.musichub.producer.application.exception.ExternalServiceException;
 import com.musichub.producer.application.ports.out.EventPublisherPort;
 import com.musichub.producer.application.ports.out.MusicPlatformPort;
 import com.musichub.producer.application.ports.out.ProducerRepository;
-import com.musichub.producer.application.service.RegisterTrackService;
 import com.musichub.producer.domain.model.Producer;
-import com.musichub.shared.domain.values.Source;
 import com.musichub.shared.domain.values.ISRC;
 import com.musichub.shared.domain.values.ProducerCode;
+import com.musichub.shared.domain.values.Source;
 import com.musichub.shared.events.ArtistCreditInfo;
 import com.musichub.shared.events.TrackWasRegistered;
 
@@ -86,7 +85,7 @@ class RegisterTrackServiceTest {
             when(producerRepository.save(any(Producer.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // When: Registering track
-            Producer result = registerTrackService.registerTrack(TEST_ISRC);
+            Producer result = registerTrackService.registerTrack(TEST_ISRC, "test-correlation-id-1");
 
             // Then: Should call external API
             verify(musicPlatformPort).getTrackByIsrc(TEST_ISRC);
@@ -129,7 +128,7 @@ class RegisterTrackServiceTest {
             when(producerRepository.save(any(Producer.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // When: Registering track
-            Producer result = registerTrackService.registerTrack(TEST_ISRC);
+            Producer result = registerTrackService.registerTrack(TEST_ISRC, "test-correlation-id-2");
 
             // Then: Should use existing producer
             verify(producerRepository).findByProducerCode(code);
@@ -157,7 +156,7 @@ class RegisterTrackServiceTest {
             when(producerRepository.save(any(Producer.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // When: Registering track
-            registerTrackService.registerTrack(TEST_ISRC);
+            registerTrackService.registerTrack(TEST_ISRC, "test-correlation-id-3");
 
             // Then: Event should contain all artists
             ArgumentCaptor<TrackWasRegistered> eventCaptor = ArgumentCaptor.forClass(TrackWasRegistered.class);
@@ -196,7 +195,7 @@ class RegisterTrackServiceTest {
             when(producerRepository.save(any(Producer.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // When: Registering same track again
-            registerTrackService.registerTrack(TEST_ISRC);
+            registerTrackService.registerTrack(TEST_ISRC, "test-correlation-id-4");
 
             // Then: Should still call external API (for metadata)
             verify(musicPlatformPort).getTrackByIsrc(TEST_ISRC);
@@ -224,7 +223,7 @@ class RegisterTrackServiceTest {
             when(producerRepository.save(any(Producer.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // When: Registering track with formatted ISRC
-            registerTrackService.registerTrack("GB-UM7-15-07409");
+            registerTrackService.registerTrack("GB-UM7-15-07409", "test-correlation-id-5");
 
             // Then: Should normalize ISRC for API call
             verify(musicPlatformPort).getTrackByIsrc("GB-UM7-15-07409");
@@ -251,7 +250,7 @@ class RegisterTrackServiceTest {
             // When & Then: Should propagate the exception
             ExternalServiceException thrown = assertThrows(
                     ExternalServiceException.class,
-                    () -> registerTrackService.registerTrack(TEST_ISRC));
+                    () -> registerTrackService.registerTrack(TEST_ISRC, "test-correlation-id-6"));
 
             assertEquals("Track not found", thrown.getMessage());
             assertEquals(TEST_ISRC, thrown.getIsrc());
@@ -272,7 +271,7 @@ class RegisterTrackServiceTest {
             // When & Then: Should wrap in ExternalServiceException
             ExternalServiceException thrown = assertThrows(
                     ExternalServiceException.class,
-                    () -> registerTrackService.registerTrack(TEST_ISRC));
+                    () -> registerTrackService.registerTrack(TEST_ISRC, "test-correlation-id-7"));
 
             assertTrue(thrown.getMessage().contains("Unexpected error"));
             assertEquals(TEST_ISRC, thrown.getIsrc());
@@ -293,7 +292,7 @@ class RegisterTrackServiceTest {
 
             // When: Attempting to register track
             assertThrows(ExternalServiceException.class,
-                    () -> registerTrackService.registerTrack(TEST_ISRC));
+                    () -> registerTrackService.registerTrack(TEST_ISRC, "test-correlation-id-8"));
 
             // Then: Should not publish any event
             verifyNoInteractions(eventPublisherPort);
@@ -319,7 +318,7 @@ class RegisterTrackServiceTest {
             when(producerRepository.save(any(Producer.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // When: Registering track
-            registerTrackService.registerTrack(TEST_ISRC);
+            registerTrackService.registerTrack(TEST_ISRC, "test-correlation-id-9");
 
             // Then: Should save first, then publish event (verified by method order)
             verify(producerRepository).save(any(Producer.class));
@@ -340,7 +339,7 @@ class RegisterTrackServiceTest {
             when(producerRepository.save(any(Producer.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // When: Registering track
-            registerTrackService.registerTrack(TEST_ISRC);
+            registerTrackService.registerTrack(TEST_ISRC, "test-correlation-id-10");
 
             // Then: Event should have correct structure
             ArgumentCaptor<TrackWasRegistered> eventCaptor = ArgumentCaptor.forClass(TrackWasRegistered.class);
@@ -366,7 +365,7 @@ class RegisterTrackServiceTest {
 
             // When & Then: Should throw ExternalServiceException due to null metadata
             ExternalServiceException thrown = assertThrows(ExternalServiceException.class,
-                    () -> registerTrackService.registerTrack(null));
+                    () -> registerTrackService.registerTrack(null, "test-correlation-id-11"));
 
             // Then: Should mention no track metadata returned
             assertTrue(thrown.getMessage().contains("No track metadata returned"));
@@ -387,7 +386,7 @@ class RegisterTrackServiceTest {
 
             // When & Then: Should fail due to null metadata
             ExternalServiceException thrown = assertThrows(ExternalServiceException.class,
-                    () -> registerTrackService.registerTrack(""));
+                    () -> registerTrackService.registerTrack("", "test-correlation-id-12"));
 
             // Then: Should mention no track metadata returned
             assertTrue(thrown.getMessage().contains("No track metadata returned"));

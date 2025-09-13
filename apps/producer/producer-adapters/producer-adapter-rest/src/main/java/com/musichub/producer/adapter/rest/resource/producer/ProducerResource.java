@@ -62,7 +62,7 @@ public class ProducerResource {
             validateRequest(request, correlationId);
             log.info("Registering track with ISRC: {} (correlationId: {})", request.isrc, correlationId);
 
-            Producer producer = registerTrackUseCase.registerTrack(request.isrc);
+            Producer producer = registerTrackUseCase.registerTrack(request.isrc, correlationId);
             ProducerResponse response = producerMapper.toResponse(producer);
 
             log.info("Successfully registered track for producer: {} (correlationId: {})",

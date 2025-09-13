@@ -52,7 +52,7 @@ class ProducerResourceTest {
         mockResponse.id = mockProducer.id().value().toString();
         mockResponse.producerCode = mockProducer.producerCode().value();
 
-        when(registerTrackUseCase.registerTrack("FRLA12400001")).thenReturn(mockProducer);
+        when(registerTrackUseCase.registerTrack("FRLA12400001", "test-correlation-id")).thenReturn(mockProducer);
         when(producerMapper.toResponse(mockProducer)).thenReturn(mockResponse);
 
         // When

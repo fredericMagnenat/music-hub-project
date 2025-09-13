@@ -269,16 +269,129 @@ components:
 
 To resolve data conflicts from multiple sources, the application implements a "Source of Truth" hierarchy (`MANUAL > TIDAL > SPOTIFY...`) as defined in the Domain Charter. This logic is applied within the domain aggregates (`Track`, `Artist`) when new information is processed, ensuring that the entity's state always reflects the data from the most authoritative source available. The authoritative source is determined at the entity level, not the attribute level, meaning the system identifies the single highest-ranking source for a given entity and considers all of its data to be authoritative.
 
+### Correlation ID Pattern Implementation
+
+The application implements a comprehensive correlation ID pattern to ensure proper observability and tracing across the distributed system. This pattern is crucial for debugging, monitoring, and maintaining request traceability in production environments.
+
+#### Pattern Overview
+
+Each service generates its own correlation ID following this format:
+```
+{service-name}-{timestamp}-{uuid-safe}
+```
+
+Example: `producer-1734567890123-a1b2c3d4e5f6789`
+
+#### Implementation Strategy
+
+**1. Service-Specific ID Generation:**
+```java
+// In RegisterTrackService.java
+@Override
+public Producer registerTrack(String isrcValue, String correlationId) {
+    // Generate service-specific correlation ID
+    String serviceCorrelationId = CorrelationIdGenerator.buildServiceCorrelationId(correlationId, SERVICE_NAME);
+
+    // Set MDC context for structured logging
+    MDC.put("correlation_id", serviceCorrelationId);
+    MDC.put("service", SERVICE_NAME);
+
+    try {
+        // Business logic using serviceCorrelationId
+        return performOperation(serviceCorrelationId);
+    } finally {
+        MDC.clear();
+    }
+}
+```
+
+**2. Shared Utility Class:**
+```java
+// In CorrelationIdGenerator.java (shared-kernel)
+public static String buildServiceCorrelationId(String incomingCorrelationId, String serviceName) {
+    if (incomingCorrelationId != null && !incomingCorrelationId.trim().isEmpty()) {
+        return incomingCorrelationId + "-" + serviceName + "-service";
+    }
+    return generateServiceCorrelationId(serviceName);
+}
+```
+
+#### Key Benefits
+
+- **🔍 Enhanced Observability**: Clear service identification in logs
+- **🔗 Distributed Tracing**: Correlation IDs flow across service boundaries
+- **🛡️ Backward Compatibility**: Existing clients work unchanged
+- **📊 Monitoring Ready**: Structured logs for APM tools
+- **🧪 Testable**: Dedicated test utilities for correlation ID validation
+
+#### Usage Examples
+
+**Log Output:**
+```json
+{
+  "timestamp": "2024-01-15T10:30:00.123Z",
+  "level": "INFO",
+  "logger": "com.musichub.producer.RegisterTrackService",
+  "message": "Track registration completed",
+  "correlation_id": "request-123-producer-service",
+  "service": "producer",
+  "business_context": {
+    "producer_code": "FRLA1",
+    "isrc": "FRLA12400001"
+  }
+}
+```
+
+**Chain of Correlation IDs:**
+```
+request-123 → request-123-producer-service → request-123-producer-service-artist-service
+```
+
+#### Testing Strategy
+
+**Unit Tests for Correlation ID Generation:**
+```java
+@Test
+@DisplayName("Should generate unique correlation IDs")
+void shouldGenerateUniqueCorrelationIds() {
+    Set<String> generatedIds = new HashSet<>();
+    for (int i = 0; i < 1000; i++) {
+        String id = CorrelationIdGenerator.generateServiceCorrelationId("producer");
+        generatedIds.add(id);
+    }
+    assertEquals(1000, generatedIds.size());
+}
+```
+
+#### Best Practices
+
+1. **Always Set MDC Context**: Use MDC.put() for structured logging
+2. **Cleanup After Use**: Always call MDC.clear() in finally blocks
+3. **Service-Specific Suffix**: Append service name to maintain traceability
+4. **Fallback Generation**: Generate ID if none provided
+5. **Test Coverage**: Include correlation ID validation in tests
+
+#### Integration with Monitoring
+
+The correlation ID pattern integrates seamlessly with:
+- **OpenTelemetry**: Distributed tracing support
+- **ELK Stack**: Structured log analysis
+- **Prometheus**: Request tracing metrics
+- **APM Tools**: End-to-end transaction monitoring
+
+This implementation ensures that every request can be traced from the initial entry point through all service layers, providing complete observability for production debugging and performance monitoring.
+
 ----- 
 
 ## Testing Strategy
 
 The testing strategy combines multiple levels to ensure quality:
 
-  * **Unit Tests (Backend & Frontend)**: Validate the atomic logic of domain classes and React components in isolation.
-  * **Integration Tests (Backend)**: Validate complete flows, from the API to the database, using an in-memory database (H2) and mocks (WireMock) for external services.
-  * **Code Quality**: Code coverage is measured by **Jacoco** (80% target), and architectural rules are validated by **ArchUnit**.
-  * **Test Documentation**: JUnit 5's ` @DisplayName` annotation is mandatory for all backend tests to ensure their readability.
+   * **Unit Tests (Backend & Frontend)**: Validate the atomic logic of domain classes and React components in isolation.
+   * **Integration Tests (Backend)**: Validate complete flows, from the API to the database, using an in-memory database (H2) and mocks (WireMock) for external services.
+   * **Code Quality**: Code coverage is measured by **Jacoco** (80% target), and architectural rules are validated by **ArchUnit**.
+   * **Test Documentation**: JUnit 5's ` @DisplayName` annotation is mandatory for all backend tests to ensure their readability.
+   * **Correlation ID Testing**: Dedicated tests for correlation ID generation, uniqueness, and propagation across service boundaries.
 
 ----- 
 
@@ -338,7 +451,8 @@ Centralized configuration using:
   "level": "INFO",
   "logger": "com.musichub.producer.application.RegisterTrackService",
   "message": "Track successfully registered",
-  "correlation_id": "req-123-456",
+  "correlation_id": "request-123-producer-service",
+  "service": "producer",
   "business_context": {
     "producer_code": "FRLA1",
     "isrc": "FRLA12400001",
@@ -347,12 +461,40 @@ Centralized configuration using:
 }
 ```
 
+**Note**: The `correlation_id` field now includes the service-specific suffix (e.g., `-producer-service`) as implemented in the Correlation ID Pattern. This enables clear service identification and distributed tracing across the system.
+
 ### Contextual Logging & Correlation
 
-- **Request Correlation**: UUID generated per request
-- **Business Context**: Business metadata in each log
-- **User Context**: User identification (if applicable)
+- **Request Correlation**: Service-specific correlation IDs with format `{service-name}-{timestamp}-{uuid}`
+- **Business Context**: Business metadata in each log entry
+- **Service Context**: Service identification via MDC "service" field
 - **Performance Context**: Execution times and metrics
+
+#### Correlation ID Implementation
+
+The system implements a hierarchical correlation ID pattern:
+
+**1. ID Generation Strategy:**
+```java
+// Service-specific correlation ID generation
+String serviceCorrelationId = CorrelationIdGenerator.buildServiceCorrelationId(
+    incomingCorrelationId, "producer"
+);
+// Result: "request-123-producer-service"
+```
+
+**2. MDC Context Setup:**
+```java
+MDC.put("correlation_id", serviceCorrelationId);
+MDC.put("service", SERVICE_NAME);
+```
+
+**3. Chain of Correlation IDs:**
+```
+request-123 → request-123-producer-service → request-123-producer-service-artist-service
+```
+
+This pattern ensures complete traceability across all service boundaries while maintaining backward compatibility with existing clients.
 
 ### Hexagonal Architecture Logging Patterns
 
@@ -414,10 +556,42 @@ log.info("Producer created with code: {}", producerCode.value());
 
 ### OpenTelemetry Integration
 
-- **Traces**: Correlation with APM metrics
-- **Spans**: Distributed context between services
-- **Baggage**: Business metadata propagation
-- **Sampling**: Intelligent trace configuration
+- **Traces**: Correlation IDs enable distributed tracing across services
+- **Spans**: Service-specific correlation IDs in span context
+- **Baggage**: Business metadata propagation via correlation ID chains
+- **Sampling**: Correlation ID-based sampling for targeted tracing
+
+#### Correlation ID Integration
+
+**Distributed Tracing Example:**
+```java
+// Automatic span tagging with correlation ID
+Span span = tracer.spanBuilder("register-track")
+    .setAttribute("correlation_id", serviceCorrelationId)
+    .setAttribute("service", SERVICE_NAME)
+    .startSpan();
+
+try (Scope scope = span.makeCurrent()) {
+    // Business logic
+    span.setAttribute("producer_code", producerCode.value());
+} finally {
+    span.end();
+}
+```
+
+**Log Correlation with Traces:**
+```json
+{
+  "timestamp": "2024-01-15T10:30:00.123Z",
+  "level": "INFO",
+  "message": "Track registered successfully",
+  "correlation_id": "request-123-producer-service",
+  "trace_id": "a1b2c3d4e5f6789abcdef",
+  "span_id": "fedcba987654321"
+}
+```
+
+This integration provides end-to-end observability from initial request through all service layers.
 
 ### Performance Considerations
 
@@ -428,17 +602,75 @@ log.info("Producer created with code: {}", producerCode.value());
 
 ### Business Event Logging
 
-- **Domain Events**: Business event logging
-- **State Changes**: Important state transitions
-- **Business Metrics**: KPIs and business indicators
-- **Compliance**: Regulatory traceability
+- **Domain Events**: Business events with correlation ID context
+- **State Changes**: Important state transitions with full traceability
+- **Business Metrics**: KPIs linked to specific correlation IDs
+- **Compliance**: Regulatory traceability with service-specific context
+
+#### Correlation ID in Business Events
+
+**Enhanced Business Event Logging:**
+```java
+logger.info("Track registration completed for ISRC: {} (correlationId: {})",
+    isrcValue, serviceCorrelationId);
+
+// Structured business context
+MDC.put("business_context", Map.of(
+    "producer_code", producerCode.value(),
+    "isrc", isrcValue,
+    "operation", "track_registration"
+).toString());
+```
+
+**Event Publishing with Correlation ID:**
+```java
+TrackWasRegistered event = new TrackWasRegistered(
+    isrc, title, producerId, artistCredits, sources
+);
+// Correlation ID is maintained in MDC context for event processing
+eventPublisherPort.publishTrackRegistered(event);
+```
+
+This ensures that all business events can be traced back to their originating request and service context.
 
 ### Monitoring & Alerting
 
-- **Error Rate**: Alerts on error spikes
-- **Performance**: Latency thresholds
-- **Business KPIs**: Critical business metrics
-- **Infrastructure**: System health and resources
+- **Error Rate**: Correlation ID-based error tracking and alerting
+- **Performance**: Latency monitoring per correlation ID chain
+- **Business KPIs**: Request tracing for business metric correlation
+- **Infrastructure**: System health with request context
+
+#### Correlation ID-Based Monitoring
+
+**Error Tracking by Correlation ID:**
+```java
+// Error logging with full context
+logger.error("Track registration failed for ISRC: {} (correlationId: {})",
+    isrcValue, serviceCorrelationId, exception);
+
+// Alerting can group errors by correlation ID to identify
+// systemic issues vs. isolated failures
+```
+
+**Performance Monitoring:**
+```java
+// Performance metrics tagged with correlation ID
+meterRegistry.timer("track.registration.duration",
+    Tags.of("correlation_id", serviceCorrelationId,
+            "service", SERVICE_NAME))
+    .record(duration);
+```
+
+**Business KPI Tracking:**
+```java
+// Business metrics linked to correlation IDs
+businessMetrics.counter("tracks.registered",
+    Tags.of("correlation_id", serviceCorrelationId,
+            "producer_code", producerCode.value()))
+    .increment();
+```
+
+This enables sophisticated monitoring scenarios like tracking the complete journey of a request across all services and identifying performance bottlenecks at the correlation ID level.
 
 -----
 
@@ -855,6 +1087,81 @@ quarkus.datasource.jdbc.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
 quarkus.hibernate-orm.database.generation=drop-and-create
 quarkus.hibernate-orm.log.sql=true
 ```
+
+#### Correlation ID Testing Standards
+
+**Philosophy**: Correlation ID tests ensure proper generation, uniqueness, and propagation across service boundaries.
+
+##### ✅ Excellent Example from Our Codebase
+
+```java
+// From: apps/shared-kernel/src/test/java/.../CorrelationIdGeneratorTest.java
+@DisplayName("CorrelationIdGenerator")
+class CorrelationIdGeneratorTest {
+
+    @Test
+    @DisplayName("Should generate unique correlation IDs")
+    void shouldGenerateUniqueCorrelationIds() {
+        // Given
+        Set<String> generatedIds = new HashSet<>();
+        int numberOfGenerations = 1000;
+
+        // When
+        for (int i = 0; i < numberOfGenerations; i++) {
+            String id = CorrelationIdGenerator.generateServiceCorrelationId("producer");
+            generatedIds.add(id);
+        }
+
+        // Then
+        assertEquals(numberOfGenerations, generatedIds.size(),
+                "All generated correlation IDs should be unique");
+    }
+
+    @Test
+    @DisplayName("Should append service suffix when incoming ID is provided")
+    void shouldAppendServiceSuffixWhenIncomingIdIsProvided() {
+        // Given
+        String incomingId = "request-123";
+
+        // When
+        String result = CorrelationIdGenerator.buildServiceCorrelationId(incomingId, "producer");
+
+        // Then
+        assertEquals("request-123-producer-service", result);
+    }
+}
+```
+
+##### Correlation ID Testing Standards
+
+- **Uniqueness Testing**: Generate thousands of IDs to verify no collisions
+- **Format Validation**: Ensure correct `{service}-{timestamp}-{uuid}` format
+- **Boundary Testing**: Test null, empty, and whitespace inputs
+- **Integration Testing**: Verify correlation IDs in logs and MDC context
+- **Performance Testing**: Measure ID generation overhead
+
+##### Service-Specific Correlation ID Tests
+
+```java
+// From: apps/producer/producer-application/src/test/java/.../RegisterTrackServiceCorrelationIdTest.java
+@Test
+@DisplayName("Should generate correlation ID with correct format")
+void shouldGenerateCorrelationIdWithCorrectFormat() {
+    // When
+    String result = testableService.generateServiceCorrelationId();
+
+    // Then
+    assertTrue(result.matches("producer-\\d+-[a-f0-9]+"),
+            "Correlation ID should match expected format");
+}
+```
+
+**Key Testing Scenarios:**
+- Service suffix appending
+- Fallback ID generation
+- MDC context management
+- Log correlation validation
+- End-to-end correlation ID propagation
 
 -----
 
@@ -1954,6 +2261,7 @@ This document establishes the testing standards for the Music Hub project, ensur
 3.  **Quality Over Coverage**: Focus on meaningful tests, not just coverage numbers
 4.  **Performance Matters**: Fast tests enable rapid feedback and productive development
 5.  **AI-Friendly Patterns**: Consistent templates and clear guidelines for automated test generation
+6.  **Correlation ID Pattern**: Service-specific correlation IDs for complete observability
 
 ### Quick Reference:
 
@@ -1962,6 +2270,7 @@ This document establishes the testing standards for the Music Hub project, ensur
 - **Adapter Tests**: Unit tests with RTL, mock external dependencies
 - **Bootstrap Tests**: Integration tests with real infrastructure
 - **Frontend Tests**: Component tests with RTL, mock external dependencies
+- **Correlation ID Tests**: Dedicated tests for ID generation and propagation
 - **Coverage Target**: 80% minimum, focus on critical paths
 
 For specific examples and templates, refer to the relevant sections above. When in doubt, follow the patterns established in our existing codebase and prioritize clarity and maintainability over cleverness.
