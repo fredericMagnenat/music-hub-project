@@ -2,7 +2,6 @@ package com.musichub.producer.application.service;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,10 +15,10 @@ import com.musichub.producer.application.ports.out.ProducerRepository;
 import com.musichub.producer.domain.model.Producer;
 import com.musichub.producer.domain.model.Track;
 import com.musichub.producer.domain.values.ArtistCredit;
-import com.musichub.shared.domain.values.Source;
 import com.musichub.shared.domain.id.ArtistId;
 import com.musichub.shared.domain.values.ISRC;
 import com.musichub.shared.domain.values.ProducerCode;
+import com.musichub.shared.domain.values.Source;
 import com.musichub.shared.events.ArtistCreditInfo;
 import com.musichub.shared.events.SourceInfo;
 import com.musichub.shared.events.TrackWasRegistered;
@@ -71,7 +70,7 @@ public class RegisterTrackService implements RegisterTrackUseCase {
         List<ArtistCredit> artistCredits = metadata.getArtistCredits().stream()
                 .map(dto -> ArtistCredit.with(dto.getArtistName(),
                         dto.getArtistId() != null ? new ArtistId(dto.getArtistId()) : null))
-                .collect(Collectors.toList());
+                .toList();
 
         boolean wasAdded = producer.registerTrack(normalizedIsrc, metadata.getTitle(), artistCredits, List.of(source));
 
@@ -116,11 +115,8 @@ public class RegisterTrackService implements RegisterTrackUseCase {
                     isrcValue, metadata.getTitle(), metadata.getArtistCredits());
             return metadata;
         } catch (ExternalServiceException e) {
-            logger.error("Failed to fetch track metadata from external API for ISRC: {} - {}",
-                    isrcValue, e.getMessage());
             throw e; // Re-throw the application exception
         } catch (Exception e) {
-            logger.error("Unexpected error while fetching track metadata for ISRC: {}", isrcValue, e);
             throw new ExternalServiceException(
                     "Unexpected error fetching track metadata for ISRC: " + isrcValue,
                     isrcValue,
@@ -161,11 +157,13 @@ public class RegisterTrackService implements RegisterTrackUseCase {
 
         this.eventPublisherPort.publishTrackRegistered(event);
 
-        logger.info(
-                "Successfully published TrackWasRegistered event for ISRC: {} - Title: '{}' by {} - ProducerId: {} - Sources: {}",
-                track.isrc().value(), track.title(),
-                artistCredits.stream().map(ArtistCreditInfo::artistName).toList(),
-                producer.id().value(), sources.size() + " sources");
+        if (logger.isInfoEnabled()) {
+            logger.info(
+                    "Successfully published TrackWasRegistered event for ISRC: {} - Title: '{}' by {} - ProducerId: {} - Sources: {}",
+                    track.isrc().value(), track.title(),
+                    artistCredits.stream().map(ArtistCreditInfo::artistName).toList(),
+                    producer.id().value(), sources.size() + " sources");
+        }
     }
 
     private static String normalizeIsrc(String input) {

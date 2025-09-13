@@ -35,7 +35,7 @@ public final class IdGenerator {
                         long leastSigBits = byteBuffer.getLong();
                         return new UUID(mostSigBits, leastSigBits);
                 } catch (NoSuchAlgorithmException e) {
-                        throw new RuntimeException("SHA-256 algorithm not found", e);
+                        throw new IdGenerationException("SHA-256 algorithm not found", e);
                 }
         }
 
