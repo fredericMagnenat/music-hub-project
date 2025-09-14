@@ -1,4 +1,4 @@
-package com.musichub.producer.adapter.spi.auth;
+package com.musichub.shared.adapter.spi.auth;
 
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;

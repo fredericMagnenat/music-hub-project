@@ -1,4 +1,4 @@
-package com.musichub.producer.adapter.spi.auth;
+package com.musichub.shared.adapter.spi.auth;
 
 import org.eclipse.microprofile.rest.client.ext.ClientHeadersFactory;
 import org.slf4j.Logger;
@@ -12,7 +12,7 @@ import jakarta.ws.rs.core.MultivaluedHashMap;
 /**
  * Client headers factory for Tidal API authentication.
  * Implements Quarkus REST Client best practices for adding authentication headers.
- * 
+ *
  * This factory:
  * 1. Uses TidalAuthService to obtain OAuth2 tokens
  * 2. Adds proper Authorization headers with Bearer tokens
@@ -30,7 +30,7 @@ public class TidalClientHeadersFactory implements ClientHeadersFactory {
     @Override
     public MultivaluedMap<String, String> update(MultivaluedMap<String, String> incomingHeaders,
                                                 MultivaluedMap<String, String> clientOutgoingHeaders) {
-        
+
         MultivaluedMap<String, String> headers = new MultivaluedHashMap<>();
 
         // Get OAuth2 token from authentication service
@@ -45,7 +45,7 @@ public class TidalClientHeadersFactory implements ClientHeadersFactory {
         // Always add required headers for Tidal API (JSON:API specification)
         headers.add("Accept", "application/vnd.api+json");
         headers.add("Content-Type", "application/vnd.api+json");
-        
+
         // Add User-Agent for API identification and debugging
         headers.add("User-Agent", "MusicHub/1.0.0");
 

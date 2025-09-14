@@ -37,6 +37,7 @@
 
     <modules>
         <module>shared-kernel</module>
+        <module>shared-technical</module>
         <module>producer</module>
         <module>artist</module>
         <module>bootstrap</module>

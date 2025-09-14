@@ -30,3 +30,16 @@ Merci de l'ajouter au backlog.
 Cordialement,
 
 Winston (Architecte)
+
+
+
+claude mcp add context7 -- npx -s project -y @upstash/context7-mcp --api-key ctx7sk-336dafdb-e821-4f09-a31b-3486a5ed25f9
+
+
+✅ QA Gate: CRÉÉ & APPROUVÉ
+⏳ Technical Review: En attente (Architecte)
+⏳ Business Sign-off: En attente (Bob - Scrum Master)
+
+Le QA Gate est maintenant disponible et la story peut officiellement passer en review technique !
+
+Souhaitez-vous que je committe les changements pour finaliser l'implémentation ?

@@ -1,4 +1,4 @@
-package com.musichub.producer.adapter.spi.auth;
+package com.musichub.shared.adapter.spi.auth;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 

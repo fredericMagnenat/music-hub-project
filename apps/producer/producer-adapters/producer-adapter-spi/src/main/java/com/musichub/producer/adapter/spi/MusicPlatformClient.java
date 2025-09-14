@@ -3,7 +3,7 @@ package com.musichub.producer.adapter.spi;
 import org.eclipse.microprofile.rest.client.annotation.RegisterClientHeaders;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
-import com.musichub.producer.adapter.spi.auth.TidalClientHeadersFactory;
+import com.musichub.shared.adapter.spi.auth.TidalClientHeadersFactory;
 import com.musichub.producer.adapter.spi.dto.tidal.TidalTracksResponse;
 
 import jakarta.ws.rs.GET;
