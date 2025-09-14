@@ -40,7 +40,8 @@ Centralized configuration using:
   "level": "INFO",
   "logger": "com.musichub.producer.application.RegisterTrackService",
   "message": "Track successfully registered",
-  "correlation_id": "req-123-456",
+  "correlation_id": "request-123-producer-service",
+  "service": "producer",
   "business_context": {
     "producer_code": "FRLA1",
     "isrc": "FRLA12400001",
@@ -49,12 +50,40 @@ Centralized configuration using:
 }
 ```
 
+**Note**: The `correlation_id` field now includes the service-specific suffix (e.g., `-producer-service`) as implemented in the Correlation ID Pattern. This enables clear service identification and distributed tracing across the system.
+
 ## Contextual Logging & Correlation
 
-- **Request Correlation**: UUID generated per request
-- **Business Context**: Business metadata in each log
-- **User Context**: User identification (if applicable)
+- **Request Correlation**: Service-specific correlation IDs with format `{service-name}-{timestamp}-{uuid}`
+- **Business Context**: Business metadata in each log entry
+- **Service Context**: Service identification via MDC "service" field
 - **Performance Context**: Execution times and metrics
+
+### Correlation ID Implementation
+
+The system implements a hierarchical correlation ID pattern:
+
+**1. ID Generation Strategy:**
+```java
+// Service-specific correlation ID generation
+String serviceCorrelationId = CorrelationIdGenerator.buildServiceCorrelationId(
+    incomingCorrelationId, "producer"
+);
+// Result: "request-123-producer-service"
+```
+
+**2. MDC Context Setup:**
+```java
+MDC.put("correlation_id", serviceCorrelationId);
+MDC.put("service", SERVICE_NAME);
+```
+
+**3. Chain of Correlation IDs:**
+```
+request-123 → request-123-producer-service → request-123-producer-service-artist-service
+```
+
+This pattern ensures complete traceability across all service boundaries while maintaining backward compatibility with existing clients.
 
 ## Hexagonal Architecture Logging Patterns
 
