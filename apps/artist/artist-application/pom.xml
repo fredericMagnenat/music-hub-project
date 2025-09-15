@@ -28,15 +28,6 @@
             <artifactId>quarkus-arc</artifactId>
         </dependency>
 
-        <!-- To use the "attached test JAR" from the "model" module-->
-        <dependency>
-            <groupId>com.musichub</groupId>
-            <artifactId>artist-domain</artifactId>
-            <version>${project.version}</version>
-            <classifier>tests</classifier>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
 
 
     </dependencies>

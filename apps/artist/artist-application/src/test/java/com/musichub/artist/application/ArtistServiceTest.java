@@ -7,13 +7,16 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import com.musichub.artist.application.ports.out.ArtistRepository;
 import com.musichub.artist.application.service.ArtistService;
+import com.musichub.artist.application.service.ArtistEnrichmentService;
 import com.musichub.shared.events.ArtistCreditInfo;
 import com.musichub.shared.events.SourceInfo;
 import com.musichub.shared.events.TrackWasRegistered;
@@ -26,8 +29,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.musichub.artist.domain.model.Artist;
-
-
+import com.musichub.artist.domain.values.Contribution;
+import com.musichub.shared.domain.id.TrackId;
 import com.musichub.shared.domain.values.ISRC;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,10 +42,16 @@ class ArtistServiceTest {
     @Mock
     private ArtistRepository artistRepository;
 
+    @Mock
+    private ArtistEnrichmentService enrichmentService;
+
     @BeforeEach
     @DisplayName("Set up test environment")
     void setUp() {
-        artistService = new ArtistService(artistRepository);
+        artistService = new ArtistService(artistRepository, enrichmentService);
+        // Setup default enrichment service behavior
+        when(enrichmentService.enrichArtist(any(Artist.class)))
+            .thenReturn(CompletableFuture.completedFuture(mock(Artist.class)));
     }
 
     @Test
@@ -50,28 +59,34 @@ class ArtistServiceTest {
     void unknownArtist_shouldCreateNewArtistWhenHandlingTrackRegistration() {
         // Given
         String artistName = "The Testers";
-        ISRC isrc = new ISRC("DEU630901306");
+        ISRC isrc = ISRC.of("DEU630901306");
         UUID producerId = UUID.randomUUID();
         TrackWasRegistered event = new TrackWasRegistered(
-            isrc, 
-            "Test Track", 
-            producerId, 
+            isrc,
+            "Test Track",
+            producerId,
             List.of(ArtistCreditInfo.withName(artistName)),
             List.of(new SourceInfo("SPOTIFY", "spotify123"))
         );
 
         when(artistRepository.findByName(artistName)).thenReturn(Optional.empty());
+        when(artistRepository.save(any(Artist.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // When
         artistService.handleTrackRegistration(event);
 
         // Then
         ArgumentCaptor<Artist> artistCaptor = ArgumentCaptor.forClass(Artist.class);
-        verify(artistRepository).save(artistCaptor.capture());
+        verify(artistRepository, times(2)).save(artistCaptor.capture()); // Once for creation, once for contribution
 
-        Artist savedArtist = artistCaptor.getValue();
-        assertEquals(artistName, savedArtist.getName());
-        assertTrue(savedArtist.getTrackReferences().contains(isrc), "New track reference should be added");
+        List<Artist> savedArtists = artistCaptor.getAllValues();
+        Artist finalArtist = savedArtists.get(savedArtists.size() - 1);
+        assertEquals(artistName, finalArtist.getNameValue());
+        assertEquals(1, finalArtist.getContributions().size());
+
+        Contribution contribution = finalArtist.getContributions().get(0);
+        assertEquals("Test Track", contribution.title());
+        assertEquals(isrc, contribution.isrc());
     }
 
     @Test
@@ -79,22 +94,28 @@ class ArtistServiceTest {
     void existingArtist_shouldUpdateWhenHandlingTrackRegistration() {
         // Given
         String artistName = "The Veterans";
-        ISRC existingIsrc = new ISRC("DEU630901307");
-        ISRC newIsrc = new ISRC("DEU630901308");
+        ISRC existingIsrc = ISRC.of("DEU630901307");
+        ISRC newIsrc = ISRC.of("DEU630901308");
         UUID producerId = UUID.randomUUID();
         TrackWasRegistered event = new TrackWasRegistered(
-            newIsrc, 
-            "Another Track", 
-            producerId, 
+            newIsrc,
+            "Another Track",
+            producerId,
             List.of(ArtistCreditInfo.withName(artistName)),
             List.of(new SourceInfo("TIDAL", "tidal456"))
         );
 
-        // Create an artist that already has one track reference
+        // Create an artist that already has one contribution
         Artist existingArtist = Artist.createProvisional(artistName);
-        existingArtist.addTrackReference(existingIsrc);
+        Contribution existingContribution = Contribution.of(
+            new TrackId(UUID.randomUUID()),
+            "Existing Track",
+            existingIsrc
+        );
+        existingArtist = existingArtist.addContribution(existingContribution);
 
         when(artistRepository.findByName(artistName)).thenReturn(Optional.of(existingArtist));
+        when(artistRepository.save(any(Artist.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // When
         artistService.handleTrackRegistration(event);
@@ -104,22 +125,29 @@ class ArtistServiceTest {
         verify(artistRepository).save(artistCaptor.capture());
 
         Artist savedArtist = artistCaptor.getValue();
-        assertEquals(artistName, savedArtist.getName());
-        assertEquals(2, savedArtist.getTrackReferences().size(), "Should now have two track references");
-        assertTrue(savedArtist.getTrackReferences().contains(existingIsrc), "Should still contain the old track reference");
-        assertTrue(savedArtist.getTrackReferences().contains(newIsrc), "Should contain the new track reference");
+        assertEquals(artistName, savedArtist.getNameValue());
+        assertEquals(2, savedArtist.getContributions().size(), "Should now have two contributions");
+
+        // Check both contributions are present
+        boolean hasOldContribution = savedArtist.getContributions().stream()
+            .anyMatch(c -> c.isrc().equals(existingIsrc));
+        boolean hasNewContribution = savedArtist.getContributions().stream()
+            .anyMatch(c -> c.isrc().equals(newIsrc) && c.title().equals("Another Track"));
+
+        assertTrue(hasOldContribution, "Should still contain the old contribution");
+        assertTrue(hasNewContribution, "Should contain the new contribution");
     }
 
     @Test
     @DisplayName("Should handle empty artist names list gracefully")
     void emptyArtistNames_shouldHandleGracefully() {
         // Given
-        ISRC isrc = new ISRC("DEU630901309");
+        ISRC isrc = ISRC.of("DEU630901309");
         UUID producerId = UUID.randomUUID();
         TrackWasRegistered event = new TrackWasRegistered(
-            isrc, 
-            "Track Without Artists", 
-            producerId, 
+            isrc,
+            "Track Without Artists",
+            producerId,
             List.of(),
             List.of(new SourceInfo("MANUAL", "manual789"))
         );
@@ -136,12 +164,12 @@ class ArtistServiceTest {
     @DisplayName("Should handle null artist names list gracefully")
     void nullArtistNames_shouldHandleGracefully() {
         // Given
-        ISRC isrc = new ISRC("DEU630901310");
+        ISRC isrc = ISRC.of("DEU630901310");
         UUID producerId = UUID.randomUUID();
         TrackWasRegistered event = new TrackWasRegistered(
-            isrc, 
-            "Track With Null Artists", 
-            producerId, 
+            isrc,
+            "Track With Null Artists",
+            producerId,
             null,
             List.of(new SourceInfo("DEEZER", "deezer101"))
         );
@@ -161,10 +189,10 @@ class ArtistServiceTest {
         String artist1Name = "First Artist";
         String artist2Name = "Second Artist";
         String artist3Name = "Third Artist";
-        ISRC isrc = new ISRC("DEU630901311");
+        ISRC isrc = ISRC.of("DEU630901311");
         UUID producerId = UUID.randomUUID();
         TrackWasRegistered event = new TrackWasRegistered(
-            isrc, 
+            isrc,
             "Collaboration Track",
             producerId,
             List.of(
@@ -177,11 +205,17 @@ class ArtistServiceTest {
 
         // Mock existing artist for artist2
         Artist existingArtist = Artist.createProvisional(artist2Name);
-        existingArtist.addTrackReference(new ISRC("DEU630901312"));
+        Contribution existingContribution = Contribution.of(
+            new TrackId(UUID.randomUUID()),
+            "Existing Track",
+            ISRC.of("DEU630901312")
+        );
+        existingArtist = existingArtist.addContribution(existingContribution);
 
         when(artistRepository.findByName(artist1Name)).thenReturn(Optional.empty());
         when(artistRepository.findByName(artist2Name)).thenReturn(Optional.of(existingArtist));
         when(artistRepository.findByName(artist3Name)).thenReturn(Optional.empty());
+        when(artistRepository.save(any(Artist.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // When
         artistService.handleTrackRegistration(event);
@@ -193,36 +227,20 @@ class ArtistServiceTest {
         verify(artistRepository).findByName(artist3Name);
 
         ArgumentCaptor<Artist> artistCaptor = ArgumentCaptor.forClass(Artist.class);
-        verify(artistRepository, times(3)).save(artistCaptor.capture());
+        verify(artistRepository, times(5)).save(artistCaptor.capture()); // 2 new artists + 3 with contributions
 
         List<Artist> savedArtists = artistCaptor.getAllValues();
-        assertEquals(3, savedArtists.size());
 
-        // Verify first artist (new)
-        Artist savedArtist1 = savedArtists.stream()
-            .filter(artist -> artist.getName().equals(artist1Name))
-            .findFirst()
-            .orElseThrow();
-        assertEquals(artist1Name, savedArtist1.getName());
-        assertEquals(1, savedArtist1.getTrackReferences().size());
-        assertTrue(savedArtist1.getTrackReferences().contains(isrc));
+        // Get final saved artists (last 3 saves are with contributions)
+        List<Artist> finalArtists = savedArtists.subList(savedArtists.size() - 3, savedArtists.size());
 
-        Artist savedArtist2 = savedArtists.stream()
-            .filter(artist -> artist.getName().equals(artist2Name))
-            .findFirst()
-            .orElseThrow();
-        assertEquals(artist2Name, savedArtist2.getName());
-        assertEquals(2, savedArtist2.getTrackReferences().size());
-        assertTrue(savedArtist2.getTrackReferences().contains(isrc));
-
-
-        Artist savedArtist3 = savedArtists.stream()
-            .filter(artist -> artist.getName().equals(artist3Name))
-            .findFirst()
-            .orElseThrow();
-        assertEquals(artist3Name, savedArtist3.getName());
-        assertEquals(1, savedArtist3.getTrackReferences().size());
-        assertTrue(savedArtist3.getTrackReferences().contains(isrc));
+        // Check each artist has the collaboration contribution
+        for (Artist artist : finalArtists) {
+            boolean hasCollaborationContribution = artist.getContributions().stream()
+                .anyMatch(c -> c.isrc().equals(isrc) && c.title().equals("Collaboration Track"));
+            assertTrue(hasCollaborationContribution,
+                "Artist " + artist.getNameValue() + " should have collaboration contribution");
+        }
     }
 
     @Test
@@ -230,52 +248,63 @@ class ArtistServiceTest {
     void artistNameWithWhitespace_shouldHandleGracefully() {
         // Given
         String artistNameWithSpaces = "  Artist With Spaces  ";
-        ISRC isrc = new ISRC("DEU630901313");
+        ISRC isrc = ISRC.of("DEU630901313");
         UUID producerId = UUID.randomUUID();
         TrackWasRegistered event = new TrackWasRegistered(
-            isrc, 
-            "Spaced Track", 
+            isrc,
+            "Spaced Track",
             producerId,
             List.of(ArtistCreditInfo.withName(artistNameWithSpaces)),
             List.of(new SourceInfo("SPOTIFY", "spotify303"))
         );
 
         when(artistRepository.findByName(artistNameWithSpaces)).thenReturn(Optional.empty());
+        when(artistRepository.save(any(Artist.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // When
         artistService.handleTrackRegistration(event);
 
         // Then
         verify(artistRepository).findByName(artistNameWithSpaces);
-        
-        ArgumentCaptor<Artist> artistCaptor = ArgumentCaptor.forClass(Artist.class);
-        verify(artistRepository).save(artistCaptor.capture());
 
-        Artist savedArtist = artistCaptor.getValue();
-        assertEquals(artistNameWithSpaces, savedArtist.getName());
-        assertTrue(savedArtist.getTrackReferences().contains(isrc));
+        ArgumentCaptor<Artist> artistCaptor = ArgumentCaptor.forClass(Artist.class);
+        verify(artistRepository, times(2)).save(artistCaptor.capture());
+
+        List<Artist> savedArtists = artistCaptor.getAllValues();
+        Artist finalArtist = savedArtists.get(savedArtists.size() - 1);
+        assertEquals(artistNameWithSpaces, finalArtist.getNameValue());
+
+        boolean hasContribution = finalArtist.getContributions().stream()
+            .anyMatch(c -> c.isrc().equals(isrc) && c.title().equals("Spaced Track"));
+        assertTrue(hasContribution, "Should contain the track contribution");
     }
 
     @Test
-    @DisplayName("Should not save artist when track reference already exists")
-    void existingTrackReference_shouldStillSaveArtist() {
+    @DisplayName("Should handle duplicate contribution idempotently")
+    void existingContribution_shouldHandleIdempotently() {
         // Given
         String artistName = "Duplicate Track Artist";
-        ISRC duplicateIsrc = new ISRC("DEU630901314");
+        ISRC duplicateIsrc = ISRC.of("DEU630901314");
         UUID producerId = UUID.randomUUID();
         TrackWasRegistered event = new TrackWasRegistered(
-            duplicateIsrc, 
-            "Duplicate Track", 
+            duplicateIsrc,
+            "Duplicate Track",
             producerId,
             List.of(ArtistCreditInfo.withName(artistName)),
             List.of(new SourceInfo("TIDAL", "tidal404"))
         );
 
-        // Artist already has this track reference
+        // Artist already has this contribution
         Artist existingArtist = Artist.createProvisional(artistName);
-        existingArtist.addTrackReference(duplicateIsrc);
+        Contribution existingContribution = Contribution.of(
+            new TrackId(producerId),
+            "Duplicate Track",
+            duplicateIsrc
+        );
+        existingArtist = existingArtist.addContribution(existingContribution);
 
         when(artistRepository.findByName(artistName)).thenReturn(Optional.of(existingArtist));
+        when(artistRepository.save(any(Artist.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // When
         artistService.handleTrackRegistration(event);
@@ -285,8 +314,11 @@ class ArtistServiceTest {
         verify(artistRepository).save(artistCaptor.capture());
 
         Artist savedArtist = artistCaptor.getValue();
-        assertEquals(artistName, savedArtist.getName());
-        assertEquals(1, savedArtist.getTrackReferences().size());
-        assertTrue(savedArtist.getTrackReferences().contains(duplicateIsrc));
+        assertEquals(artistName, savedArtist.getNameValue());
+        assertEquals(1, savedArtist.getContributions().size()); // Still only one contribution due to idempotency
+
+        Contribution contribution = savedArtist.getContributions().get(0);
+        assertEquals(duplicateIsrc, contribution.isrc());
+        assertEquals("Duplicate Track", contribution.title());
     }
 }
