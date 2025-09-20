@@ -45,11 +45,11 @@ class ArtistEnrichmentServiceTest {
         List<ArtistReconciliationPort> reconciliationPorts = Arrays.asList(tidalPort, spotifyPort);
         enrichmentService = new ArtistEnrichmentService(artistRepository, reconciliationPorts);
 
-        // Setup default port support
-        when(tidalPort.supports(SourceType.TIDAL)).thenReturn(true);
-        when(tidalPort.supports(any())).thenReturn(false);
-        when(spotifyPort.supports(SourceType.SPOTIFY)).thenReturn(true);
-        when(spotifyPort.supports(any())).thenReturn(false);
+        // Setup default port support - only stub what's actually used in tests
+        lenient().when(tidalPort.supports(SourceType.TIDAL)).thenReturn(true);
+        lenient().when(tidalPort.supports(any())).thenReturn(false);
+        lenient().when(spotifyPort.supports(SourceType.SPOTIFY)).thenReturn(true);
+        lenient().when(spotifyPort.supports(any())).thenReturn(false);
     }
 
     @Nested
