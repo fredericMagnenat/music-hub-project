@@ -8,6 +8,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.lenient;
 
 import java.util.List;
 import java.util.Optional;
@@ -49,8 +50,8 @@ class ArtistServiceTest {
     @DisplayName("Set up test environment")
     void setUp() {
         artistService = new ArtistService(artistRepository, enrichmentService);
-        // Setup default enrichment service behavior
-        when(enrichmentService.enrichArtist(any(Artist.class)))
+        // Setup default enrichment service behavior - use lenient to avoid UnnecessaryStubbingException
+        lenient().when(enrichmentService.enrichArtist(any(Artist.class)))
             .thenReturn(CompletableFuture.completedFuture(mock(Artist.class)));
     }
 
@@ -231,16 +232,21 @@ class ArtistServiceTest {
 
         List<Artist> savedArtists = artistCaptor.getAllValues();
 
-        // Get final saved artists (last 3 saves are with contributions)
-        List<Artist> finalArtists = savedArtists.subList(savedArtists.size() - 3, savedArtists.size());
+        // Filter to get only artists that have contributions (exclude newly created artists without contributions)
+        List<Artist> artistsWithContributions = savedArtists.stream()
+            .filter(artist -> !artist.getContributions().isEmpty())
+            .toList();
 
-        // Check each artist has the collaboration contribution
-        for (Artist artist : finalArtists) {
+        // Check each artist with contributions has the collaboration contribution
+        for (Artist artist : artistsWithContributions) {
             boolean hasCollaborationContribution = artist.getContributions().stream()
                 .anyMatch(c -> c.isrc().equals(isrc) && c.title().equals("Collaboration Track"));
             assertTrue(hasCollaborationContribution,
                 "Artist " + artist.getNameValue() + " should have collaboration contribution");
         }
+
+        // Verify we have exactly 3 artists with contributions
+        assertEquals(3, artistsWithContributions.size(), "Should have exactly 3 artists with contributions");
     }
 
     @Test
@@ -272,7 +278,8 @@ class ArtistServiceTest {
 
         List<Artist> savedArtists = artistCaptor.getAllValues();
         Artist finalArtist = savedArtists.get(savedArtists.size() - 1);
-        assertEquals(artistNameWithSpaces, finalArtist.getNameValue());
+        // ArtistName trims whitespace, so expect the trimmed version
+        assertEquals(artistNameWithSpaces.trim(), finalArtist.getNameValue());
 
         boolean hasContribution = finalArtist.getContributions().stream()
             .anyMatch(c -> c.isrc().equals(isrc) && c.title().equals("Spaced Track"));
