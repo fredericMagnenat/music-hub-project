@@ -1,31 +1,29 @@
 package com.musichub.artist.adapter.persistence.mapper;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
+import org.mapstruct.ReportingPolicy;
+
 import com.musichub.artist.adapter.persistence.entity.ArtistEntity;
 import com.musichub.artist.adapter.persistence.entity.ContributionEntity;
 import com.musichub.artist.adapter.persistence.entity.SourceEntity;
 import com.musichub.artist.domain.model.Artist;
-import com.musichub.artist.domain.model.ArtistStatus;
 import com.musichub.artist.domain.values.ArtistName;
 import com.musichub.artist.domain.values.Contribution;
 import com.musichub.shared.domain.id.ArtistId;
 import com.musichub.shared.domain.id.TrackId;
 import com.musichub.shared.domain.values.ISRC;
 import com.musichub.shared.domain.values.Source;
-import com.musichub.shared.domain.values.SourceType;
-
-import org.mapstruct.*;
-
-import java.util.List;
-import java.util.UUID;
 
 /**
  * MapStruct mapper between Artist domain model and JPA entities.
  * Handles conversion of rich domain aggregates to/from persistence format.
  */
-@Mapper(
-    componentModel = "cdi",
-    unmappedTargetPolicy = ReportingPolicy.ERROR
-)
+@Mapper(componentModel = "cdi", unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface ArtistMapper {
 
     /**
@@ -75,10 +73,9 @@ public interface ArtistMapper {
             return null;
         }
         return Contribution.of(
-            new TrackId(entity.trackId),
-            entity.title,
-            ISRC.of(entity.isrc)
-        );
+                new TrackId(entity.trackId),
+                entity.title,
+                ISRC.of(entity.isrc));
     }
 
     /**
