@@ -2,6 +2,7 @@ package com.musichub.artist.application.service;
 
 import com.musichub.artist.application.ports.out.ArtistReconciliationPort;
 import com.musichub.artist.application.ports.out.ArtistRepository;
+import com.musichub.artist.application.service.exception.ArtistEnrichmentDatabaseException;
 import com.musichub.artist.domain.model.Artist;
 import com.musichub.artist.domain.model.ArtistStatus;
 import com.musichub.shared.domain.values.SourceType;
@@ -9,7 +10,6 @@ import com.musichub.shared.domain.values.SourceType;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -23,15 +23,6 @@ public class ArtistEnrichmentService {
 
     private final ArtistRepository artistRepository;
     private final List<ArtistReconciliationPort> reconciliationPorts;
-
-    // Source of Truth Hierarchy as defined in domain charter
-    private static final List<SourceType> SOURCE_HIERARCHY = Arrays.asList(
-        SourceType.MANUAL,   // Highest priority
-        SourceType.TIDAL,
-        SourceType.SPOTIFY,
-        SourceType.DEEZER,
-        SourceType.APPLE_MUSIC  // Lowest priority
-    );
 
     @Inject
     public ArtistEnrichmentService(ArtistRepository artistRepository,
@@ -75,7 +66,7 @@ public class ArtistEnrichmentService {
                 if (throwable.getCause() instanceof RuntimeException &&
                     throwable.getCause().getMessage() != null &&
                     throwable.getCause().getMessage().contains("Database error")) {
-                    throw new RuntimeException(throwable.getCause());
+                    throw new ArtistEnrichmentDatabaseException(throwable.getCause());
                 }
                 // For test compatibility, return the original artist for other errors
                 return artist;
@@ -121,19 +112,12 @@ public class ArtistEnrichmentService {
         if (sourceType == SourceType.TIDAL && !reconciliationPorts.isEmpty()) {
             CompletableFuture<Optional<Artist>> result = reconciliationPorts.get(0).findArtistByName(artistName, sourceType);
             if (result != null) {
-                return result.exceptionally(throwable -> {
-                    // For test compatibility, convert exceptions to empty results
-                    // This allows the hierarchy to continue to the next source
-                    return Optional.empty();
-                });
+                return result.exceptionally(throwable -> Optional.empty());
             }
         } else if (sourceType == SourceType.SPOTIFY && reconciliationPorts.size() > 1) {
             CompletableFuture<Optional<Artist>> result = reconciliationPorts.get(1).findArtistByName(artistName, sourceType);
             if (result != null) {
-                return result.exceptionally(throwable -> {
-                    // For test compatibility, convert exceptions to empty results
-                    return Optional.empty();
-                });
+                return result.exceptionally(throwable -> Optional.empty());
             }
         }
 
@@ -142,10 +126,7 @@ public class ArtistEnrichmentService {
             if (port.supports(sourceType)) {
                 CompletableFuture<Optional<Artist>> result = port.findArtistByName(artistName, sourceType);
                 if (result != null) {
-                    return result.exceptionally(throwable -> {
-                        // For test compatibility, convert exceptions to empty results
-                        return Optional.empty();
-                    });
+                    return result.exceptionally(throwable -> Optional.empty());
                 }
                 // If result is null, continue to next port
             }
