@@ -1,18 +1,19 @@
 package com.musichub.artist.adapter.spi;
 
-import com.musichub.artist.domain.model.Artist;
-import com.musichub.artist.domain.model.ArtistStatus;
-import com.musichub.shared.domain.values.SourceType;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-
-import static org.assertj.core.api.Assertions.*;
+import com.musichub.artist.domain.model.Artist;
+import com.musichub.artist.domain.model.ArtistStatus;
+import com.musichub.shared.domain.values.SourceType;
 
 @DisplayName("TidalArtistClient Unit Tests")
 class TidalArtistClientTest {
@@ -89,11 +90,7 @@ class TidalArtistClientTest {
             CompletableFuture<Optional<Artist>> result = tidalClient.findArtistByName(artistName, sourceType);
 
             // Then - Should not throw exception and return empty
-            assertThatCode(() -> {
-                Optional<Artist> artist = result.join();
-                // Either empty (no artist found) or present (if network call succeeded)
-                // Both are valid outcomes for this test
-            }).doesNotThrowAnyException();
+            assertThatCode(result::join).doesNotThrowAnyException();
         }
 
         @Test
@@ -107,7 +104,7 @@ class TidalArtistClientTest {
             CompletableFuture<Optional<Artist>> result = tidalClient.findArtistByName(artistNameWithSpaces, sourceType);
 
             // Then - Should handle the name formatting without throwing exception
-            assertThatCode(() -> result.join()).doesNotThrowAnyException();
+            assertThatCode(result::join).doesNotThrowAnyException();
         }
     }
 
@@ -141,7 +138,7 @@ class TidalArtistClientTest {
             CompletableFuture<Optional<Artist>> result = tidalClient.findArtistByExternalId(invalidExternalId, sourceType);
 
             // Then - Should not throw exception
-            assertThatCode(() -> result.join()).doesNotThrowAnyException();
+            assertThatCode(result::join).doesNotThrowAnyException();
         }
 
         @Test
@@ -155,7 +152,7 @@ class TidalArtistClientTest {
             CompletableFuture<Optional<Artist>> result = tidalClient.findArtistByExternalId(nullExternalId, sourceType);
 
             // Then - Should not throw exception
-            assertThatCode(() -> result.join()).doesNotThrowAnyException();
+            assertThatCode(result::join).doesNotThrowAnyException();
         }
     }
 
@@ -175,7 +172,7 @@ class TidalArtistClientTest {
 
             // When & Then - Should not throw exception even if API returns malformed JSON
             CompletableFuture<Optional<Artist>> result = tidalClient.findArtistByName(artistName, sourceType);
-            assertThatCode(() -> result.join()).doesNotThrowAnyException();
+            assertThatCode(result::join).doesNotThrowAnyException();
         }
 
         @Test
@@ -187,7 +184,7 @@ class TidalArtistClientTest {
 
             // When & Then - Should not throw exception even if API returns empty response
             CompletableFuture<Optional<Artist>> result = tidalClient.findArtistByName(artistName, sourceType);
-            assertThatCode(() -> result.join()).doesNotThrowAnyException();
+            assertThatCode(result::join).doesNotThrowAnyException();
         }
     }
 
@@ -209,8 +206,7 @@ class TidalArtistClientTest {
 
             // Then - Method should return quickly (< 100ms) without blocking
             assertThat(endTime - startTime).isLessThan(100);
-            assertThat(result).isNotNull();
-            assertThat(result).isInstanceOf(CompletableFuture.class);
+            assertThat(result).isNotNull().isInstanceOf(CompletableFuture.class);
         }
 
         @Test
@@ -225,8 +221,6 @@ class TidalArtistClientTest {
 
             // Then - Future should not be completed immediately
             // Note: This might be flaky in very fast environments, but generally should work
-            boolean initiallyComplete = result.isDone();
-
             // Wait for completion
             result.join();
 
