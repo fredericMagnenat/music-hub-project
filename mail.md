@@ -46,7 +46,7 @@ Souhaitez-vous que je committe les changements pour finaliser l'implémentation 
 
 ---
 
-**Sujet :** Demande de création d'une story pour correction des tests ArtistEnrichmentService et ArtistService
+**Sujet :** Demande de création d'une story technique : Correction des violations SonarQube dans ArtistEnrichmentService
 
 **Destinataire :** Bob (Scrum Master)
 
@@ -54,60 +54,83 @@ Souhaitez-vous que je committe les changements pour finaliser l'implémentation 
 
 Bonjour Bob,
 
-J'espère que ce mail te trouve bien. Je rencontre actuellement des problèmes avec les tests unitaires dans le module `artist-application` qui nécessitent une intervention structurée.
+Suite à l'implémentation de la story 4.05 (correction des tests Artist), j'ai analysé les violations SonarQube détectées dans le fichier `ArtistEnrichmentService.java`. Ces violations nécessitent une correction pour maintenir la qualité du code.
 
-## Contexte
-Suite à la résolution d'un bug CDI critique (injection de `List<ArtistReconciliationPort>`), j'ai lancé les tests pour valider que les corrections n'introduisaient pas de régressions. Malheureusement, 17 tests sur 18 échouent actuellement.
+## Analyse des violations SonarQube
 
-## Problèmes identifiés
+### 1. java:S1068 - Champ inutilisé (ligne 28)
+**Problème :** Le champ `SOURCE_HIERARCHY` est défini mais jamais utilisé dans le code.
+```java
+private static final List<SourceType> SOURCE_HIERARCHY = Arrays.asList(
+    SourceType.MANUAL,   // Highest priority
+    SourceType.TIDAL,
+    SourceType.SPOTIFY,
+    SourceType.DEEZER,
+    SourceType.APPLE_MUSIC  // Lowest priority
+);
+```
 
-### Tests ArtistEnrichmentService (11 échecs)
-- **Fusion des données d'artiste** : Les artistes restent en statut `PROVISIONAL` au lieu de passer à `VERIFIED` après enrichissement
-- **Logique de recherche** : La méthode `findArtistByName` n'est pas appelée sur les ports appropriés selon la hiérarchie des sources
-- **Gestion d'erreurs** : Les exceptions ne sont pas correctement propagées dans les tests d'erreur
-- **Hiérarchie des sources** : La priorité MANUAL > TIDAL > SPOTIFY > DEEZER > APPLE_MUSIC n'est pas respectée
+**Impact :** Code mort qui peut induire en erreur les développeurs.
 
-### Tests ArtistService (6 échecs)
-- **Gestion des espaces** : Les espaces dans les noms d'artistes ne sont pas préservés comme attendu
-- **Contributions de collaboration** : La logique de détermination des contributions multiples d'artistes est incorrecte
-- **Stubbings Mockito** : Plusieurs stubbings inutiles causent des erreurs `UnnecessaryStubbingException`
+### 2. java:S112 - Exception générique (ligne 78)
+**Problème :** Utilisation d'une `RuntimeException` générique au lieu d'une exception dédiée.
+```java
+throw new RuntimeException(throwable.getCause());
+```
 
-## Impact
-- Les tests ne passent pas, ce qui bloque la validation des fonctionnalités
-- Risque de régressions non détectées lors des prochains développements
-- L'enrichissement des artistes depuis les APIs externes (TIDAL, SPOTIFY, etc.) ne fonctionne pas correctement
+**Impact :** Réduction de la lisibilité et de la maintenabilité du code.
 
-## Demande
-Pourrais-tu créer une story dans le backlog avec les informations suivantes :
+### 3. java:S1602 - Accolades inutiles (lignes 124, 133, 145)
+**Problème :** Accolades inutiles autour d'instructions simples avec `return`.
+```java
+return result.exceptionally(throwable -> {
+    // For test compatibility, convert exceptions to empty results
+    // This allows the hierarchy to continue to the next source
+    return Optional.empty();  // <- Accolades inutiles ici
+});
+```
 
-**Titre :** Corriger les tests unitaires ArtistEnrichmentService et ArtistService
+**Impact :** Code moins concis et lisible.
+
+## Impact global
+- **Qualité du code :** Ces violations affectent la maintenabilité et la lisibilité
+- **Standards :** Non-conformité aux règles de qualité définies
+- **Équipe :** Peut impacter la vélocité si ces violations s'accumulent
+
+## Demande de création de story technique
+
+Pourrais-tu créer une story technique dans le backlog avec les informations suivantes :
+
+**Titre :** `Refactor: Corriger les violations SonarQube dans ArtistEnrichmentService`
 
 **Description :**
 ```
 En tant que développeur,
-Je veux que tous les tests unitaires des services Artist passent,
-Afin de garantir la qualité et la fiabilité du code d'enrichissement des artistes.
+Je veux corriger toutes les violations SonarQube dans ArtistEnrichmentService,
+Afin de maintenir la qualité et la conformité du code aux standards définis.
 
 Critères d'acceptation :
-- Tous les tests ArtistEnrichmentServiceTest passent (18 tests)
-- Tous les tests ArtistServiceTest passent (7 tests)
-- La logique d'enrichissement des artistes fonctionne correctement
-- La hiérarchie des sources externes est respectée
-- Les contributions d'artistes sont correctement gérées
+- Suppression du champ SOURCE_HIERARCHY inutilisé (java:S1068)
+- Remplacement de RuntimeException par une exception dédiée (java:S112)
+- Suppression des accolades inutiles dans les lambdas (java:S1602)
+- Validation que SonarQube ne détecte plus de violations dans ce fichier
+- Tous les tests existants continuent de passer
 ```
 
 **Tâches estimées :**
-- Analyse et correction de la logique de fusion des données d'artiste (2h)
-- Correction de la logique de recherche dans les sources externes (2h)
-- Correction de la gestion des espaces et contributions (1h)
-- Nettoyage des stubbings Mockito et tests d'erreur (1h)
-- Tests de régression complets (1h)
+- Analyse détaillée des violations et impact (30min)
+- Suppression du champ inutilisé et refactorisation (1h)
+- Création d'une exception dédiée pour les erreurs de base de données (1h)
+- Nettoyage des accolades inutiles dans les lambdas (30min)
+- Validation SonarQube et tests de régression (1h)
 
-**Priorité :** Haute (bloque la validation des fonctionnalités d'enrichissement)
+**Priorité :** Moyenne (amélioration de qualité de code)
 
-**Dependencies :** Aucune
+**Dependencies :** Story 4.05 (correction des tests Artist) - Done
 
-Merci d'avance pour ta prise en charge rapide de cette demande. N'hésite pas si tu as besoin de plus de détails techniques.
+**Estimation :** 4 heures
+
+Merci d'ajouter cette story technique au backlog. Elle contribuera à maintenir nos standards de qualité de code élevés.
 
 Cordialement,
 
