@@ -1,111 +1,113 @@
-# **Product Requirements Document (PRD) : Catalogue Musical Centralisé**
+# **Product Requirements Document (PRD): Centralized Music Catalogue**
 
-* **Version :** 1.0
-* **Date :** 25 juillet 2025
-* **Auteur :** PM (John)
+* **Version:** 1.2
+* **Date:** September 19, 2025
+* **Author:** PO (Sarah) - Standardized story naming conventions.
 
 ---
 
-## 1. Goals and Background Context
+## Goals and Background Context
 
 ### Goals
 
-* Créer un **produit** pour centraliser et vérifier les catalogues de tracks musicaux pour les producteurs, labels et artistes.
-* Fournir une valeur utilisateur immédiate via une interface minimale dans le cadre d'un PoC (Proof of Concept).
-* Valider une architecture technique Hexagonale et "Event-Driven" pour assurer la future maintenabilité et scalabilité de la solution.
-* Éliminer la gestion manuelle et chronophage des catalogues actuellement effectuée dans des fichiers Excel.
+* Create a **product** to centralize and verify music track catalogues for producers, labels, and artists.
+* Provide immediate user value through a minimal interface as part of a PoC (Proof of Concept).
+* Validate a Hexagonal and Event-Driven technical architecture to ensure the future maintainability and scalability of the solution.
+* Eliminate the manual and time-consuming management of catalogues currently done in Excel files.
 
 ### Background Context
 
-Actuellement, les professionnels de la musique comme les producteurs, les labels et les artistes font face à des défis importants dans la gestion de leurs catalogues. Le processus est souvent manuel, reposant sur des tableurs comme Excel, ce qui est source d'erreurs, de perte de temps et d'un manque de fiabilité des données. Il n'existe pas de lien automatisé entre les métadonnées d'une track (comme son ISRC) et sa présence sur les différentes plateformes de streaming, obligeant à des vérifications manuelles fastidieuses.
+Currently, music professionals such as producers, labels, and artists face significant challenges in managing their catalogues. The process is often manual, relying on spreadsheets like Excel, which leads to errors, wasted time, and unreliable data. There is no automated link between a track's metadata (like its ISRC) and its presence on various streaming platforms, forcing tedious manual checks.
 
-Ce projet vise à résoudre ce problème en créant un **produit** centralisé. Le PoC se concentrera sur la fonctionnalité la plus critique identifiée : permettre à un utilisateur d'ajouter une track via son code ISRC, de récupérer automatiquement les métadonnées depuis les services de streaming, et de l'intégrer à son catalogue unifié, apportant ainsi un gain d'efficacité immédiat.
+This project aims to solve this problem by creating a centralized **product**. The PoC will focus on the most critical functionality identified: allowing a user to add a track via its ISRC code, automatically retrieve metadata from streaming services, and integrate it into their unified catalogue, thus providing an immediate efficiency gain.
 
 ### Change Log
 
-| Date       | Version | Description                                    | Author |
-| :--------- | :------ | :--------------------------------------------- | :----- |
-| 2025-07-25 | 1.0     | Version finale suite à l'élicitation complète. | PM     |
+| Date | Version | Description | Author |
+| :--- | :--- | :--- | :--- |
+| 2025-07-25 | 1.0 | Final version following complete elicitation. | PM |
+| 2025-09-19 | 1.1 | Integrated all epics (0-4) into the PRD for BMad V4 compliance. | PO (Sarah) |
+| 2025-09-19 | 1.2 | Standardized all story identifiers to `Epic.Story` format for clarity and consistency. | PO (Sarah) |
 
 ---
 
-## 2. Architecture Domaine et User Stories
+## Epics & User Stories
 
-### Bounded Context 1 : Producer
+### Epic 0: Project Initialization
 
-* **Objectif :** Gérer le cycle de vie des tracks en garantissant qu'elles appartiennent à un "Producer" (identifié par son code unique) valide.
-* **Stories Clés :**
-    * **Story 1-01 : Valider et Créer un Producer**
-        > **En tant que** Système, **quand** un nouvel ISRC est soumis, **je veux** valider que le "Producer Code" (les 5 premiers caractères) existe, et le créer s'il est inconnu, **afin de** garantir que chaque track a un propriétaire référencé.
-    * **Story 1-02 : Intégrer une Track et Publier un Événement**
-        > **En tant que** Producer (utilisateur), **quand** je valide l'ajout d'une track, **je veux** que la track soit ajoutée à l'agrégat du bon "Producer" et qu'un événement `TrackWasRegistered` soit publié, **afin de** sécuriser l'enregistrement de la track et d'informer le reste du système.
+* **Objective:** Establish the complete development foundation, including the monorepo structure, backend and frontend project skeletons, the CI/CD pipeline, and a fully functional local development environment.
+* **Key Stories:**
+    * **Story 0.01:** Set Up the Monorepo Structure
+    * **Story 0.02:** Generate the Backend Application Skeleton
+    * **Story 0.03:** Initialize the Frontend Application
+    * **Story 0.04:** Configure the Unified Development Environment
+    * **Story 0.05:** Implement the Basic CI/CD Pipeline
 
-### Bounded Context 2 : Artist
+### Epic 1: Core Producer Management System
 
-* **Objectif :** Gérer les profils des artistes et maintenir une liste de leurs œuvres en réaction aux événements du système.
-* **Stories Clés :**
-    * **Story 2-01 : Mettre à Jour un Artiste suite à un Événement**
-        > **En tant que** Contexte Artiste, **quand** je reçois un événement `TrackWasRegistered`, **je veux** trouver l'artiste correspondant dans mon catalogue ou le créer s'il est inconnu, puis y lier la track, **afin de** maintenir les profils à jour de manière autonome.
-        >
-        > **Critères d'Acceptation :**
-        > 1.  **Given** un événement `TrackWasRegistered` est reçu pour un artiste qui **existe déjà**, **When** l'événement est traité, **Then** une référence à la nouvelle track est ajoutée à la liste de l'artiste existant.
-        > 2.  **Given** un événement `TrackWasRegistered` est reçu pour un artiste qui **n'existe pas**, **When** l'événement est traité, **Then** un nouveau profil d'artiste "provisoire" est créé automatiquement avec les données de l'événement, **And** une référence à la nouvelle track est ajoutée à ce nouvel artiste.
-    * **Story A2 : Gérer les Données d'un Artiste**
-        > **En tant que** Producer (utilisateur), **je veux** pouvoir consulter et potentiellement mettre à jour les informations d'un artiste (ex: nom de scène, etc.), **afin de** garantir la qualité des données de mon catalogue d'artistes.
+* **Objective:** Establish a robust producer management system with automatic ISRC validation and catalogue creation.
+* **Key Stories:**
+    * **Story 1.01:** Validate and Create a Producer
+    * **Story 1.02:** Integrate a Track and Publish an Event
+    * **Story 1.03:** External API Mock Services
+    * **Story 1.04:** Recent Tracks API Endpoint
 
----
+### Epic 2: Artist Context Event Processing
 
-## 3. User Interface Design Goals
+* **Objective:** Implement an autonomous artist management system that reacts to `TrackWasRegistered` events to maintain up-to-date profiles without manual intervention.
+* **Key Stories:**
+    * **Story 2.01:** Update an Artist Following an Event
+    * **Story 2.02:** Manage an Artist's Data
 
-* **Overall UX Vision** : L'expérience utilisateur doit être simple, épurée et extrêmement efficace. Le parcours principal de l'utilisateur doit être fluide et sans friction.
-* **Key Interaction Paradigms** : Le produit se comportera comme une "Single-Page Application" (SPA) moderne avec un retour visuel immédiat et une validation instantanée des champs.
-* **Core Screens and Views** : Tableau de bord principal (liste des tracks), Formulaire d'ajout par ISRC, Écran de prévisualisation, Formulaire de création manuelle.
-* **Accessibility** : Viser un niveau de conformité WCAG AA.
-* **Branding** : Aucun pour le PoC. Le design sera neutre et fonctionnel.
-* **Target Device and Platforms** : Web Responsive (Desktop et tablette).
+### Epic 3: UI/UX Foundation & Dashboard
 
----
+* **Objective:** Establish a solid UI/UX foundation with reusable components and a functional dashboard for a coherent and accessible user experience.
+* **Key Stories:**
+    * **Story 3.01:** Adopt shadcn-style UI Components for ISRC form
+    * **Story 3.02:** Implement Dashboard with Recent Tracks list
+    * **Story 3.03:** Accessibility Implementation (WCAG 2.1 AA)
 
-## 4. Technical Assumptions
+### Epic 4: Technical Debt and Refactoring
 
-* **Repository Structure** : Monorepo.
-* **Service Architecture** : Hexagonale, Domain-Driven Design (DDD), Event-Driven.
-* **Testing Requirements** :
-    * **Back-end (Quarkus)** : Tests unitaires (JUnit) et d'intégration. Couverture de code mesurée avec Jacoco (objectif 80%).
-    * **Front-end (Remix)** : Tests unitaires et de composants avec Vitest et React Testing Library (objectif 80%).
-    * **Tests End-to-End** : Hors du périmètre pour le PoC.
-* **Additional Technical Assumptions** :
-    * **Stack** : Java (Quarkus) pour le back-end, TypeScript (Remix) pour le front-end.
-    * **Base de données** : PostgreSQL.
-    * **Déploiement** : Conteneurs Docker.
-    * **Style d'API** : REST.
-    * **Bus d'Événements** : Interne à l'application Quarkus.
-    * **Authentification** : Hors du périmètre pour le PoC.
-
-* **Non-Functional Requirements** :
-    * **NFR1** : Respect des principes de l'architecture Hexagonale.
-    * **NFR2** : Temps de réponse < 5 secondes pour la recherche ISRC.
-    * **NFR3** : Couverture de test de 80% (back-end et front-end).
-    * **NFR4** : Implémentation du domaine selon les patrons DDD.
-    * **NFR5** : Utilisation d'une approche Event-Driven.
-    * **NFR6** : Logging structuré (JSON) pour les erreurs back-end.
-    * **NFR7** : Exposition d'un point d'API `/health` pour le monitoring.
+* **Objective:** Improve the internal quality of the codebase, address technical debt, and perform refactorings to enhance maintainability, performance, and adherence to architectural standards. (Related to NFR4, NFR6)
+* **Key Stories:**
+    * **Story 4.01:** Improve Logging in RegisterTrackService
+    * **Story 4.02:** Refactor Source Value Object for Cross-Context Reusability (was 1.05)
+    * **Story 4.03:** Create and Maintain a Version Compatibility Matrix (was 0.13)
 
 ---
 
-## 5. Checklist Results Report
+## User Interface Design Goals
 
-* **Complétude Générale :** 95%
-* **Adéquation du périmètre (MVP/PoC) :** Idéal (Just Right)
-* **Prêt pour la phase d'architecture :** Oui
-* **Déficiences Critiques :** Aucune.
-* **Décision Finale :** ✅ **PRÊT POUR L'ARCHITECTE**
+* **Overall UX Vision**: The user experience must be simple, clean, and extremely efficient. The main user journey must be smooth and frictionless.
+* **Key Interaction Paradigms**: The product will behave like a modern "Single-Page Application" (SPA) with immediate visual feedback and instant field validation.
+* **Core Screens and Views**: Main dashboard (track list), ISRC entry form, Preview screen, Manual creation form.
+* **Accessibility**: Aim for WCAG AA compliance level.
+* **Branding**: None for the PoC. The design will be neutral and functional.
+* **Target Device and Platforms**: Web Responsive (Desktop and tablet).
 
 ---
 
-## 6. Next Steps
+## Technical Assumptions
 
-Ce document constitue la source de vérité unique pour le PoC.
-
-1.  **Handoff à l'Architecte :** L'Architecte peut utiliser ce document pour concevoir la solution technique détaillée.
-2.  **Handoff au Designer UX/UI :** Le Designer peut utiliser les "User Interface Design Goals" et les User Stories pour créer des wireframes et des maquettes.
+* **Repository Structure**: Monorepo.
+* **Service Architecture**: Hexagonal, Domain-Driven Design (DDD), Event-Driven.
+* **Testing Requirements**:
+    * **Back-end (Quarkus)**: Unit and integration tests (JUnit). Code coverage measured with Jacoco (80% target).
+    * **Front-end (Remix)**: Unit and component tests with Vitest and React Testing Library (80% target).
+    * **End-to-End Tests**: Out of scope for the PoC.
+* **Additional Technical Assumptions**:
+    * **Stack**: Java (Quarkus) for the back-end, TypeScript (Remix) for the front-end.
+    * **Database**: PostgreSQL.
+    * **Deployment**: Docker containers.
+    * **API Style**: REST.
+    * **Event Bus**: Internal to the Quarkus application.
+    * **Authentication**: Out of scope for the PoC.
+* **Non-Functional Requirements**:
+    * **NFR1**: Adherence to Hexagonal architecture principles.
+    * **NFR2**: Response time < 5 seconds for ISRC search.
+    * **NFR3**: 80% test coverage (back-end and front-end).
+    * **NFR4**: Domain implementation according to DDD patterns.
+    * **NFR5**: Use of an Event-Driven approach.
+    * **NFR6**: Structured logging (JSON) for back-end errors.
+    * **NFR7**: Exposure of a `/health` API endpoint for monitoring.

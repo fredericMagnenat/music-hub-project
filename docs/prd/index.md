@@ -1,16 +1,17 @@
-# Product Requirements Document (PRD) : Catalogue Musical Centralisé
+# Product Requirements Document (PRD): Centralized Music Catalogue
 
 ## Table of Contents
 
-- [Product Requirements Document (PRD) : Catalogue Musical Centralisé](#table-of-contents)
-  - [1. Goals and Background Context](./1-goals-and-background-context.md)
-    - [Goals](./1-goals-and-background-context.md#goals)
-    - [Background Context](./1-goals-and-background-context.md#background-context)
-    - [Change Log](./1-goals-and-background-context.md#change-log)
-  - [2. Architecture Domaine et User Stories](./2-architecture-domaine-et-user-stories.md)
-    - [Bounded Context 1 : Producer](./2-architecture-domaine-et-user-stories.md#bounded-context-1-producer)
-    - [Bounded Context 2 : Artist](./2-architecture-domaine-et-user-stories.md#bounded-context-2-artist)
-  - [3. User Interface Design Goals](./3-user-interface-design-goals.md)
-  - [4. Technical Assumptions](./4-technical-assumptions.md)
-  - [5. Checklist Results Report](./5-checklist-results-report.md)
-  - [6. Next Steps](./6-next-steps.md)
+- [Product Requirements Document (PRD): Centralized Music Catalogue](#table-of-contents)
+  - [Goals and Background Context](./goals-and-background-context.md)
+    - [Goals](./goals-and-background-context.md#goals)
+    - [Background Context](./goals-and-background-context.md#background-context)
+    - [Change Log](./goals-and-background-context.md#change-log)
+  - [Epics & User Stories](./epics-user-stories.md)
+    - [Epic 0: Project Initialization](./epics-user-stories.md#epic-0-project-initialization)
+    - [Epic 1: Core Producer Management System](./epics-user-stories.md#epic-1-core-producer-management-system)
+    - [Epic 2: Artist Context Event Processing](./epics-user-stories.md#epic-2-artist-context-event-processing)
+    - [Epic 3: UI/UX Foundation & Dashboard](./epics-user-stories.md#epic-3-uiux-foundation-dashboard)
+    - [Epic 4: Technical Debt and Refactoring](./epics-user-stories.md#epic-4-technical-debt-and-refactoring)
+  - [User Interface Design Goals](./user-interface-design-goals.md)
+  - [Technical Assumptions](./technical-assumptions.md)
