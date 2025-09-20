@@ -23,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.musichub.artist.application.ports.out.ArtistReconciliationPort;
 import com.musichub.artist.application.ports.out.ArtistRepository;
+import com.musichub.artist.application.service.exception.ArtistEnrichmentDatabaseException;
 import com.musichub.artist.domain.model.Artist;
 import com.musichub.artist.domain.model.ArtistStatus;
 import com.musichub.shared.domain.values.Source;
@@ -383,8 +384,8 @@ class ArtistEnrichmentServiceTest {
                         // When & Then
                         CompletableFuture<Artist> result = enrichmentService.enrichArtist(provisionalArtist);
 
-                        assertThatThrownBy(result::join)
-                                        .hasCauseInstanceOf(RuntimeException.class);
+                         assertThatThrownBy(result::join)
+                                         .hasCauseInstanceOf(ArtistEnrichmentDatabaseException.class);
                 }
         }
 }
